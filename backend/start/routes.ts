@@ -31,6 +31,9 @@ router
   .group(() => {
     router.get('/twitch/redirect', [AuthController, 'redirect'])
     router.get('/twitch/callback', [AuthController, 'callback'])
+    // Alias pour compat front: /auth/twitch/redirect/callback
+    router.get('/auth/twitch/redirect', [AuthController, 'redirect'])
+    router.get('/auth/twitch/callback', [AuthController, 'callback'])
     router.post('/logout', [AuthController, 'logout']).use(middleware.auth())
     router.get('/me', [AuthController, 'me']).use(middleware.auth())
     router.post('/switch-role', [AuthController, 'switchRole']).use(middleware.auth())
