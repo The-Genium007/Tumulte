@@ -6,6 +6,20 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        NODE_ENV: ${NODE_ENV:-production}
+        LOG_LEVEL: ${LOG_LEVEL:-info}
+        APP_KEY: ${APP_KEY}
+        TWITCH_CLIENT_ID: ${TWITCH_CLIENT_ID}
+        TWITCH_CLIENT_SECRET: ${TWITCH_CLIENT_SECRET}
+        TWITCH_REDIRECT_URI: ${TWITCH_REDIRECT_URI}
+        FRONTEND_URL: ${FRONTEND_URL}
+        DB_HOST: ${DB_HOST}
+        DB_PORT: ${DB_PORT:-5432}
+        DB_USER: ${DB_USER}
+        DB_PASSWORD: ${DB_PASSWORD}
+        DB_DATABASE: ${DB_DATABASE}
+        SESSION_DRIVER: ${SESSION_DRIVER:-cookie}
     container_name: tumulte-backend
     environment:
       NODE_ENV: production
