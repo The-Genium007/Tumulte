@@ -6,6 +6,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_WS_URL: ${VITE_WS_URL}
     container_name: tumulte-frontend
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:3333}
