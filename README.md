@@ -94,7 +94,7 @@ Find your Twitch User ID: https://www.streamweasels.com/tools/convert-twitch-use
 
 ## 📦 Deployment with Dokploy
 
-The project includes a Docker Compose configuration compatible with [Dokploy](https://docs.dokploy.com) and Cloudflare Tunnel for secure external access.
+The project includes a Docker Compose configuration compatible with [Dokploy](https://docs.dokploy.com).
 
 ### Docker Compose Structure
 
@@ -103,24 +103,42 @@ services:
   backend:     # AdonisJS API + WebSocket
   frontend:    # Vue.js Dashboard
   postgres:    # PostgreSQL Database
-  cloudflared: # Cloudflare Tunnel (optional)
 
 networks:
-  dokploy-network:  # Required for Dokploy
+  dokploy-network:  # Required for Dokploy (external)
   internal:         # Internal services communication
 ```
 
-### Cloudflare Tunnel Setup
+### Network Information
 
-1. Create a Cloudflare Tunnel: https://one.dash.cloudflare.com/
-2. Get your tunnel token
-3. Add to your environment:
-   ```env
-   CLOUDFLARE_TUNNEL_TOKEN=your_token_here
-   ```
-4. Set SSL/TLS mode to "Full" or "Full (Strict)" in Cloudflare dashboard
+**Network name**: `dokploy-network` (external network managed by Dokploy)
 
-The tunnel secures external connections while services communicate internally via `dokploy-network`.
+All services (backend, frontend) are connected to this network for Traefik routing and external access.
+
+### Service Information for Cloudflare Tunnel
+
+If you're configuring an external Cloudflare Tunnel, use these service details:
+
+| Service  | Service Name       | Port | Protocol    | Description                  |
+|----------|--------------------|------|-------------|------------------------------|
+| Frontend | `frontend`         | 80   | HTTP        | Vue.js Dashboard & Overlay   |
+| Backend  | `backend`          | 3333 | HTTP/WS     | API + WebSocket              |
+
+**Example Cloudflare Tunnel Configuration:**
+```yaml
+# In your separate Cloudflare Tunnel service
+tunnel:
+  ingress:
+    - hostname: yourdomain.com
+      service: http://frontend:80
+    - hostname: api.yourdomain.com
+      service: http://backend:3333
+```
+
+**Important**:
+- Ensure your Cloudflare Tunnel container is on the same `dokploy-network`
+- Set Cloudflare SSL/TLS mode to **Full** or **Full (Strict)**
+- Backend supports WebSocket connections on the same port (3333)
 
 **Resources**:
 - [Dokploy Docker Compose Guide](https://docs.dokploy.com/docs/core/docker-compose)

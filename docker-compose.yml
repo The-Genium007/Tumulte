@@ -74,27 +74,6 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # Cloudflare Tunnel (Optional - for external access)
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: tumulte-cloudflared
-    environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-    command:
-      - tunnel
-      - --no-autoupdate
-      - run
-    depends_on:
-      - backend
-      - frontend
-    networks:
-      - dokploy-network
-      - internal
-    restart: unless-stopped
-    # Remove this service if not using Cloudflare Tunnel
-    profiles:
-      - cloudflare
-
 # Networks
 networks:
   # Dokploy network - required for Dokploy domain management and Traefik routing
