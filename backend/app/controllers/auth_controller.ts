@@ -26,7 +26,9 @@ export default class AuthController {
     // Générer l'URL d'autorisation Twitch
     const authUrl = this.twitchAuthService.getAuthorizationUrl(state)
 
-    logger.info('Redirecting to Twitch OAuth')
+    logger.info(
+      `Redirecting to Twitch OAuth with redirect_uri=${env.get('TWITCH_REDIRECT_URI')}`
+    )
 
     return response.redirect(authUrl)
   }
