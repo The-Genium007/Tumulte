@@ -1,0 +1,17 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/* Masquer les modals des gestionnaires de mots de passe */
+[id^="1password"],
+[id^="lastpass"],
+[id^="bitwarden"],
+[class*="onepassword"],
+[class*="lastpass"],
+[class*="bitwarden"],
+[data-lastpass-root],
+[data-1p-root] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

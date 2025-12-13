@@ -1,0 +1,145 @@
+<template>
+  <DefaultLayout>
+    <div
+      class="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900/10 to-gray-900 p-6"
+    >
+      <div class="max-w-2xl mx-auto space-y-6">
+        <!-- Header -->
+        <UCard>
+          <div class="flex items-center gap-4">
+            <UButton
+              color="gray"
+              variant="ghost"
+              icon="i-lucide-arrow-left"
+              @click="router.push('/mj/campaigns')"
+            />
+            <div class="bg-primary-500/10 p-3 rounded-xl">
+              <UIcon name="i-lucide-folder-plus" class="size-8 text-primary-500" />
+            </div>
+            <div>
+              <h1 class="text-3xl font-bold text-white">Créer une campagne</h1>
+              <p class="text-gray-400 mt-1">
+                Configurez votre nouvelle campagne multi-stream
+              </p>
+            </div>
+          </div>
+        </UCard>
+
+        <!-- Form Card -->
+        <UCard>
+          <template #header>
+            <h2 class="text-xl font-semibold text-white">
+              Informations de la campagne
+            </h2>
+          </template>
+
+          <div class="space-y-6">
+            <!-- Name Field -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">
+                Nom de la campagne <span class="text-red-400">*</span>
+              </label>
+              <UInput
+                v-model="name"
+                type="text"
+                placeholder="Ma super campagne"
+                size="lg"
+                icon="i-lucide-folder"
+                autofocus
+              />
+              <p class="text-xs text-gray-400 mt-1">
+                Le nom de votre campagne (visible par tous les membres)
+              </p>
+            </div>
+
+            <!-- Description Field -->
+            <div>
+              <label class="block text-sm font-medium text-gray-300 mb-2">
+                Description
+              </label>
+              <UInput
+                v-model="description"
+                type="textarea"
+                placeholder="Description de la campagne..."
+                :rows="6"
+              />
+              <p class="text-xs text-gray-400 mt-1">
+                Une brève description (optionnel)
+              </p>
+            </div>
+          </div>
+
+          <template #footer>
+            <div class="flex justify-end gap-3">
+              <UButton
+                color="gray"
+                variant="soft"
+                label="Annuler"
+                icon="i-lucide-x"
+                @click="router.push('/mj/campaigns')"
+              />
+              <UButton
+                color="primary"
+                label="Créer la campagne"
+                icon="i-lucide-check"
+                :loading="creating"
+                @click="handleCreate"
+              />
+            </div>
+          </template>
+        </UCard>
+      </div>
+    </div>
+  </DefaultLayout>
+</template>
+
+<script setup lang="ts">
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useCampaigns } from "@/composables/useCampaigns";
+import DefaultLayout from "@/layouts/DefaultLayout.vue";
+
+const router = useRouter();
+const toast = useToast();
+const { createCampaign } = useCampaigns();
+
+const name = ref("");
+const description = ref("");
+const creating = ref(false);
+
+const handleCreate = async () => {
+  if (!name.value.trim()) {
+    toast.add({
+      title: "Erreur",
+      description: "Le nom de la campagne est requis",
+      color: "red",
+    });
+    return;
+  }
+
+  creating.value = true;
+  try {
+    await createCampaign({
+      name: name.value.trim(),
+      description: description.value.trim() || undefined,
+    });
+
+    toast.add({
+      title: "Succès",
+      description: `Campagne "${name.value}" créée avec succès`,
+      color: "green",
+    });
+
+    router.push("/mj/campaigns");
+  } catch (error: any) {
+    console.error("Failed to create campaign:", error);
+    toast.add({
+      title: "Erreur",
+      description: error.data?.error || "Impossible de créer la campagne",
+      color: "red",
+    });
+  } finally {
+    creating.value = false;
+  }
+};
+</script>
