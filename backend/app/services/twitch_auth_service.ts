@@ -23,7 +23,7 @@ export default class TwitchAuthService {
   private readonly clientId: string
   private readonly clientSecret: string
   private readonly redirectUri: string
-  private readonly scopes = ['channel:manage:polls', 'channel:read:polls']
+  private readonly scopes = ['channel:manage:polls', 'channel:read:polls', 'user:read:email']
 
   constructor() {
     this.clientId = env.get('TWITCH_CLIENT_ID') || ''
