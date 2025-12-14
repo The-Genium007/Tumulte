@@ -1189,7 +1189,22 @@ export default class MJController {
 
         try {
           const streamer = await Streamer.find(streamerId)
-          if (!streamer) continue
+          if (!streamer) {
+            failedCancellations.push(pollData.streamer_name || streamerId)
+            continue
+          }
+
+          if (!streamer.broadcasterType ||
+            (streamer.broadcasterType.toLowerCase() !== 'affiliate' &&
+              streamer.broadcasterType.toLowerCase() !== 'partner')
+          ) {
+            logger.warn(
+              `Skipping remote cancellation for streamer ${streamer.twitchDisplayName}: not affiliate/partner`
+            )
+            failedCancellations.push(pollData.streamer_name || streamer.twitchDisplayName)
+            twitchPollsData[streamerId].status = 'TERMINATED'
+            continue
+          }
 
           // Récupérer l'access token déchiffré
           const accessToken = await streamer.getDecryptedAccessToken()
@@ -1207,6 +1222,7 @@ export default class MJController {
         } catch (error) {
           logger.error(`Failed to cancel poll on streamer ${streamerId}: ${error.message}`)
           failedCancellations.push(pollData.streamer_name || streamerId)
+          twitchPollsData[streamerId].status = 'TERMINATED'
         }
       }
 
