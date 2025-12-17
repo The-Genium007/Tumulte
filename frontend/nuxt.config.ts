@@ -39,4 +39,16 @@ export default defineNuxtConfig({
     strict: true,
     typeCheck: false,
   },
+  app: {
+    head: {
+      script: [
+        {
+          // Charger le script Umami dans le HTML initial (préférer HTTPS)
+          src: 'https://zerocase-umami-2548df-51-83-45-107.traefik.me/script.js',
+          defer: true,
+          'data-website-id': '07e569f4-6e75-445b-9db9-51a821f38d5b'
+        }
+      ]
+    }
+  },
 });
