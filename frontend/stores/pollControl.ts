@@ -14,6 +14,8 @@ interface PollControlState {
   launchedPolls: number[];
   pollStartTime: number | null;
   pollDuration: number | null;
+  // Nouveau champ pour conserver l'ID de la campagne active
+  activeCampaignId: string | null;
   timestamp: number;
 }
 
@@ -28,6 +30,8 @@ export const usePollControlStore = defineStore("pollControl", () => {
   const launchedPolls = ref<number[]>([]);
   const pollStartTime = ref<number | null>(null);
   const pollDuration = ref<number | null>(null);
+  // Nouveau ref
+  const activeCampaignId = ref<string | null>(null);
 
   // Vérifier si on est côté client
   const isClient = typeof window !== "undefined";
@@ -61,6 +65,7 @@ export const usePollControlStore = defineStore("pollControl", () => {
       launchedPolls.value = data.launchedPolls;
       pollStartTime.value = data.pollStartTime;
       pollDuration.value = data.pollDuration;
+      activeCampaignId.value = data.activeCampaignId ?? null;
 
       // Recalculer le countdown si un sondage était en cours
       if (data.pollStatus === "sending" && data.pollStartTime && data.pollDuration) {
@@ -102,6 +107,7 @@ export const usePollControlStore = defineStore("pollControl", () => {
         launchedPolls: launchedPolls.value,
         pollStartTime: pollStartTime.value,
         pollDuration: pollDuration.value,
+        activeCampaignId: activeCampaignId.value,
         timestamp: Date.now(),
       };
 
@@ -122,6 +128,7 @@ export const usePollControlStore = defineStore("pollControl", () => {
     launchedPolls.value = [];
     pollStartTime.value = null;
     pollDuration.value = null;
+    activeCampaignId.value = null;
     if (isClient) {
       localStorage.removeItem(STORAGE_KEY);
     }
@@ -140,6 +147,7 @@ export const usePollControlStore = defineStore("pollControl", () => {
         launchedPolls,
         pollStartTime,
         pollDuration,
+        activeCampaignId, // inclure le nouveau champ
       ],
       () => {
         // Si une session est active, on sauvegarde
@@ -168,6 +176,7 @@ export const usePollControlStore = defineStore("pollControl", () => {
     launchedPolls,
     pollStartTime,
     pollDuration,
+    activeCampaignId,
 
     // Actions
     clearState,
