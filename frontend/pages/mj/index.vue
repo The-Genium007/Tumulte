@@ -444,7 +444,6 @@
             </div>
           </div>
         </UCard>
-        <!-- The rest of the template remains unchanged; we only modify script setup logic -->
 
       </div>
 
@@ -1032,7 +1031,6 @@ const {
   launchedPolls,
   pollStartTime,
   pollDuration,
-  activeCampaignId,
 } = storeToRefs(pollControlStore);
 
 // Computed pour la question actuelle
@@ -1089,9 +1087,6 @@ const launchSession = async (session: any) => {
     launchedPolls.value = [];
     pollStartTime.value = null;
     pollDuration.value = null;
-
-    // Mémoriser la campagne courante dans le store pollControl
-    pollControlStore.activeCampaignId = selectedCampaignId.value;
   } catch (error) {
     toast.add({
       title: "Erreur",
@@ -1145,10 +1140,6 @@ const resetPollState = () => {
 // Annuler le sondage en cours
 const cancelPoll = async () => {
   if (!currentPoll.value || !selectedCampaignId.value) {
-  // fallback sur l'ID de campagne mémorisé si selectedCampaignId est null
-  const campaignId = selectedCampaignId.value ?? activeCampaignId.value ?? null;
-
-  if (!currentPoll.value || !campaignId) {
     resetPollState();
     return;
   }
@@ -1164,7 +1155,6 @@ const cancelPoll = async () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL;
       const response = await fetch(`${API_URL}/mj/campaigns/${selectedCampaignId.value}/polls/${currentPoll.value.id}/cancel`, {
-      const response = await fetch(`${API_URL}/mj/campaigns/${campaignId}/polls/${currentPoll.value.id}/cancel`, {
         method: 'PATCH',
         credentials: 'include',
       });
@@ -1195,10 +1185,6 @@ const cancelPoll = async () => {
 // Envoyer le sondage
 const sendPoll = async () => {
   if (!currentPoll.value || !activeSession.value || !selectedCampaignId.value) return;
-  // fallback sur l'ID de campagne mémorisé si selectedCampaignId est null
-  const campaignId = selectedCampaignId.value ?? activeCampaignId.value ?? null;
-
-  if (!currentPoll.value || !activeSession.value || !campaignId) return;
 
   pollStatus.value = 'sending';
   pollStartTime.value = Date.now();
@@ -1209,10 +1195,8 @@ const sendPoll = async () => {
 
   try {
     // Appeler l'API pour lancer le sondage
-    // Appeler l'API pour lancer le sondage - on utilise campaignId obtenu ci-dessus
     const API_URL = import.meta.env.VITE_API_URL;
     const response = await fetch(`${API_URL}/mj/campaigns/${selectedCampaignId.value}/polls/${currentPoll.value.id}/launch`, {
-    const response = await fetch(`${API_URL}/mj/campaigns/${campaignId}/polls/${currentPoll.value.id}/launch`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -1240,21 +1224,15 @@ const sendPoll = async () => {
         description: "Le sondage a été envoyé à tous les streamers actifs",
         color: "success",
       });
-      const errText = await response.text().catch(() => 'Unknown error');
-      throw new Error(errText || 'Failed to launch poll');
     }
 
     // Démarrer le compte à rebours
     countdown.value = activeSession.value.default_duration_seconds;
-    // Démarrer le compteur local
-    countdown.value = pollDuration.value;
     startCountdown();
   } catch (error: any) {
     const errorMessage = error?.message || "Impossible d'envoyer le sondage";
 
     // Détecter les erreurs spécifiques
-    const errorMessage = (error && error.message) ? error.message : 'Une erreur est survenue';
-    // Détecter les erreurs spécifiques et message utilisateur
     if (errorMessage.includes('No active streamers')) {
       toast.add({
         title: "Aucun streamer actif",
@@ -1281,7 +1259,6 @@ const sendPoll = async () => {
 };
 
 // Compte à rebours
-// Compte à rebours (variable utilisée par startCountdown)
 let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
 const startCountdown = () => {
@@ -1322,11 +1299,6 @@ onMounted(() => {
 // Récupérer les résultats (10 fois en 10 secondes)
 const fetchPollResults = async () => {
   if (!currentPoll.value || !selectedCampaignId.value) return;
-  if (!currentPoll.value) return;
-
-  // fallback pour la campagne
-  const campaignId = selectedCampaignId.value ?? activeCampaignId.value ?? null;
-  if (!campaignId || !currentPoll.value) return;
 
   let attempts = 0;
   const maxAttempts = 10;
@@ -1338,7 +1310,6 @@ const fetchPollResults = async () => {
       // Appeler l'API pour récupérer les résultats
       const API_URL = import.meta.env.VITE_API_URL;
       const response = await fetch(`${API_URL}/mj/campaigns/${selectedCampaignId.value}/polls/${currentPoll.value.id}/results`, {
-      const response = await fetch(`${API_URL}/mj/campaigns/${campaignId}/polls/${currentPoll.value.id}/results`, {
         credentials: 'include',
       });
 
@@ -1653,10 +1624,6 @@ const handleDeletePoll = async (pollId: string) => {
     });
   }
 };
-// Reprendre le countdown si un sondage était en cours lors du chargement
-onMounted(() => {
-  // Forcer le rechargement de l'état depuis localStorage côté client
-  pollControlStore.loadState();
 
 const handleLogout = async () => {
   try {
@@ -1669,12 +1636,6 @@ const handleLogout = async () => {
     });
   }
 };
-  console.log('Poll Control - onMounted (après loadState):', {
-    activeSession: activeSession.value,
-    pollStatus: pollStatus.value,
-    countdown: countdown.value,
-    activeSessionPolls: activeSessionPolls.value.length
-  });
 
 // Reset modal on close
 watch(showCreateModal, (isOpen) => {
@@ -1683,14 +1644,6 @@ watch(showCreateModal, (isOpen) => {
     newTemplate.title = "";
     newTemplate.duration_seconds = 60;
     optionsText.value = "";
-  if (pollStatus.value === 'sending' && countdown.value > 0) {
-    console.log('Reprendre le countdown avec', countdown.value, 'secondes restantes');
-    startCountdown();
   }
 });
-
 </script>
-
-<style scoped>
-/* (styles unchanged) */
-</style>
