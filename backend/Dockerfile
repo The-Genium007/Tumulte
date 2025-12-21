@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-# Stage 1: Builder - Compile TypeScript and install all dependencies
-FROM node:20-alpine AS builder
+# Stage 1: Dependencies installation
+FROM node:20-alpine AS deps
 
 WORKDIR /app
 
@@ -11,27 +11,10 @@ RUN apk add --no-cache python3 make g++
 # Copy package files for dependency installation
 COPY package*.json ./
 
-# Install all dependencies (including devDependencies for build)
+# Install all dependencies (production + dev for ts-node)
 RUN npm ci && npm cache clean --force
 
-# Copy source code
-COPY . .
-
-# Build AdonisJS application (compile TypeScript)
-RUN npm run build
-
-# Stage 2: Production dependencies only
-FROM node:20-alpine AS deps
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install only production dependencies
-RUN npm ci --only=production && npm cache clean --force
-
-# Stage 3: Production runtime
+# Stage 2: Production runtime with TypeScript support
 FROM node:20-alpine AS production
 
 # Install dumb-init for proper signal handling and curl for health checks
@@ -43,15 +26,11 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-# Copy built application from builder stage
-COPY --from=builder --chown=nodejs:nodejs /app/build ./build
-
-# Copy production dependencies
+# Copy dependencies from deps stage
 COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 
-# Copy necessary runtime files
-COPY --chown=nodejs:nodejs package*.json ./
-COPY --chown=nodejs:nodejs adonisrc.js ./
+# Copy application source code
+COPY --chown=nodejs:nodejs . .
 
 # Set environment variables
 ENV NODE_ENV=production \
@@ -73,5 +52,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application using the compiled build
+# Start the application with ts-node (runtime transpilation)
 CMD ["node", "--loader", "ts-node-maintained/esm", "bin/server.ts"]
