@@ -67,10 +67,6 @@ services:
         parallelism: 1
         delay: 10s
         failure_action: rollback
-    labels:
-      # Traefik labels (Dokploy will manage these via UI)
-      traefik.enable: "true"
-      traefik.docker.network: "dokploy-network"
 
 # Networks
 networks:
