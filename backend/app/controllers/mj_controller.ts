@@ -23,7 +23,8 @@ export default class MJController {
 
   private async getChatService() {
     if (!this._chatService) {
-      const app = (await import('@adonisjs/core/services/app')).default
+      const appModule = await import('@adonisjs/core/services/app')
+      const app = appModule.default
       this._chatService = await app.container.make('TwitchChatService')
     }
     return this._chatService
@@ -31,7 +32,8 @@ export default class MJController {
 
   private async getChatCountdownService() {
     if (!this._chatCountdownService) {
-      const app = (await import('@adonisjs/core/services/app')).default
+      const appModule = await import('@adonisjs/core/services/app')
+      const app = appModule.default
       this._chatCountdownService = await app.container.make('TwitchChatCountdownService')
     }
     return this._chatCountdownService
@@ -39,7 +41,8 @@ export default class MJController {
 
   private async getRedisService() {
     if (!this._redisService) {
-      const app = (await import('@adonisjs/core/services/app')).default
+      const appModule = await import('@adonisjs/core/services/app')
+      const app = appModule.default
       this._redisService = await app.container.make('RedisService')
     }
     return this._redisService
@@ -136,12 +139,12 @@ export default class MJController {
   async createTemplate({ auth, params, request, response }: HttpContext) {
     const user = auth.user!
     const { campaignId } = params
-    const { label, title, options, duration_seconds } = request.only([
-      'label',
-      'title',
-      'options',
-      'duration_seconds',
-    ])
+    const {
+      label,
+      title,
+      options,
+      duration_seconds: durationSeconds,
+    } = request.only(['label', 'title', 'options', 'duration_seconds'])
 
     // Si campaignId est fourni, vérifier que la campagne appartient au MJ
     if (campaignId) {
@@ -156,7 +159,7 @@ export default class MJController {
     }
 
     // Validation
-    if (!label || !title || !options || !duration_seconds) {
+    if (!label || !title || !options || !durationSeconds) {
       return response.badRequest({ error: 'Missing required fields' })
     }
 
@@ -164,7 +167,7 @@ export default class MJController {
       return response.badRequest({ error: 'Options must be an array with 2 to 5 choices' })
     }
 
-    if (duration_seconds < 15 || duration_seconds > 1800) {
+    if (durationSeconds < 15 || durationSeconds > 1800) {
       return response.badRequest({ error: 'Duration must be between 15 and 1800 seconds' })
     }
 
@@ -175,7 +178,7 @@ export default class MJController {
         label,
         title,
         options,
-        durationSeconds: duration_seconds,
+        durationSeconds,
       })
 
       logger.info(
@@ -204,12 +207,12 @@ export default class MJController {
   async updateTemplate({ auth, params, request, response }: HttpContext) {
     const user = auth.user!
     const templateId = params.id
-    const { label, title, options, duration_seconds } = request.only([
-      'label',
-      'title',
-      'options',
-      'duration_seconds',
-    ])
+    const {
+      label,
+      title,
+      options,
+      duration_seconds: durationSeconds,
+    } = request.only(['label', 'title', 'options', 'duration_seconds'])
 
     // Récupérer le template
     const template = await PollTemplate.query()
@@ -231,7 +234,7 @@ export default class MJController {
       return response.badRequest({ error: 'Options must be an array with 2 to 5 choices' })
     }
 
-    if (duration_seconds && (duration_seconds < 15 || duration_seconds > 1800)) {
+    if (durationSeconds && (durationSeconds < 15 || durationSeconds > 1800)) {
       return response.badRequest({ error: 'Duration must be between 15 and 1800 seconds' })
     }
 
@@ -240,7 +243,7 @@ export default class MJController {
       if (label) template.label = label
       if (title) template.title = title
       if (options) template.options = options
-      if (duration_seconds) template.durationSeconds = duration_seconds
+      if (durationSeconds) template.durationSeconds = durationSeconds
 
       await template.save()
 
@@ -301,12 +304,12 @@ export default class MJController {
   async launchPoll({ auth, params, request, response }: HttpContext) {
     const user = auth.user!
     const { campaignId } = params
-    const { template_id, title, options, duration_seconds } = request.only([
-      'template_id',
-      'title',
-      'options',
-      'duration_seconds',
-    ])
+    const {
+      template_id: templateId,
+      title,
+      options,
+      duration_seconds: durationSeconds,
+    } = request.only(['template_id', 'title', 'options', 'duration_seconds'])
 
     // Si campaignId est fourni, vérifier que la campagne appartient au MJ
     if (campaignId) {
@@ -325,9 +328,9 @@ export default class MJController {
     let pollDuration: number
 
     // Si un template_id est fourni, charger le template
-    if (template_id) {
+    if (templateId) {
       const template = await PollTemplate.query()
-        .where('id', template_id)
+        .where('id', templateId)
         .where('owner_id', user.id)
         .first()
 
@@ -340,7 +343,7 @@ export default class MJController {
       pollDuration = template.durationSeconds
     } else {
       // Sinon, utiliser les valeurs fournies
-      if (!title || !options || !duration_seconds) {
+      if (!title || !options || !durationSeconds) {
         return response.badRequest({
           error: 'Either template_id or (title, options, duration_seconds) must be provided',
         })
@@ -350,19 +353,19 @@ export default class MJController {
         return response.badRequest({ error: 'Options must be an array with 2 to 5 choices' })
       }
 
-      if (duration_seconds < 15 || duration_seconds > 1800) {
+      if (durationSeconds < 15 || durationSeconds > 1800) {
         return response.badRequest({ error: 'Duration must be between 15 and 1800 seconds' })
       }
 
       pollTitle = title
       pollOptions = options
-      pollDuration = duration_seconds
+      pollDuration = durationSeconds
     }
 
     try {
       // Créer l'instance de sondage
       const pollInstance = await PollInstance.create({
-        templateId: template_id || null,
+        templateId: templateId || null,
         campaignId: campaignId || null,
         title: pollTitle,
         options: pollOptions,
@@ -547,7 +550,10 @@ export default class MJController {
   async createPollSession({ auth, params, request, response }: HttpContext) {
     const user = auth.user!
     const { campaignId } = params
-    const { name, default_duration_seconds } = request.only(['name', 'default_duration_seconds'])
+    const { name, default_duration_seconds: defaultDurationSeconds } = request.only([
+      'name',
+      'default_duration_seconds',
+    ])
 
     // Vérifier que la campagne appartient au MJ
     const campaign = await Campaign.query()
@@ -560,11 +566,11 @@ export default class MJController {
     }
 
     // Validation
-    if (!name || !default_duration_seconds) {
+    if (!name || !defaultDurationSeconds) {
       return response.badRequest({ error: 'Missing required fields' })
     }
 
-    if (default_duration_seconds < 15 || default_duration_seconds > 1800) {
+    if (defaultDurationSeconds < 15 || defaultDurationSeconds > 1800) {
       return response.badRequest({ error: 'Duration must be between 15 and 1800 seconds' })
     }
 
@@ -573,7 +579,7 @@ export default class MJController {
         ownerId: user.id,
         campaignId,
         name,
-        defaultDurationSeconds: default_duration_seconds,
+        defaultDurationSeconds,
       })
 
       logger.info(`Poll session ${session.id} created by MJ ${user.id} for campaign ${campaignId}`)
@@ -649,7 +655,10 @@ export default class MJController {
   async updatePollSession({ auth, params, request, response }: HttpContext) {
     const user = auth.user!
     const { campaignId, id } = params
-    const { name, default_duration_seconds } = request.only(['name', 'default_duration_seconds'])
+    const { name, default_duration_seconds: defaultDurationSeconds } = request.only([
+      'name',
+      'default_duration_seconds',
+    ])
 
     // Vérifier que la campagne appartient au MJ
     const campaign = await Campaign.query()
@@ -671,16 +680,13 @@ export default class MJController {
     }
 
     // Validation
-    if (
-      default_duration_seconds &&
-      (default_duration_seconds < 15 || default_duration_seconds > 1800)
-    ) {
+    if (defaultDurationSeconds && (defaultDurationSeconds < 15 || defaultDurationSeconds > 1800)) {
       return response.badRequest({ error: 'Duration must be between 15 and 1800 seconds' })
     }
 
     try {
       if (name) session.name = name
-      if (default_duration_seconds) session.defaultDurationSeconds = default_duration_seconds
+      if (defaultDurationSeconds) session.defaultDurationSeconds = defaultDurationSeconds
 
       await session.save()
 
@@ -744,9 +750,19 @@ export default class MJController {
   async addPollToSession({ auth, params, request, response }: HttpContext) {
     const user = auth.user!
     const { campaignId, sessionId } = params
-    const { question, options, type, channel_points_enabled, channel_points_amount } = request.only(
-      ['question', 'options', 'type', 'channel_points_enabled', 'channel_points_amount']
-    )
+    const {
+      question,
+      options,
+      type,
+      channel_points_enabled: channelPointsEnabled,
+      channel_points_amount: channelPointsAmount,
+    } = request.only([
+      'question',
+      'options',
+      'type',
+      'channel_points_enabled',
+      'channel_points_amount',
+    ])
 
     // Vérifier que la campagne appartient au MJ
     const campaign = await Campaign.query()
@@ -796,8 +812,8 @@ export default class MJController {
         options,
         type,
         orderIndex: nextIndex,
-        channelPointsEnabled: channel_points_enabled || false,
-        channelPointsAmount: channel_points_enabled ? channel_points_amount : null,
+        channelPointsEnabled: channelPointsEnabled || false,
+        channelPointsAmount: channelPointsEnabled ? channelPointsAmount : null,
       })
 
       logger.info(`Poll ${poll.id} added to session ${sessionId} by MJ ${user.id}`)
@@ -1179,7 +1195,7 @@ export default class MJController {
 
               // Agréger les votes (clés = index: "0", "1", "2")
               for (const [optionIndex, votes] of Object.entries(chatVotes)) {
-                const optionIndexNum = parseInt(optionIndex, 10)
+                const optionIndexNum = Number.parseInt(optionIndex, 10)
                 const poll = await Poll.find(pollId)
                 if (!poll) continue
 

@@ -24,7 +24,7 @@
 
     <UCard
       v-if="open"
-      class="w-[840px] max-w-[95vw] bg-gray-950 border border-gray-800 text-white shadow-2xl"
+      class="w-210 max-w-[95vw] bg-gray-950 border border-gray-800 text-white shadow-2xl"
     >
       <div class="space-y-4">
         <header class="flex items-start justify-between gap-3">

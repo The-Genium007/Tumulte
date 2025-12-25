@@ -108,7 +108,7 @@ export default class WebSocketService {
     for (const [optionIndex, votes] of Object.entries(aggregated.votesByOption)) {
       if (votes > maxVotes) {
         maxVotes = votes
-        winnerIndex = parseInt(optionIndex)
+        winnerIndex = Number.parseInt(optionIndex)
       }
     }
 

@@ -178,7 +178,7 @@
                   </div>
                   <div class="flex items-center gap-2 ml-6">
                     <UBadge
-                      :color="poll.type === 'UNIQUE' ? 'blue' : 'purple'"
+                      :color="poll.type === 'UNIQUE' ? 'info' : 'primary'"
                       variant="soft"
                       size="xs"
                     >

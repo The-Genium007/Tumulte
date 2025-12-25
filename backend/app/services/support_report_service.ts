@@ -112,23 +112,19 @@ export default class SupportReportService {
     if (!frontend) return undefined
 
     const sanitizeLogs = (logs?: ConsoleLogEntry[]) =>
-      (logs ?? [])
-        .slice(-50)
-        .map((entry) => ({
-          level: entry.level ?? 'log',
-          message: this.truncate(this.serialize(entry.message), 500),
-          timestamp: entry.timestamp,
-        }))
+      (logs ?? []).slice(-50).map((entry) => ({
+        level: entry.level ?? 'log',
+        message: this.truncate(this.serialize(entry.message), 500),
+        timestamp: entry.timestamp,
+      }))
 
     const sanitizeErrors = (errors?: ErrorLogEntry[]) =>
-      (errors ?? [])
-        .slice(-20)
-        .map((entry) => ({
-          message: this.truncate(this.serialize(entry.message), 800),
-          stack: this.truncate(this.serialize(entry.stack), 1200),
-          type: entry.type,
-          timestamp: entry.timestamp,
-        }))
+      (errors ?? []).slice(-20).map((entry) => ({
+        message: this.truncate(this.serialize(entry.message), 800),
+        stack: this.truncate(this.serialize(entry.stack), 1200),
+        type: entry.type,
+        timestamp: entry.timestamp,
+      }))
 
     let sanitizedStore: Record<string, unknown> | undefined
     if (frontend.storeState) {
@@ -262,9 +258,7 @@ export default class SupportReportService {
         )
       }
       if (frontend.screen) {
-        lines.push(
-          `Screen: ${frontend.screen.width ?? '?'} x ${frontend.screen.height ?? '?'}`
-        )
+        lines.push(`Screen: ${frontend.screen.width ?? '?'} x ${frontend.screen.height ?? '?'}`)
       }
       if (frontend.sessionId) {
         lines.push(`Session ID: ${frontend.sessionId}`)
@@ -286,9 +280,7 @@ export default class SupportReportService {
       if (frontend.consoleLogs?.length) {
         lines.push('--- Console logs (plus récents) ---')
         frontend.consoleLogs.forEach((log) => {
-          lines.push(
-            `[${log.timestamp ?? 'n/a'}] ${log.level ?? 'log'}: ${log.message ?? 'n/a'}`
-          )
+          lines.push(`[${log.timestamp ?? 'n/a'}] ${log.level ?? 'log'}: ${log.message ?? 'n/a'}`)
         })
         lines.push('')
       }

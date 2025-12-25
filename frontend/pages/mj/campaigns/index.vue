@@ -101,7 +101,7 @@
                   @click="router.push(`/mj/campaigns/${campaign.id}`)"
                 />
                 <UButton
-                  color="red"
+                  color="error"
                   variant="soft"
                   size="sm"
                   icon="i-lucide-trash-2"
@@ -146,13 +146,13 @@ const handleDelete = async (id: string) => {
     toast.add({
       title: "Succès",
       description: "Campagne supprimée avec succès",
-      color: "green",
+      color: "success",
     });
   } catch (error) {
     toast.add({
       title: "Erreur",
       description: "Impossible de supprimer la campagne",
-      color: "red",
+      color: "error",
     });
   }
 };

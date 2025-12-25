@@ -111,7 +111,7 @@
               v-for="status in authorizationStatuses"
               :key="status.campaign_id"
               variant="outline"
-              :ui="{ base: status.is_authorized ? 'border-2 border-green-500/50' : '' }"
+              :class="status.is_authorized ? 'border-2 border-green-500/50' : ''"
             >
               <template #header>
                 <div class="flex justify-between items-center">

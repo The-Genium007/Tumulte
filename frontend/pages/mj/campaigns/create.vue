@@ -6,7 +6,7 @@
         <UCard>
           <div class="flex items-center gap-4">
             <UButton
-              color="gray"
+              color="neutral"
               variant="ghost"
               icon="i-lucide-arrow-left"
               @click="router.push('/mj/campaigns')"
@@ -70,7 +70,7 @@
           <template #footer>
             <div class="flex justify-end gap-3">
               <UButton
-                color="gray"
+                color="neutral"
                 variant="soft"
                 label="Annuler"
                 icon="i-lucide-x"
@@ -117,7 +117,7 @@ const handleCreate = async () => {
     toast.add({
       title: "Erreur",
       description: "Le nom de la campagne est requis",
-      color: "red",
+      color: "error",
     });
     return;
   }
@@ -132,7 +132,7 @@ const handleCreate = async () => {
     toast.add({
       title: "Succès",
       description: `Campagne "${name.value}" créée avec succès`,
-      color: "green",
+      color: "success",
     });
 
     router.push("/mj/campaigns");
@@ -141,7 +141,7 @@ const handleCreate = async () => {
     toast.add({
       title: "Erreur",
       description: error.data?.error || "Impossible de créer la campagne",
-      color: "red",
+      color: "error",
     });
   } finally {
     creating.value = false;

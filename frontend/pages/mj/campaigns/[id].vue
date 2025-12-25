@@ -132,7 +132,7 @@
                     </p>
                     <UBadge
                       :label="member.status === 'ACTIVE' ? 'Actif' : 'En attente'"
-                      :color="member.status === 'ACTIVE' ? 'green' : 'amber'"
+                      :color="member.status === 'ACTIVE' ? 'success' : 'warning'"
                       variant="soft"
                       size="sm"
                     />
@@ -154,7 +154,7 @@
                 <UButton
                   v-if="isDev && member.status === 'PENDING'"
                   icon="i-lucide-check"
-                  color="green"
+                  color="success"
                   variant="soft"
                   size="sm"
                   label="Activer"
@@ -177,7 +177,7 @@
     </div>
 
     <!-- Modal de confirmation de suppression -->
-    <UModal v-model:open="showDeleteModal" :ui="{ width: 'sm:max-w-md' }">
+    <UModal v-model:open="showDeleteModal">
       <template #header>
         <div class="flex items-center gap-3">
           <div class="bg-error-500/10 p-2 rounded-lg">
@@ -220,7 +220,7 @@
     </UModal>
 
     <!-- Modal d'invitation -->
-    <UModal v-model:open="showInviteModal" :ui="{ width: 'sm:max-w-2xl' }">
+    <UModal v-model:open="showInviteModal">
       <template #header>
         <h3 class="text-xl font-bold text-white">Inviter un streamer</h3>
       </template>
@@ -299,7 +299,7 @@
       <template #footer>
         <div class="flex justify-end">
           <UButton
-            color="gray"
+            color="neutral"
             variant="soft"
             label="Fermer"
             @click="showInviteModal = false"
@@ -375,7 +375,7 @@ const loadMembers = async () => {
     toast.add({
       title: "Erreur",
       description: "Impossible de charger la campagne",
-      color: "red",
+      color: "error",
     });
   } finally {
     loadingMembers.value = false;
@@ -405,7 +405,7 @@ watch(searchQuery, () => {
       toast.add({
         title: "Erreur",
         description: "Impossible de rechercher les streamers",
-        color: "red",
+        color: "error",
       });
     } finally {
       searching.value = false;
@@ -429,7 +429,7 @@ const handleInvite = async (streamer: any) => {
     toast.add({
       title: "Succès",
       description: `${streamer.twitch_display_name} a été invité`,
-      color: "green",
+      color: "success",
     });
     showInviteModal.value = false;
     searchQuery.value = "";
@@ -440,7 +440,7 @@ const handleInvite = async (streamer: any) => {
     toast.add({
       title: "Erreur",
       description: message,
-      color: "red",
+      color: "error",
     });
   }
 };
@@ -456,14 +456,14 @@ const handleRemoveMember = async (memberId: string) => {
     toast.add({
       title: "Succès",
       description: "Membre retiré de la campagne",
-      color: "green",
+      color: "success",
     });
     await loadMembers();
   } catch (error) {
     toast.add({
       title: "Erreur",
       description: "Impossible de retirer le membre",
-      color: "red",
+      color: "error",
     });
   }
 };
@@ -482,14 +482,14 @@ const handleActivateMember = async (memberId: string) => {
     toast.add({
       title: "Succès",
       description: "Membre activé",
-      color: "green",
+      color: "success",
     });
     await loadMembers();
   } catch (error) {
     toast.add({
       title: "Erreur",
       description: "Impossible d'activer le membre",
-      color: "red",
+      color: "error",
     });
   }
 };
@@ -507,14 +507,14 @@ const confirmDeleteCampaign = async () => {
     toast.add({
       title: "Succès",
       description: "Campagne supprimée avec succès",
-      color: "green",
+      color: "success",
     });
     router.push({ path: "/mj/campaigns" });
   } catch (error) {
     toast.add({
       title: "Erreur",
       description: "Impossible de supprimer la campagne",
-      color: "red",
+      color: "error",
     });
   }
 };

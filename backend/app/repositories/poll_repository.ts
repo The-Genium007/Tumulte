@@ -45,11 +45,8 @@ export class PollRepository {
   }
 
   async reorderPolls(sessionId: string, pollIds: string[]): Promise<void> {
-    for (let i = 0; i < pollIds.length; i++) {
-      await Poll.query()
-        .where('id', pollIds[i])
-        .where('sessionId', sessionId)
-        .update({ orderIndex: i })
+    for (const [i, pollId] of pollIds.entries()) {
+      await Poll.query().where('id', pollId).where('sessionId', sessionId).update({ orderIndex: i })
     }
   }
 }

@@ -247,7 +247,7 @@ export default class TwitchChatService {
     const match = /^([0-9]+)$/.exec(trimmed)
     if (!match) return null
 
-    const voteNumber = parseInt(match[1], 10)
+    const voteNumber = Number.parseInt(match[1], 10)
 
     // Valider que c'est une option valide (1-indexed)
     if (voteNumber < 1 || voteNumber > optionsCount) return null

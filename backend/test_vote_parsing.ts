@@ -11,7 +11,7 @@ function parseVote(message: string, optionsCount: number): number | null {
   const match = /^([0-9]+)$/.exec(trimmed)
   if (!match) return null
 
-  const voteNumber = parseInt(match[1], 10)
+  const voteNumber = Number.parseInt(match[1], 10)
   if (voteNumber < 1 || voteNumber > optionsCount) return null
 
   return voteNumber - 1 // 0-indexed

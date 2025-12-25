@@ -242,7 +242,7 @@ export class RedisService {
       // Convertir les valeurs string en number
       const result: Record<string, number> = {}
       for (const [option, count] of Object.entries(votes)) {
-        result[option] = parseInt(count as string, 10)
+        result[option] = Number.parseInt(count as string, 10)
       }
 
       return result

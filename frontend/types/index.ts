@@ -101,6 +101,14 @@ export interface StreamerSearchResult {
   profile_image_url: string;
 }
 
+export interface AuthorizationStatus {
+  campaign_id: string;
+  campaign_name: string;
+  is_authorized: boolean;
+  expires_at: string | null;
+  remaining_seconds: number | null;
+}
+
 // WebSocket types
 export interface PollUpdateEvent {
   poll_instance_id: string;

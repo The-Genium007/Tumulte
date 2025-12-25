@@ -21,7 +21,7 @@
             to="https://github.com/The-Genium007/Tumulte/releases"
             target="_blank"
             variant="ghost"
-            color="gray"
+            color="neutral"
             size="sm"
             icon="i-lucide-scroll-text"
             trailing-icon="i-lucide-external-link"

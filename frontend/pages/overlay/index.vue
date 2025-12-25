@@ -23,12 +23,12 @@
             >
               <div class="option-header">
                 <span class="option-label">{{ option }}</span>
-                <span class="option-percentage">{{ percentages[index] || 0 }}%</span>
+                <span class="option-percentage">{{ percentages[index as number] || 0 }}%</span>
               </div>
               <div class="option-bar-container">
                 <div
                   class="option-bar"
-                  :style="{ width: `${percentages[index] || 0}%` }"
+                  :style="{ width: `${percentages[index as number] || 0}%` }"
                 />
               </div>
             </div>

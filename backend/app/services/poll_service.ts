@@ -68,8 +68,9 @@ export default class PollService {
     for (const streamer of streamers) {
       if (!this.isStreamerCompatible(streamer)) {
         logger.warn(
-          `Skipping poll creation for ${streamer.twitchDisplayName}: broadcasterType=${streamer.broadcasterType ||
-            'unknown'}`
+          `Skipping poll creation for ${streamer.twitchDisplayName}: broadcasterType=${
+            streamer.broadcasterType || 'unknown'
+          }`
         )
         continue
       }
