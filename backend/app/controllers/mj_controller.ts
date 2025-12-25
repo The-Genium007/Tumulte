@@ -1,6 +1,5 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
-import { inject } from '@adonisjs/core'
 import logger from '@adonisjs/core/services/logger'
 import Streamer from '#models/streamer'
 import PollTemplate from '#models/poll_template'
