@@ -69,12 +69,13 @@ async function testRedisVoteCounting() {
   try {
     // Test 1: Vérifier la connexion Redis
     console.log('Test 1: Connexion Redis...')
-    const connected = await redisService.ping()
-    if (!connected) {
+    try {
+      await redisService.ping()
+      console.log('✅ Redis connecté\n')
+    } catch {
       console.log('❌ Redis non disponible')
       return false
     }
-    console.log('✅ Redis connecté\n')
 
     // Test 2: Incrémenter les votes
     console.log('Test 2: Incrémentation des votes...')

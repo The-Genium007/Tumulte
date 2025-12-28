@@ -162,7 +162,7 @@ class TwitchAuthService {
     return {
       id: user.id,
       login: user.login,
-      displayName: user.display_name,
+      displayName: user.displayName,
       email: user.email,
 
       profile_image_url: user.profile_image_url,

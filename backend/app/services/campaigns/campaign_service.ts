@@ -1,6 +1,6 @@
 import { CampaignRepository } from '#repositories/campaign_repository'
 import { CampaignMembershipRepository } from '#repositories/campaign_membership_repository'
-import type { Campaign } from '#models/campaign'
+import type { campaign as Campaign } from '#models/campaign'
 import { user as User } from '#models/user'
 import { inject } from '@adonisjs/core'
 import logger from '@adonisjs/core/services/logger'

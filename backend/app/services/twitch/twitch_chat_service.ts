@@ -32,8 +32,8 @@ class TwitchChatService {
    * @returns Le token d'accès valide (potentiellement rafraîchi)
    */
   private async ensureValidAccessToken(streamerId: string): Promise<string> {
-    const { streamer: Streamer } = await import('#models/streamer')
-    const streamer = await Streamer.find(streamerId)
+    const { streamer: streamerModel } = await import('#models/streamer')
+    const streamer = await streamerModel.find(streamerId)
 
     if (!streamer) {
       throw new Error(`Streamer ${streamerId} not found`)
@@ -201,8 +201,8 @@ class TwitchChatService {
     pollType: 'STANDARD' | 'UNIQUE' = 'STANDARD'
   ): Promise<void> {
     // Récupérer les infos du streamer depuis la base
-    const { streamer: Streamer } = await import('#models/streamer')
-    const streamer = await Streamer.find(streamerId)
+    const { streamer: streamerModel } = await import('#models/streamer')
+    const streamer = await streamerModel.find(streamerId)
 
     if (!streamer) {
       throw new Error(`Streamer ${streamerId} not found`)
@@ -331,8 +331,8 @@ class TwitchChatService {
    * Envoie un message ponctuel via une connexion IRC temporaire
    */
   private async sendOneTimeMessage(streamerId: string, message: string): Promise<void> {
-    const { streamer: Streamer } = await import('#models/streamer')
-    const streamer = await Streamer.find(streamerId)
+    const { streamer: streamerModel } = await import('#models/streamer')
+    const streamer = await streamerModel.find(streamerId)
 
     if (!streamer) {
       throw new Error(`Streamer ${streamerId} not found`)

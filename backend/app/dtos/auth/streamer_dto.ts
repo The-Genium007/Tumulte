@@ -1,4 +1,4 @@
-import type { Streamer } from '#models/streamer'
+import type { streamer as Streamer } from '#models/streamer'
 
 export class StreamerDto {
   id!: string

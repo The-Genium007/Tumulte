@@ -262,7 +262,7 @@ class PollService {
               (token) =>
                 this.twitchPollService.getPoll(
                   link.streamer.twitchUserId,
-                  link.twitchPollId,
+                  link.twitchPollId!,
                   token
                 ),
               async () => accessToken,

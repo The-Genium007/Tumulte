@@ -20,7 +20,7 @@ app.container.singleton('redisService', async () => {
 // Campaign Services
 app.container.bind('campaignService', async () => {
   const mod = await import('#services/campaigns/campaign_service')
-  return app.container.make(mod.campaignService)
+  return app.container.make(mod.CampaignService)
 })
 
 app.container.bind('membershipService', async () => {
@@ -75,7 +75,7 @@ app.container.bind('pollAggregationService', async () => {
 
 app.container.bind('pollPollingService', async () => {
   const mod = await import('#services/polls/poll_polling_service')
-  return app.container.make(mod.pollPollingService)
+  return app.container.make(mod.PollPollingService)
 })
 
 app.container.bind('pollLifecycleService', async () => {
@@ -104,7 +104,7 @@ app.container.bind('streamerRepository', async () => {
 // Campaign Repository
 app.container.bind('campaignRepository', async () => {
   const mod = await import('#repositories/campaign_repository')
-  return new mod.campaignRepository()
+  return new mod.CampaignRepository()
 })
 
 // Campaign Membership Repository

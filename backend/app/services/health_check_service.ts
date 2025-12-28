@@ -156,8 +156,9 @@ export class HealthCheckService {
       throw new Error(`Failed to get Twitch app token: ${tokenResponse.status}`)
     }
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const tokenData = (await tokenResponse.json()) as { access_token: string }
-    const appAccessToken = tokenData.access_token
+    const appAccessToken = tokenData['access_token']
 
     // Tester l'API Twitch
     const apiResponse = await fetch(`https://api.twitch.tv/helix/users?id=${testUserId}`, {

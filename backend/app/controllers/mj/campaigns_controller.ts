@@ -131,7 +131,7 @@ export default class CampaignsController {
         twitchDisplayName: data.twitch_display_name,
         profileImageUrl: data.profile_image_url || null,
         broadcasterType: '',
-        scopes: JSON.stringify([]),
+        scopes: [],
         isActive: false,
       })
     }

@@ -119,10 +119,10 @@ class TwitchApiService {
 
       return data.data.map((channel: TwitchChannel) => ({
         id: channel.id,
-        login: channel.broadcaster_login,
-        displayName: channel.display_name,
+        login: channel.broadcasterLogin,
+        displayName: channel.displayName,
 
-        profile_image_url: channel.thumbnail_url,
+        profile_image_url: channel.thumbnailUrl,
       }))
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'

@@ -2,8 +2,8 @@ import env from '#start/env'
 import logger from '@adonisjs/core/services/logger'
 import { DateTime } from 'luxon'
 import { Blob } from 'node:buffer'
-import type { User } from '#models/user'
-import type { Streamer } from '#models/streamer'
+import type { user as User } from '#models/user'
+import type { streamer as Streamer } from '#models/streamer'
 
 type ConsoleLogEntry = {
   level?: string

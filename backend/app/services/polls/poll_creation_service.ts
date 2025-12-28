@@ -376,7 +376,7 @@ export class PollCreationService {
    * - Affiliate/Partner: via l'API Twitch Polls
    * - Non-affilié (vide ou autre): via le chat IRC
    */
-  private isStreamerCompatible(streamer: Streamer): boolean {
+  private isStreamerCompatible(_streamer: Streamer): boolean {
     // Tous les streamers sont compatibles maintenant
     return true
   }

@@ -115,7 +115,7 @@ export default class AuthController {
 
       // Si des scopes sont manquants, loguer un avertissement
       if (!hasAllScopes) {
-        logger.warning({
+        logger.warn({
           message: 'User authorized with missing scopes',
           missingScopes: missingScopes,
           receivedScopes: tokens.scope,
@@ -130,7 +130,7 @@ export default class AuthController {
         message: 'OAuth callback: user authenticated',
         userLogin: userInfo.login,
         user_id: userInfo.id,
-        displayName: userInfo.display_name,
+        displayName: userInfo.displayName,
         scopes: tokens.scope,
       })
 
@@ -150,15 +150,15 @@ export default class AuthController {
 
         // Mettre à jour le display_name si changé
         if (user) {
-          if (user.displayName !== userInfo.display_name) {
-            user.displayName = userInfo.display_name
+          if (user.displayName !== userInfo.displayName) {
+            user.displayName = userInfo.displayName
             await user.save()
           }
         } else {
           // Corrige les anciens enregistrements sans user associé
           user = await User.create({
             role,
-            displayName: userInfo.display_name,
+            displayName: userInfo.displayName,
             email: userInfo.email,
           })
           streamer.userId = user.id
@@ -171,7 +171,7 @@ export default class AuthController {
 
         // Mettre à jour les infos Twitch du streamer
         streamer.twitchLogin = userInfo.login
-        streamer.twitchDisplayName = userInfo.display_name
+        streamer.twitchDisplayName = userInfo.displayName
         streamer.profileImageUrl = userInfo.profile_image_url
         streamer.broadcasterType = userInfo.broadcaster_type
         await streamer.updateTokens(tokens.access_token, tokens.refresh_token)
@@ -182,7 +182,7 @@ export default class AuthController {
         // Créer un nouvel utilisateur
         user = await User.create({
           role,
-          displayName: userInfo.display_name,
+          displayName: userInfo.displayName,
           email: userInfo.email,
         })
 
@@ -191,7 +191,7 @@ export default class AuthController {
           userId: user.id,
           twitchUserId: userInfo.id,
           twitchLogin: userInfo.login,
-          twitchDisplayName: userInfo.display_name,
+          twitchDisplayName: userInfo.displayName,
           profileImageUrl: userInfo.profile_image_url,
           broadcasterType: userInfo.broadcaster_type,
           accessToken: tokens.access_token,
