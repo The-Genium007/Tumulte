@@ -9,7 +9,7 @@
               color="neutral"
               variant="ghost"
               icon="i-lucide-arrow-left"
-              @click="router.push('/mj/campaigns')"
+              @click="_router.push('/mj/campaigns')"
             />
             <div class="bg-primary-500/10 p-3 rounded-xl">
               <UIcon name="i-lucide-folder-plus" class="size-8 text-primary-500" />
@@ -74,7 +74,7 @@
                 variant="soft"
                 label="Annuler"
                 icon="i-lucide-x"
-                @click="router.push('/mj/campaigns')"
+                @click="_router.push('/mj/campaigns')"
               />
               <UButton
                 color="primary"
@@ -104,7 +104,7 @@ definePageMeta({
   ]
 });
 
-const router = useRouter();
+const _router = useRouter();
 const toast = useToast();
 const { createCampaign } = useCampaigns();
 
@@ -135,12 +135,12 @@ const handleCreate = async () => {
       color: "success",
     });
 
-    router.push("/mj/campaigns");
-  } catch (error: any) {
+    _router.push("/mj/campaigns");
+  } catch (error: unknown) {
     console.error("Failed to create campaign:", error);
     toast.add({
       title: "Erreur",
-      description: error.data?.error || "Impossible de créer la campagne",
+      description: (error as { data?: { error?: string } })?.data?.error || "Impossible de créer la campagne",
       color: "error",
     });
   } finally {

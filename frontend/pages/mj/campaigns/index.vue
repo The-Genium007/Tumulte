@@ -1,14 +1,20 @@
 <template>
     <div class="min-h-screen py-6">
       <div class="space-y-6">
-        <!-- Header with back button -->
-        <div class="flex items-center gap-4">
+        <!-- Header with back button and create button -->
+        <div class="flex items-center justify-between gap-4">
           <UButton
             variant="soft"
             color="neutral"
             icon="i-lucide-arrow-left"
             label="Retour au dashboard"
-            @click="router.push('/mj')"
+            @click="_router.push('/mj')"
+          />
+          <UButton
+            color="primary"
+            icon="i-lucide-plus"
+            label="Créer une campagne"
+            @click="_router.push('/mj/campaigns/create')"
           />
         </div>
 
@@ -39,7 +45,7 @@
             size="lg"
             icon="i-lucide-plus"
             label="Créer ma première campagne"
-            @click="router.push('/mj/campaigns/create')"
+            @click="_router.push('/mj/campaigns/create')"
           />
         </div>
 
@@ -98,7 +104,7 @@
                   icon="i-lucide-users"
                   label="Voir les membres"
                   block
-                  @click="router.push(`/mj/campaigns/${campaign.id}`)"
+                  @click="_router.push(`/mj/campaigns/${campaign.id}`)"
                 />
                 <UButton
                   color="error"
@@ -124,7 +130,7 @@ import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useCampaigns } from "@/composables/useCampaigns";
 
-const router = useRouter();
+const _router = useRouter();
 const toast = useToast();
 const { campaigns, loading, fetchCampaigns, deleteCampaign } = useCampaigns();
 
@@ -148,7 +154,7 @@ const handleDelete = async (id: string) => {
       description: "Campagne supprimée avec succès",
       color: "success",
     });
-  } catch (error) {
+  } catch {
     toast.add({
       title: "Erreur",
       description: "Impossible de supprimer la campagne",

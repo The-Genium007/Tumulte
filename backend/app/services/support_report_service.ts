@@ -2,8 +2,8 @@ import env from '#start/env'
 import logger from '@adonisjs/core/services/logger'
 import { DateTime } from 'luxon'
 import { Blob } from 'node:buffer'
-import type User from '#models/user'
-import type Streamer from '#models/streamer'
+import type { User } from '#models/user'
+import type { Streamer } from '#models/streamer'
 
 type ConsoleLogEntry = {
   level?: string
@@ -58,7 +58,7 @@ type SupportReportPayload = {
   requestContext: RequestContext
 }
 
-export default class SupportReportService {
+class SupportReportService {
   async send(payload: SupportReportPayload) {
     const webhookUrl = env.get('DISCORD_SUPPORT_WEBHOOK_URL')
     if (!webhookUrl) {
@@ -81,7 +81,7 @@ export default class SupportReportService {
     const payloadJson: Record<string, unknown> = {
       content: contentPieces.join(' '),
       embeds: [embed],
-      allowed_mentions: roleId ? { parse: [], roles: [roleId] } : { parse: [] },
+      allowedMentions: roleId ? { parse: [], roles: [roleId] } : { parse: [] },
     }
 
     const formData = new FormData()
@@ -329,3 +329,5 @@ export default class SupportReportService {
     return `${value.slice(0, max - 3)}...`
   }
 }
+
+export { SupportReportService as supportReportService }

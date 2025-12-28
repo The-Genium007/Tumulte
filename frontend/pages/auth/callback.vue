@@ -20,7 +20,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useAuth } from "@/composables/useAuth";
 
 const route = useRoute();
-const router = useRouter();
+const _router = useRouter();
 const { fetchMe } = useAuth();
 
 onMounted(async () => {
@@ -32,10 +32,10 @@ onMounted(async () => {
     const redirect = (route.query.redirect as string) || "/";
 
     // Rediriger vers la page appropriée
-    router.push(redirect);
-  } catch (error) {
+    _router.push(redirect);
+  } catch {
     // Si erreur, rediriger vers login
-    router.push("/login?error=session_failed");
+    _router.push("/login?error=session_failed");
   }
 });
 </script>

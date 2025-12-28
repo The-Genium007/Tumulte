@@ -1,4 +1,4 @@
-import Poll from '#models/poll'
+import { poll as Poll } from '#models/poll'
 
 export class PollRepository {
   async findById(id: string): Promise<Poll | null> {
@@ -39,7 +39,7 @@ export class PollRepository {
   }
 
   async getNextOrderIndex(sessionId: string): Promise<number> {
-    const result = await Poll.query().where('sessionId', sessionId).max('orderIndex as maxIndex')
+    const result = await Poll.query().where('sessionId', sessionId).max('order_index as maxIndex')
     const maxIndex = result[0]?.$extras?.maxIndex
     return maxIndex !== null && maxIndex !== undefined ? maxIndex + 1 : 0
   }
@@ -52,3 +52,4 @@ export class PollRepository {
 }
 
 export default PollRepository
+export { PollRepository as pollRepository }

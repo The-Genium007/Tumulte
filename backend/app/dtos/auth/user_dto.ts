@@ -1,4 +1,4 @@
-import type User from '#models/user'
+import type { User } from '#models/user'
 
 export class UserDto {
   id!: string

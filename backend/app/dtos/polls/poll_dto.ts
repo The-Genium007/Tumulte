@@ -1,7 +1,7 @@
-import type PollInstance from '#models/poll_instance'
-import type PollSession from '#models/poll_session'
-import type PollTemplate from '#models/poll_template'
-import type Poll from '#models/poll'
+import type { PollInstance } from '#models/poll_instance'
+import type { PollSession } from '#models/poll_session'
+import type { PollTemplate } from '#models/poll_template'
+import type { Poll } from '#models/poll'
 
 export class PollTemplateDto {
   id!: string
