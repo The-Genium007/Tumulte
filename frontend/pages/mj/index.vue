@@ -132,7 +132,14 @@
                     <p class="font-semibold text-white text-sm">
                       {{ streamer.twitchDisplayName }}
                     </p>
-                    <p class="text-xs text-gray-400">@{{ streamer.twitchLogin }}</p>
+                    <a
+                      :href="`https://www.twitch.tv/${streamer.twitchLogin}`"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-xs text-gray-400 hover:text-purple-400 transition-colors"
+                    >
+                      @{{ streamer.twitchLogin }}
+                    </a>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -745,9 +752,16 @@ const selectedCampaignStreamers = computed<StreamerDisplay[]>(() => {
 
 const formatAuthTime = (seconds: number | null): string => {
   if (!seconds) return 'Non autorisé';
-  const mins = Math.floor(seconds / 60);
+
+  // Si l'autorisation est > 1 an (31536000 secondes), c'est "permanent"
+  if (seconds > 31536000) return 'Permanent';
+
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-  return `${mins}:${String(secs).padStart(2, '0')}`;
+
+  // Format H:M:S
+  return `${hours}h${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
 // Charger les membres de la campagne sélectionnée
