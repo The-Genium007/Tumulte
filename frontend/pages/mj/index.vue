@@ -253,6 +253,16 @@
                 size="lg"
                 @click="sendPoll"
               />
+
+              <!-- Bouton Relancer (pour polls annulés) -->
+              <UButton
+                v-if="pollStatus === 'cancelled'"
+                color="primary"
+                icon="i-lucide-refresh-cw"
+                label="Relancer"
+                size="lg"
+                @click="sendPoll"
+              />
             </div>
 
             <!-- Partie droite: Navigation + Badges + Fermer -->
@@ -296,6 +306,13 @@
                 variant="soft"
                 size="lg"
               />
+              <UBadge
+                v-else-if="pollStatus === 'cancelled'"
+                label="Annulé"
+                color="error"
+                variant="soft"
+                size="lg"
+              />
 
               <!-- Bouton fermer/annuler intelligent -->
               <UButton
@@ -310,21 +327,60 @@
             </div>
           </div>
 
-          <!-- Résultats (en dessous si présents) -->
-          <div v-if="pollResults" class="mt-6 pt-6 border-t border-gray-700">
+          <!-- Résultats (en dessous si présents et non annulé) -->
+          <div v-if="pollResults && pollStatus !== 'cancelled'" class="mt-6 pt-6 border-t border-gray-700">
             <div class="grid grid-cols-3 gap-3">
               <div
                 v-for="(result, index) in pollResults.results"
                 :key="index"
-                class="p-3 bg-gray-800/50 rounded-lg border border-gray-700"
+                :class="[
+                  'p-3 rounded-lg border transition-all duration-300',
+                  isWinner(result.votes)
+                    ? 'bg-linear-to-br from-yellow-500/20 to-amber-500/10 border-yellow-500/60 shadow-lg shadow-yellow-500/20'
+                    : 'bg-gray-800/50 border-gray-700'
+                ]"
               >
                 <div class="flex items-center justify-between mb-2">
-                  <span class="text-white font-medium text-sm">{{ result.option }}</span>
-                  <span class="text-primary-500 font-bold">{{ result.votes }}</span>
+                  <div class="flex items-center gap-2">
+                    <span
+                      :class="[
+                        'font-medium text-sm',
+                        isWinner(result.votes) ? 'text-yellow-400' : 'text-white'
+                      ]"
+                    >
+                      {{ result.option }}
+                    </span>
+                    <!-- Badge Gagnant ou Ex-aequo -->
+                    <UBadge
+                      v-if="isWinner(result.votes)"
+                      :color="hasMultipleWinners ? 'warning' : 'success'"
+                      variant="soft"
+                      size="xs"
+                    >
+                      <div class="flex items-center gap-1">
+                        <UIcon
+                          :name="hasMultipleWinners ? 'i-lucide-equal' : 'i-lucide-crown'"
+                          class="size-3"
+                        />
+                        <span class="font-semibold">{{ hasMultipleWinners ? 'Ex-aequo' : 'Gagnant' }}</span>
+                      </div>
+                    </UBadge>
+                  </div>
+                  <span
+                    :class="[
+                      'font-bold',
+                      isWinner(result.votes) ? 'text-yellow-400 text-lg' : 'text-primary-500'
+                    ]"
+                  >
+                    {{ result.votes }}
+                  </span>
                 </div>
                 <div class="w-full bg-gray-700 rounded-full h-2">
                   <div
-                    class="bg-primary-500 h-2 rounded-full transition-all duration-500"
+                    :class="[
+                      'h-2 rounded-full transition-all duration-500',
+                      isWinner(result.votes) ? 'bg-linear-to-r from-yellow-500 to-amber-500' : 'bg-primary-500'
+                    ]"
                     :style="{ width: `${(result.votes / pollResults.totalVotes) * 100}%` }"
                   ></div>
                 </div>
@@ -794,18 +850,7 @@ const newTemplate = reactive({
 const optionsText = ref("");
 
 // Load data on mount
-onMounted(async () => {
-  await fetchCampaigns();
-  campaignsLoaded.value = true;
-
-  // Check if campaign is specified in URL
-  const campaignFromUrl = route.query.campaign as string | undefined;
-  if (campaignFromUrl && campaigns.value.some((c) => c.id === campaignFromUrl)) {
-    selectedCampaignId.value = campaignFromUrl;
-  } else if (campaigns.value.length > 0) {
-    selectedCampaignId.value = campaigns.value[0]?.id ?? null;
-  }
-});
+// MOVED TO SINGLE onMounted BELOW - See line ~1370
 
 const _handleCreateTemplate = async () => {
   const options = optionsText.value.split("\n").filter((o) => o.trim());
@@ -954,10 +999,31 @@ const {
   currentPollInstanceId,
 } = storeToRefs(pollControlStore);
 
+// Actions du store
+const { saveCurrentPollState, restorePollState } = pollControlStore;
+
 // Computed pour la question actuelle
 const currentPoll = computed<Poll | null>(() => {
   if (!activeSessionPolls.value.length) return null;
   return activeSessionPolls.value[currentPollIndex.value] as Poll;
+});
+
+// Computed pour déterminer le score maximum (le gagnant)
+const maxVotes = computed(() => {
+  if (!pollResults.value || !pollResults.value.results.length) return 0;
+  return Math.max(...pollResults.value.results.map(r => r.votes));
+});
+
+// Fonction pour vérifier si une option est gagnante
+const isWinner = (votes: number) => {
+  return votes > 0 && votes === maxVotes.value;
+};
+
+// Computed pour détecter s'il y a plusieurs gagnants (ex-aequo)
+const hasMultipleWinners = computed(() => {
+  if (!pollResults.value || !pollResults.value.results.length) return false;
+  const winnersCount = pollResults.value.results.filter(r => r.votes === maxVotes.value).length;
+  return winnersCount > 1;
 });
 
 // Fonction pour lancer une session
@@ -1033,6 +1099,9 @@ const launchSession = async (session: Session) => {
     pollStartTime.value = null;
     pollDuration.value = null;
 
+    // Sauvegarder explicitement l'état immédiatement
+    pollControlStore.saveState();
+
     toast.add({
       title: "Session prête",
       description: `${polls.length} sondage(s) chargé(s) - Système vérifié`,
@@ -1076,15 +1145,27 @@ const confirmCloseSession = () => {
 // Navigation entre questions
 const goToPreviousPoll = () => {
   if (currentPollIndex.value > 0) {
+    // Sauvegarder l'état du poll actuel avant de changer
+    saveCurrentPollState();
+
+    // Changer d'index
     currentPollIndex.value--;
-    resetPollState();
+
+    // Restaurer l'état du poll précédent
+    restorePollState(currentPollIndex.value);
   }
 };
 
 const goToNextPoll = () => {
   if (currentPollIndex.value < activeSessionPolls.value.length - 1) {
+    // Sauvegarder l'état du poll actuel avant de changer
+    saveCurrentPollState();
+
+    // Changer d'index
     currentPollIndex.value++;
-    resetPollState();
+
+    // Restaurer l'état du poll suivant
+    restorePollState(currentPollIndex.value);
   }
 };
 
@@ -1111,11 +1192,11 @@ const cancelPoll = async () => {
   }
 
   // Si le sondage est en cours d'envoi, appeler l'API pour annuler
-  if (pollStatus.value === 'sending') {
+  if (pollStatus.value === 'sending' && currentPollInstanceId.value) {
     try {
       const API_URL = import.meta.env.VITE_API_URL;
-      const response = await fetch(`${API_URL}/mj/campaigns/${selectedCampaignId.value}/polls/${currentPoll.value.id}/cancel`, {
-        method: 'PATCH',
+      const response = await fetch(`${API_URL}/mj/polls/${currentPollInstanceId.value}/cancel`, {
+        method: 'POST',
         credentials: 'include',
       });
 
@@ -1138,8 +1219,15 @@ const cancelPoll = async () => {
     }
   }
 
-  // Réinitialiser l'état local (sans afficher de résultats)
-  resetPollState();
+  // Marquer comme annulé et sauvegarder l'état
+  pollStatus.value = 'cancelled';
+  pollResults.value = null;
+  countdown.value = 0;
+  pollStartTime.value = null;
+  pollDuration.value = null;
+
+  // Sauvegarder l'état annulé
+  saveCurrentPollState();
 };
 
 // Envoyer le sondage
@@ -1166,6 +1254,7 @@ const sendPoll = async () => {
         title: currentPoll.value.question,
         options: currentPoll.value.options,
         durationSeconds: pollDuration.value,
+        type: currentPoll.value.type || 'STANDARD', // Vote unique ou multiple
       }),
     });
 
@@ -1273,6 +1362,9 @@ const sendPoll = async () => {
             countdownInterval = null;
           }
 
+          // Sauvegarder l'état du poll terminé avec résultats
+          saveCurrentPollState();
+
           console.log('[WebSocket] ========== POLL:END PROCESSING COMPLETE ==========');
         },
       });
@@ -1299,6 +1391,9 @@ const sendPoll = async () => {
     // Démarrer le compte à rebours
     countdown.value = (activeSession.value as ActiveSession).defaultDurationSeconds;
     startCountdown();
+
+    // Sauvegarder l'état initial du poll lancé
+    saveCurrentPollState();
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Impossible d'envoyer le sondage";
 
@@ -1334,10 +1429,20 @@ let countdownInterval: ReturnType<typeof setInterval> | null = null;
 const startCountdown = () => {
   if (countdownInterval) clearInterval(countdownInterval);
 
-  countdownInterval = setInterval(() => {
-    if (countdown.value > 0) {
-      countdown.value--;
-    } else {
+  // Fonction pour calculer et mettre à jour le countdown basé sur timestamp
+  const updateCountdown = () => {
+    if (!pollStartTime.value || !pollDuration.value) {
+      console.warn('[Countdown] Missing pollStartTime or pollDuration');
+      return;
+    }
+
+    const endsAt = pollStartTime.value + (pollDuration.value * 1000);
+    const now = Date.now();
+    const remaining = Math.max(0, Math.floor((endsAt - now) / 1000));
+
+    countdown.value = remaining;
+
+    if (remaining <= 0) {
       clearInterval(countdownInterval!);
       countdownInterval = null;
       pollStatus.value = 'sent';
@@ -1345,13 +1450,32 @@ const startCountdown = () => {
       pollDuration.value = null;
       // Les résultats seront reçus via WebSocket (événement poll:end)
       // Plus besoin de fetchPollResults() ici
+
+      // Sauvegarder l'état (les résultats seront mis à jour par le WebSocket)
+      saveCurrentPollState();
     }
-  }, 1000);
+  };
+
+  // Calculer immédiatement puis toutes les secondes
+  updateCountdown();
+  countdownInterval = setInterval(updateCountdown, 1000);
 };
 
 // Reprendre le countdown si un sondage était en cours lors du chargement
-onMounted(() => {
-  // Forcer le rechargement de l'état depuis localStorage côté client
+onMounted(async () => {
+  // 1. Charger les campagnes d'abord
+  await fetchCampaigns();
+  campaignsLoaded.value = true;
+
+  // Check if campaign is specified in URL
+  const campaignFromUrl = route.query.campaign as string | undefined;
+  if (campaignFromUrl && campaigns.value.some((c) => c.id === campaignFromUrl)) {
+    selectedCampaignId.value = campaignFromUrl;
+  } else if (campaigns.value.length > 0) {
+    selectedCampaignId.value = campaigns.value[0]?.id ?? null;
+  }
+
+  // 2. Forcer le rechargement de l'état depuis localStorage côté client
   pollControlStore.loadState();
 
   console.log('Poll Control - onMounted (après loadState):', {
@@ -1361,6 +1485,19 @@ onMounted(() => {
     activeSessionPolls: activeSessionPolls.value.length,
     currentPollInstanceId: currentPollInstanceId.value,
   });
+
+  // 3. Si une session était active, restaurer l'état du poll actuel
+  if (activeSession.value && activeSessionPolls.value.length > 0) {
+    console.log('[Restore] Restoring poll state for index:', currentPollIndex.value);
+    restorePollState(currentPollIndex.value);
+  }
+
+  // 4. Si un poll était actif, synchroniser avec le backend pour obtenir l'état réel
+  if (currentPollInstanceId.value) {
+    console.log('[Sync] Syncing with backend for poll:', currentPollInstanceId.value);
+    await pollControlStore.syncWithBackend();
+    console.log('[Sync] After sync - countdown:', countdown.value, 'status:', pollStatus.value);
+  }
 
   // Reconnecter le WebSocket si un poll est en cours
   if (currentPollInstanceId.value && (pollStatus.value === 'sending' || pollStatus.value === 'running')) {

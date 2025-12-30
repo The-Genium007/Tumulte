@@ -87,6 +87,8 @@ export interface PollInstance {
   status: "PENDING" | "RUNNING" | "ENDED";
   startedAt: string | null;
   endedAt: string | null;
+  finalTotalVotes?: number | null;
+  finalVotesByOption?: Record<string, number> | null;
   createdAt: string;
 }
 
