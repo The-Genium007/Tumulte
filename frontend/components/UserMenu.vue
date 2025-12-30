@@ -8,8 +8,8 @@
     >
       <div class="relative">
         <TwitchAvatar
-          :image-url="user?.streamer?.profile_image_url"
-          :display-name="user?.streamer?.twitch_display_name || 'User'"
+          :image-url="user?.streamer?.profileImageUrl"
+          :display-name="user?.streamer?.twitchDisplayName || 'User'"
           size="md"
         />
 
@@ -44,13 +44,13 @@
           <div class="px-4 py-3 border-b border-gray-700">
             <div class="flex items-center gap-3">
               <TwitchAvatar
-                :image-url="user?.streamer?.profile_image_url"
-                :display-name="user?.streamer?.twitch_display_name || 'User'"
+                :image-url="user?.streamer?.profileImageUrl"
+                :display-name="user?.streamer?.twitchDisplayName || 'User'"
                 size="lg"
               />
               <div class="flex flex-col">
                 <span class="text-sm font-semibold text-white">
-                  {{ user?.streamer?.twitch_display_name }}
+                  {{ user?.streamer?.twitchDisplayName }}
                 </span>
                 <span class="text-xs text-gray-400">
                   Mode {{ currentRole }}
@@ -83,7 +83,7 @@
               </div>
               <UBadge
                 v-if="hasInvitations"
-                color="yellow"
+                color="warning"
                 variant="solid"
                 size="xs"
               >
@@ -133,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { onClickOutside } from '@vueuse/core'
 import { useAuth } from '@/composables/useAuth'
@@ -147,12 +147,6 @@ const { invitationCount, hasInvitations } = useNotifications()
 
 const isOpen = ref(false)
 const menuRef = ref(null)
-
-// DEBUG: Log user data to check profile_image_url
-watch(() => user.value, (newUser) => {
-  console.log('UserMenu - User data:', newUser)
-  console.log('UserMenu - Profile image URL:', newUser?.streamer?.profile_image_url)
-}, { immediate: true })
 
 // Computed property for home path based on current role
 const homePath = computed(() => currentRole.value === 'MJ' ? '/mj' : '/streamer')

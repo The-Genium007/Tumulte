@@ -247,33 +247,26 @@ export default class AuthController {
   async me({ auth }: HttpContext) {
     const user = auth.user!
 
-    // Charger le streamer si l'utilisateur en est un
-    if (user.role === 'STREAMER') {
-      await user.load('streamer')
-
-      return {
-        id: user.id,
-        role: user.role,
-        displayName: user.displayName,
-        email: user.email,
-        streamer: user.streamer
-          ? {
-              id: user.streamer.id,
-              twitch_display_name: user.streamer.twitchDisplayName,
-              twitch_login: user.streamer.twitchLogin,
-              is_active: user.streamer.isActive,
-              broadcaster_type: user.streamer.broadcasterType,
-            }
-          : null,
-      }
-    }
+    // Charger le streamer pour tous les utilisateurs (MJ et STREAMER)
+    await user.load('streamer')
 
     return {
       id: user.id,
       role: user.role,
       displayName: user.displayName,
       email: user.email,
-      streamer: null,
+      streamer: user.streamer
+        ? {
+            id: user.streamer.id,
+            userId: user.streamer.userId,
+            twitchUserId: user.streamer.twitchUserId,
+            twitchDisplayName: user.streamer.twitchDisplayName,
+            twitchLogin: user.streamer.twitchLogin,
+            profileImageUrl: user.streamer.profileImageUrl,
+            isActive: user.streamer.isActive,
+            broadcasterType: user.streamer.broadcasterType,
+          }
+        : null,
     }
   }
 
@@ -303,31 +296,26 @@ export default class AuthController {
 
     logger.info(`User ${user.id} switched role to ${role}`)
 
-    // Retourner les nouvelles infos
-    if (role === 'STREAMER') {
-      await user.load('streamer')
-      return {
-        id: user.id,
-        role: user.role,
-        displayName: user.displayName,
-        email: user.email,
-        streamer: user.streamer
-          ? {
-              id: user.streamer.id,
-              twitch_display_name: user.streamer.twitchDisplayName,
-              twitch_login: user.streamer.twitchLogin,
-              is_active: user.streamer.isActive,
-            }
-          : null,
-      }
-    }
+    // Charger le streamer pour tous les utilisateurs (MJ et STREAMER)
+    await user.load('streamer')
 
     return {
       id: user.id,
       role: user.role,
       displayName: user.displayName,
       email: user.email,
-      streamer: null,
+      streamer: user.streamer
+        ? {
+            id: user.streamer.id,
+            userId: user.streamer.userId,
+            twitchUserId: user.streamer.twitchUserId,
+            twitchDisplayName: user.streamer.twitchDisplayName,
+            twitchLogin: user.streamer.twitchLogin,
+            profileImageUrl: user.streamer.profileImageUrl,
+            isActive: user.streamer.isActive,
+            broadcasterType: user.streamer.broadcasterType,
+          }
+        : null,
     }
   }
 }
