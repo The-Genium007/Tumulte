@@ -111,6 +111,9 @@ router
     router.put('/templates/:id', '#controllers/mj/poll_templates_controller.update')
     router.delete('/templates/:id', '#controllers/mj/poll_templates_controller.destroy')
 
+    // Active Session (récupérer la session/poll en cours)
+    router.get('/active-session', '#controllers/mj/active_session_controller.show')
+
     // Polls (lancement et contrôle)
     router.post('/campaigns/:campaignId/polls/launch', '#controllers/mj/polls_controller.launch')
     router.get('/polls', '#controllers/mj/polls_controller.index')

@@ -84,13 +84,13 @@
             <div class="grid grid-cols-2 gap-4 my-4">
               <div class="text-center p-3 bg-green-500/10 rounded-lg">
                 <p class="text-2xl font-bold text-green-400">
-                  {{ campaign.active_member_count || 0 }}
+                  {{ campaign.activeMemberCount || 0 }}
                 </p>
                 <p class="text-xs text-gray-400 mt-1">Membres actifs</p>
               </div>
               <div class="text-center p-3 bg-blue-500/10 rounded-lg">
                 <p class="text-2xl font-bold text-blue-400">
-                  {{ campaign.member_count || 0 }}
+                  {{ campaign.memberCount || 0 }}
                 </p>
                 <p class="text-xs text-gray-400 mt-1">Total invités</p>
               </div>
@@ -119,6 +119,49 @@
           </UCard>
         </div>
       </div>
+
+      <!-- Modal de confirmation de suppression -->
+      <UModal v-model:open="showDeleteModal">
+        <template #header>
+          <div class="flex items-center gap-3">
+            <div class="bg-error-500/10 p-2 rounded-lg">
+              <UIcon name="i-lucide-alert-triangle" class="size-6 text-error-500" />
+            </div>
+            <h3 class="text-xl font-bold text-white">Supprimer la campagne</h3>
+          </div>
+        </template>
+
+        <template #body>
+          <div class="space-y-4">
+            <p class="text-gray-300">
+              Êtes-vous sûr de vouloir supprimer la campagne
+              <strong class="text-white">{{ campaignToDelete?.name }}</strong> ?
+            </p>
+            <div class="bg-error-500/10 border border-error-500/20 rounded-lg p-4">
+              <p class="text-sm text-error-300">
+                ⚠️ Cette action est irréversible. Tous les templates, sondages et membres seront supprimés définitivement.
+              </p>
+            </div>
+          </div>
+        </template>
+
+        <template #footer>
+          <div class="flex gap-3 justify-end">
+            <UButton
+              color="neutral"
+              variant="soft"
+              label="Annuler"
+              @click="showDeleteModal = false"
+            />
+            <UButton
+              color="error"
+              icon="i-lucide-trash-2"
+              label="Supprimer définitivement"
+              @click="confirmDelete"
+            />
+          </div>
+        </template>
+      </UModal>
     </div>
 </template>
 
@@ -126,29 +169,37 @@
 definePageMeta({
   layout: "authenticated" as const,
 });
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useCampaigns } from "@/composables/useCampaigns";
+import type { Campaign } from "@/types/index";
 
 const _router = useRouter();
 const toast = useToast();
 const { campaigns, loading, fetchCampaigns, deleteCampaign } = useCampaigns();
 
+const showDeleteModal = ref(false);
+const campaignToDelete = ref<Campaign | null>(null);
+
 onMounted(async () => {
   await fetchCampaigns();
 });
 
-const handleDelete = async (id: string) => {
-  if (
-    !confirm(
-      "Êtes-vous sûr de vouloir supprimer cette campagne ? Tous les templates et sondages seront supprimés.",
-    )
-  ) {
-    return;
+const handleDelete = (id: string) => {
+  const campaign = campaigns.value.find((c) => c.id === id);
+  if (campaign) {
+    campaignToDelete.value = campaign;
+    showDeleteModal.value = true;
   }
+};
+
+const confirmDelete = async () => {
+  if (!campaignToDelete.value) return;
 
   try {
-    await deleteCampaign(id);
+    await deleteCampaign(campaignToDelete.value.id);
+    showDeleteModal.value = false;
+    campaignToDelete.value = null;
     toast.add({
       title: "Succès",
       description: "Campagne supprimée avec succès",

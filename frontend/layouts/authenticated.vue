@@ -24,9 +24,23 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import AppBreadcrumbs from '@/components/AppBreadcrumbs.vue'
 import SupportWidget from '@/components/SupportWidget.vue'
 import DevModeIndicator from '@/components/DevModeIndicator.vue'
+import { useAuth } from '@/composables/useAuth'
+
+const { fetchMe } = useAuth()
+
+// Charger l'utilisateur au montage initial du layout
+// Nécessaire car la page /mj ou /streamer est la première chargée après login
+onMounted(async () => {
+  try {
+    await fetchMe()
+  } catch (error) {
+    console.error('[AuthenticatedLayout] Failed to load user:', error)
+  }
+})
 </script>

@@ -87,6 +87,8 @@ export interface PollInstance {
   status: "PENDING" | "RUNNING" | "ENDED";
   startedAt: string | null;
   endedAt: string | null;
+  finalTotalVotes?: number | null;
+  finalVotesByOption?: Record<string, number> | null;
   createdAt: string;
 }
 
@@ -112,6 +114,7 @@ export interface StreamerSearchResult {
 export interface AuthorizationStatus {
   campaignId: string;
   campaignName: string;
+  isOwner?: boolean;
   isAuthorized: boolean;
   expiresAt: string | null;
   remainingSeconds: number | null;
