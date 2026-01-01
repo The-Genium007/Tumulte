@@ -16,7 +16,7 @@ class Campaign extends BaseModel {
   @column()
   declare description: string | null
 
-  @column({ columnName: 'owner_id' })
+  @column()
   declare ownerId: string
 
   @column.dateTime({ autoCreate: true })
