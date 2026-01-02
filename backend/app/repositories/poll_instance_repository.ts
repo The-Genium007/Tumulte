@@ -88,9 +88,7 @@ export class PollInstanceRepository {
     await PollInstance.query()
       .where('id', pollId)
       .update({
-        // eslint-disable-next-line camelcase
         final_total_votes: totalVotes,
-        // eslint-disable-next-line camelcase
         final_votes_by_option: JSON.stringify(votesByOption) as any,
       })
   }

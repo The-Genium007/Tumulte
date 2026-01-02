@@ -264,7 +264,7 @@ const { fetchInvitations, getAuthorizationStatus, grantAuthorization, revokeAuth
 const toast = useToast();
 
 // Dev mode
-const isDev = import.meta.dev;
+const isDev = process.dev;
 
 const overlayUrl = ref<string | null>(null);
 const loadingOverlay = ref(false);

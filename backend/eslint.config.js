@@ -142,16 +142,4 @@ export default [
     ],
     },
   },
-  // Test files: include tests directory
-  {
-    files: ['tests/**/*.ts'],
-  },
-  // Mock files: allow snake_case for external API types (Twitch, OAuth)
-  {
-    files: ['tests/mocks/**/*.ts'],
-    rules: {
-      '@typescript-eslint/naming-convention': 'off',
-      'camelcase': 'off',
-    },
-  },
 ]

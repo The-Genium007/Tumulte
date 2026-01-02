@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { pollInstance as PollInstance } from '#models/poll_instance'
+import { pollSession as PollSession } from '#models/poll_session'
 import { DateTime } from 'luxon'
 
 export default class ActiveSessionController {

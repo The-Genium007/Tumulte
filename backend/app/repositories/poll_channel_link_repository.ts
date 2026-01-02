@@ -48,9 +48,7 @@ export class PollChannelLinkRepository {
     await PollChannelLink.query()
       .where('id', linkId)
       .update({
-        // eslint-disable-next-line camelcase
         votes_by_option: JSON.stringify(votesByOption) as any,
-        // eslint-disable-next-line camelcase
         total_votes: totalVotes,
       })
   }
