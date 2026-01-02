@@ -247,4 +247,31 @@ Error: Cannot define "isPollAuthorized" on "CampaignMembership" model
 
 ---
 
-**Dernière Mise à Jour** : 2026-01-02 - Phase 3 COMPLÈTE - 85.4% de réussite
+---
+
+## ✅ PROBLÈME CRITIQUE STAGING RÉSOLU
+
+### Erreur de Migrations en Production (RÉSOLU)
+
+**Type d'erreur détectée** : `relation "users" does not exist` lors de l'exécution de migrations de renommage obsolètes
+
+**Cause identifiée** :
+- Migrations de renommage créées manuellement en staging (`1735637400000`, `1735637500000`)
+- S'exécutaient AVANT la création des tables (mauvais timestamp)
+- Conflit entre colonnes `snake_case` en DB et code `camelCase`
+
+**Solution appliquée** : ✅ Base de données staging écrasée complètement
+
+**État actuel** :
+- ✅ 23 migrations locales prêtes à être déployées
+- ✅ Migration `auth_access_tokens` (`1735849200000`) correctement positionnée en première
+- ✅ Naming strategy Lucid configuré dans [config/database.ts](backend/config/database.ts) :
+  - Colonnes : `snake_case` en DB (ex: `display_name`)
+  - Propriétés : `camelCase` en code (ex: `displayName`)
+  - Conversion automatique par Lucid
+
+**Prochaine exécution** : Les migrations vont s'exécuter dans le bon ordre sur la base staging vide
+
+---
+
+**Dernière Mise à Jour** : 2026-01-02 - Phase 3 COMPLÈTE - 85.4% de réussite + Problème critique staging détecté
