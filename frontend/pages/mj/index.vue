@@ -218,179 +218,19 @@
         </UCard>
 
         <!-- Active Poll Control Card -->
-        <UCard v-if="activeSession && activeSessionPolls.length > 0" class="border-2 border-primary-500/50 bg-gray-900/50">
-          <div class="flex items-center justify-between gap-6">
-            <!-- Partie gauche: Compteur + Question + Chrono + Actions -->
-            <div class="flex items-center gap-4 flex-1">
-              <!-- Compteur de questions -->
-              <UBadge
-                :label="`${currentPollIndex + 1}/${activeSessionPolls.length}`"
-                color="primary"
-                size="lg"
-                variant="soft"
-              />
-
-              <!-- Question -->
-              <h3 class="text-lg font-semibold text-white flex-1">{{ currentPoll?.question }}</h3>
-
-              <!-- Chrono (si en cours) -->
-              <div
-                v-if="pollStatus === 'sending' && countdown > 0"
-                class="flex items-center gap-2 px-4 py-2 bg-primary-500/10 rounded-lg border border-primary-500/30"
-              >
-                <UIcon name="i-lucide-clock" class="size-5 text-primary-500" />
-                <span class="text-2xl font-bold text-primary-500 tabular-nums">
-                  {{ Math.floor(countdown / 60) }}:{{ String(countdown % 60).padStart(2, '0') }}
-                </span>
-              </div>
-
-              <!-- Bouton Envoyer -->
-              <UButton
-                v-if="pollStatus === 'idle'"
-                color="primary"
-                icon="i-lucide-send"
-                label="Envoyer"
-                size="lg"
-                @click="sendPoll"
-              />
-
-              <!-- Bouton Relancer (pour polls annulés) -->
-              <UButton
-                v-if="pollStatus === 'cancelled'"
-                color="primary"
-                icon="i-lucide-refresh-cw"
-                label="Relancer"
-                size="lg"
-                @click="sendPoll"
-              />
-            </div>
-
-            <!-- Partie droite: Navigation + Badges + Fermer -->
-            <div class="flex items-center gap-3">
-              <!-- Flèches de navigation (avec bordures) -->
-              <div class="flex flex-col gap-1">
-                <UButton
-                  color="primary"
-                  variant="solid"
-                  icon="i-lucide-chevron-up"
-                  size="sm"
-                  square
-                  class="border border-primary-500"
-                  :disabled="currentPollIndex === 0"
-                  @click="goToPreviousPoll"
-                />
-                <UButton
-                  color="primary"
-                  variant="solid"
-                  icon="i-lucide-chevron-down"
-                  size="sm"
-                  square
-                  class="border border-primary-500"
-                  :disabled="currentPollIndex === activeSessionPolls.length - 1"
-                  @click="goToNextPoll"
-                />
-              </div>
-
-              <!-- Badge d'état -->
-              <UBadge
-                v-if="pollStatus === 'sending'"
-                label="En cours"
-                color="warning"
-                variant="soft"
-                size="lg"
-              />
-              <UBadge
-                v-else-if="pollStatus === 'sent'"
-                label="Envoyé"
-                color="success"
-                variant="soft"
-                size="lg"
-              />
-              <UBadge
-                v-else-if="pollStatus === 'cancelled'"
-                label="Annulé"
-                color="error"
-                variant="soft"
-                size="lg"
-              />
-
-              <!-- Bouton fermer/annuler intelligent -->
-              <UButton
-                :color="pollStatus === 'sending' ? 'error' : 'neutral'"
-                variant="solid"
-                icon="i-lucide-x"
-                size="sm"
-                square
-                :class="pollStatus === 'sending' ? 'border-2 border-red-500' : 'border border-gray-500'"
-                @click="handleCloseOrCancel"
-              />
-            </div>
-          </div>
-
-          <!-- Résultats (en dessous si présents et non annulé) -->
-          <div v-if="pollResults && pollStatus !== 'cancelled'" class="mt-6 pt-6 border-t border-gray-700">
-            <div class="grid grid-cols-3 gap-3">
-              <div
-                v-for="(result, index) in pollResults.results"
-                :key="index"
-                :class="[
-                  'p-3 rounded-lg border transition-all duration-300',
-                  isWinner(result.votes)
-                    ? 'bg-linear-to-br from-yellow-500/20 to-amber-500/10 border-yellow-500/60 shadow-lg shadow-yellow-500/20'
-                    : 'bg-gray-800/50 border-gray-700'
-                ]"
-              >
-                <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center gap-2">
-                    <span
-                      :class="[
-                        'font-medium text-sm',
-                        isWinner(result.votes) ? 'text-yellow-400' : 'text-white'
-                      ]"
-                    >
-                      {{ result.option }}
-                    </span>
-                    <!-- Badge Gagnant ou Ex-aequo -->
-                    <UBadge
-                      v-if="isWinner(result.votes)"
-                      :color="hasMultipleWinners ? 'warning' : 'success'"
-                      variant="soft"
-                      size="xs"
-                    >
-                      <div class="flex items-center gap-1">
-                        <UIcon
-                          :name="hasMultipleWinners ? 'i-lucide-equal' : 'i-lucide-crown'"
-                          class="size-3"
-                        />
-                        <span class="font-semibold">{{ hasMultipleWinners ? 'Ex-aequo' : 'Gagnant' }}</span>
-                      </div>
-                    </UBadge>
-                  </div>
-                  <span
-                    :class="[
-                      'font-bold',
-                      isWinner(result.votes) ? 'text-yellow-400 text-lg' : 'text-primary-500'
-                    ]"
-                  >
-                    {{ result.votes }}
-                  </span>
-                </div>
-                <div class="w-full bg-gray-700 rounded-full h-2">
-                  <div
-                    :class="[
-                      'h-2 rounded-full transition-all duration-500',
-                      isWinner(result.votes) ? 'bg-linear-to-r from-yellow-500 to-amber-500' : 'bg-primary-500'
-                    ]"
-                    :style="{ width: `${(result.votes / pollResults.totalVotes) * 100}%` }"
-                  ></div>
-                </div>
-              </div>
-            </div>
-            <p class="text-gray-400 text-xs text-center mt-3">
-              Total: {{ pollResults.totalVotes }} votes
-            </p>
-          </div>
-        </UCard>
+        <PollControlCard
+          v-if="activeSession && activeSessionPolls.length > 0"
+          :poll="currentPoll"
+          :current-index="currentPollIndex"
+          :total-polls="activeSessionPolls.length"
+          :status="pollStatus"
+          :countdown="countdown"
+          :results="pollResults"
+          @send="sendPoll"
+          @previous="goToPreviousPoll"
+          @next="goToNextPoll"
+          @close="handleCloseOrCancel"
+        />
 
         <!-- Poll Sessions -->
         <UCard>
@@ -717,6 +557,8 @@ definePageMeta({
   layout: "authenticated" as const,
 });
 
+const config = useRuntimeConfig();
+const API_URL = config.public.apiBase;
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
@@ -1008,24 +850,6 @@ const currentPoll = computed<Poll | null>(() => {
   return activeSessionPolls.value[currentPollIndex.value] as Poll;
 });
 
-// Computed pour déterminer le score maximum (le gagnant)
-const maxVotes = computed(() => {
-  if (!pollResults.value || !pollResults.value.results.length) return 0;
-  return Math.max(...pollResults.value.results.map(r => r.votes));
-});
-
-// Fonction pour vérifier si une option est gagnante
-const isWinner = (votes: number) => {
-  return votes > 0 && votes === maxVotes.value;
-};
-
-// Computed pour détecter s'il y a plusieurs gagnants (ex-aequo)
-const hasMultipleWinners = computed(() => {
-  if (!pollResults.value || !pollResults.value.results.length) return false;
-  const winnersCount = pollResults.value.results.filter(r => r.votes === maxVotes.value).length;
-  return winnersCount > 1;
-});
-
 // Fonction pour lancer une session
 const launchSession = async (session: Session) => {
   if (!selectedCampaignId.value) return;
@@ -1041,8 +865,6 @@ const launchSession = async (session: Session) => {
   }
 
   try {
-    const API_URL = import.meta.env.VITE_API_URL;
-
     // Lancer la session avec Health Check
     const response = await fetch(
       `${API_URL}/mj/campaigns/${selectedCampaignId.value}/sessions/${session.id}/launch`,
@@ -1194,7 +1016,6 @@ const cancelPoll = async () => {
   // Si le sondage est en cours d'envoi, appeler l'API pour annuler
   if (pollStatus.value === 'sending' && currentPollInstanceId.value) {
     try {
-      const API_URL = import.meta.env.VITE_API_URL;
       const response = await fetch(`${API_URL}/mj/polls/${currentPollInstanceId.value}/cancel`, {
         method: 'POST',
         credentials: 'include',
@@ -1243,7 +1064,6 @@ const sendPoll = async () => {
 
   try {
     // Appeler l'API pour lancer le sondage
-    const API_URL = import.meta.env.VITE_API_URL;
     const response = await fetch(`${API_URL}/mj/campaigns/${selectedCampaignId.value}/polls/launch`, {
       method: 'POST',
       credentials: 'include',
@@ -1608,7 +1428,6 @@ watch(selectedCampaignId, async (newId) => {
 const fetchSessions = async (campaignId: string) => {
   sessionsLoading.value = true;
   try {
-    const API_URL = import.meta.env.VITE_API_URL;
     const response = await fetch(`${API_URL}/mj/campaigns/${campaignId}/sessions`, {
       credentials: "include",
     });
@@ -1647,7 +1466,6 @@ const handleCreateSession = async () => {
 
   creating.value = true;
   try {
-    const API_URL = import.meta.env.VITE_API_URL;
     const response = await fetch(
       `${API_URL}/mj/campaigns/${selectedCampaignId.value}/sessions`,
       {
@@ -1691,7 +1509,6 @@ const confirmDeleteSession = async () => {
 
   deleting.value = true;
   try {
-    const API_URL = import.meta.env.VITE_API_URL;
     const response = await fetch(
       `${API_URL}/mj/campaigns/${selectedCampaignId.value}/sessions/${currentSession.value.id}`,
       {

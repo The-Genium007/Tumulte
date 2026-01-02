@@ -6,11 +6,11 @@ export class PollTemplateRepository {
   }
 
   async findByOwner(ownerId: string): Promise<PollTemplate[]> {
-    return await PollTemplate.query().where('ownerId', ownerId).orderBy('createdAt', 'desc')
+    return await PollTemplate.query().where('ownerId', ownerId).orderBy('created_at', 'desc')
   }
 
   async findByCampaign(campaignId: string): Promise<PollTemplate[]> {
-    return await PollTemplate.query().where('campaignId', campaignId).orderBy('createdAt', 'desc')
+    return await PollTemplate.query().where('campaignId', campaignId).orderBy('created_at', 'desc')
   }
 
   async create(data: {

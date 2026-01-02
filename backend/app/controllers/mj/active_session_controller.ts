@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import PollInstance from '#models/poll_instance'
-import PollSession from '#models/poll_session'
+import { pollInstance as PollInstance } from '#models/poll_instance'
+import { pollSession as PollSession } from '#models/poll_session'
 import { DateTime } from 'luxon'
 
 export default class ActiveSessionController {
@@ -15,7 +15,7 @@ export default class ActiveSessionController {
     const runningPoll = await PollInstance.query()
       .where('createdBy', user.id)
       .where('status', 'RUNNING')
-      .orderBy('startedAt', 'desc')
+      .orderBy('started_at', 'desc')
       .first()
 
     if (!runningPoll) {

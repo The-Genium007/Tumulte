@@ -30,7 +30,7 @@ export class CampaignMembershipRepository {
       .where('streamerId', streamerId)
       .where('status', 'PENDING')
       .preload('campaign')
-      .orderBy('invitedAt', 'desc')
+      .orderBy('invited_at', 'desc')
   }
 
   async findActiveByStreamer(streamerId: string): Promise<CampaignMembership[]> {
@@ -38,7 +38,7 @@ export class CampaignMembershipRepository {
       .where('streamerId', streamerId)
       .where('status', 'ACTIVE')
       .preload('campaign')
-      .orderBy('acceptedAt', 'desc')
+      .orderBy('accepted_at', 'desc')
   }
 
   async create(data: {

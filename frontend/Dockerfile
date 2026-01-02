@@ -18,11 +18,9 @@ RUN npm ci && npm cache clean --force
 # Copy source code
 COPY . .
 
-# Build arguments for runtime URLs
-ARG VITE_API_URL=http://localhost:3333
-ARG VITE_WS_URL=ws://localhost:3333
-ENV VITE_API_URL=${VITE_API_URL}
-ENV VITE_WS_URL=${VITE_WS_URL}
+# Build arguments for runtime URLs (no default, must be provided via .env or build args)
+ARG NUXT_PUBLIC_API_BASE
+ENV NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE}
 ENV NODE_ENV=production
 
 # Build Nuxt application

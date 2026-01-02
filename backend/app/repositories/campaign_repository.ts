@@ -29,7 +29,7 @@ export class CampaignRepository {
    * Trouver toutes les campagnes d'un propriétaire
    */
   async findByOwnerId(ownerId: string): Promise<Campaign[]> {
-    return await Campaign.query().where('ownerId', ownerId).orderBy('createdAt', 'desc')
+    return await Campaign.query().where('ownerId', ownerId).orderBy('created_at', 'desc')
   }
 
   /**
@@ -41,7 +41,7 @@ export class CampaignRepository {
       .preload('memberships', (query) => {
         query.preload('streamer')
       })
-      .orderBy('createdAt', 'desc')
+      .orderBy('created_at', 'desc')
   }
 
   /**
