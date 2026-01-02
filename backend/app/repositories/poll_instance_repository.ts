@@ -15,7 +15,7 @@ export class PollInstanceRepository {
   }
 
   async findByCampaign(campaignId: string): Promise<PollInstance[]> {
-    return await PollInstance.query().where('campaignId', campaignId).orderBy('createdAt', 'desc')
+    return await PollInstance.query().where('campaignId', campaignId).orderBy('created_at', 'desc')
   }
 
   async findRunningByCampaign(campaignId: string): Promise<PollInstance[]> {
@@ -62,21 +62,21 @@ export class PollInstanceRepository {
   async setStarted(pollId: string): Promise<void> {
     await PollInstance.query().where('id', pollId).update({
       status: 'RUNNING',
-      startedAt: new Date(),
+      started_at: new Date(),
     })
   }
 
   async setEnded(pollId: string): Promise<void> {
     await PollInstance.query().where('id', pollId).update({
       status: 'ENDED',
-      endedAt: new Date(),
+      ended_at: new Date(),
     })
   }
 
   async setCancelled(pollId: string): Promise<void> {
     await PollInstance.query().where('id', pollId).update({
       status: 'ENDED',
-      endedAt: new Date(),
+      ended_at: new Date(),
     })
   }
 
@@ -88,8 +88,8 @@ export class PollInstanceRepository {
     await PollInstance.query()
       .where('id', pollId)
       .update({
-        finalTotalVotes: totalVotes,
-        finalVotesByOption: JSON.stringify(votesByOption) as any,
+        final_total_votes: totalVotes,
+        final_votes_by_option: JSON.stringify(votesByOption) as any,
       })
   }
 }

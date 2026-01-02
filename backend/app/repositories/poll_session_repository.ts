@@ -13,11 +13,11 @@ export class PollSessionRepository {
     return await PollSession.query()
       .where('campaignId', campaignId)
       .preload('polls')
-      .orderBy('createdAt', 'desc')
+      .orderBy('created_at', 'desc')
   }
 
   async findByOwner(ownerId: string): Promise<PollSession[]> {
-    return await PollSession.query().where('ownerId', ownerId).orderBy('createdAt', 'desc')
+    return await PollSession.query().where('ownerId', ownerId).orderBy('created_at', 'desc')
   }
 
   async create(data: {

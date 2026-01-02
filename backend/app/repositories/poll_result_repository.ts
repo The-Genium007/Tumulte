@@ -11,7 +11,7 @@ export class PollResultRepository {
   }
 
   async findByCampaign(campaignId: string): Promise<PollResult[]> {
-    return await PollResult.query().where('campaignId', campaignId).orderBy('createdAt', 'desc')
+    return await PollResult.query().where('campaignId', campaignId).orderBy('created_at', 'desc')
   }
 
   async create(data: {

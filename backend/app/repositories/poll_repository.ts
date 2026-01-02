@@ -6,7 +6,7 @@ export class PollRepository {
   }
 
   async findBySession(sessionId: string): Promise<Poll[]> {
-    return await Poll.query().where('sessionId', sessionId).orderBy('orderIndex', 'asc')
+    return await Poll.query().where('sessionId', sessionId).orderBy('order_index', 'asc')
   }
 
   async create(data: {
@@ -46,7 +46,10 @@ export class PollRepository {
 
   async reorderPolls(sessionId: string, pollIds: string[]): Promise<void> {
     for (const [i, pollId] of pollIds.entries()) {
-      await Poll.query().where('id', pollId).where('sessionId', sessionId).update({ orderIndex: i })
+      await Poll.query()
+        .where('id', pollId)
+        .where('sessionId', sessionId)
+        .update({ order_index: i })
     }
   }
 }
