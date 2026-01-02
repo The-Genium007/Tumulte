@@ -133,7 +133,7 @@ export class MembershipService {
       .where('streamerId', streamerId)
       .where('status', 'PENDING')
       .preload('campaign')
-      .orderBy('invitedAt', 'desc')
+      .orderBy('invited_at', 'desc')
   }
 
   /**
@@ -144,7 +144,7 @@ export class MembershipService {
       .where('streamerId', streamerId)
       .where('status', 'ACTIVE')
       .preload('campaign')
-      .orderBy('acceptedAt', 'desc')
+      .orderBy('accepted_at', 'desc')
   }
 
   /**
