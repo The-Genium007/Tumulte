@@ -88,7 +88,7 @@ export default defineNuxtConfig({
       script: [
         {
           defer: true,
-          src: "http://zerocase-umami-2548df-51-83-45-107.traefik.me/script.js",
+          src: "https://zerocase-umami-2548df-51-83-45-107.traefik.me/script.js",
           "data-website-id": "07e569f4-6e75-445b-9db9-51a821f38d5b",
         },
       ],
