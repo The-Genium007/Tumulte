@@ -1,5 +1,5 @@
 import { test } from '@japa/runner'
-import testUtils from '@adonisjs/core/services/test_utils'
+import testUtils from '#tests/helpers/database'
 
 test.group('Authorization Expiry - E2E', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())

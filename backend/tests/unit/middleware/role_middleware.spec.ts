@@ -10,7 +10,7 @@ test.group('RoleMiddleware - Access Control', () => {
     let nextCalled = false
 
     const mockUser = {
-      id: 'user-1',
+      id: '00000000-0000-4000-d000-000000000001',
       role: 'MJ',
     } as User
 
@@ -36,7 +36,7 @@ test.group('RoleMiddleware - Access Control', () => {
     let responseBody: unknown
 
     const mockUser = {
-      id: 'user-1',
+      id: '00000000-0000-4000-d000-000000000001',
       role: 'STREAMER',
     } as User
 
@@ -126,7 +126,7 @@ test.group('RoleMiddleware - MJ Role', () => {
     let nextCalled = false
 
     const mockUser = {
-      id: 'user-1',
+      id: '00000000-0000-4000-d000-000000000001',
       role: 'MJ',
     } as User
 
@@ -151,7 +151,7 @@ test.group('RoleMiddleware - MJ Role', () => {
     let responseBody: unknown
 
     const mockUser = {
-      id: 'user-1',
+      id: '00000000-0000-4000-d000-000000000001',
       role: 'STREAMER',
     } as User
 
@@ -183,7 +183,7 @@ test.group('RoleMiddleware - STREAMER Role', () => {
     let nextCalled = false
 
     const mockUser = {
-      id: 'user-1',
+      id: '00000000-0000-4000-d000-000000000001',
       role: 'STREAMER',
     } as User
 
@@ -207,7 +207,7 @@ test.group('RoleMiddleware - STREAMER Role', () => {
     let responseStatus: number | undefined
 
     const mockUser = {
-      id: 'user-1',
+      id: '00000000-0000-4000-d000-000000000001',
       role: 'MJ',
     } as User
 
@@ -237,7 +237,7 @@ test.group('RoleMiddleware - Edge Cases', () => {
     let responseStatus: number | undefined
 
     const mockUser = {
-      id: 'user-1',
+      id: '00000000-0000-4000-d000-000000000001',
       role: null,
     } as unknown as User
 
@@ -265,7 +265,7 @@ test.group('RoleMiddleware - Edge Cases', () => {
     const expectedResult = { data: 'success' }
 
     const mockUser = {
-      id: 'user-1',
+      id: '00000000-0000-4000-d000-000000000001',
       role: 'MJ',
     } as User
 
@@ -287,7 +287,7 @@ test.group('RoleMiddleware - Edge Cases', () => {
     let responseStatus: number | undefined
 
     const mockUser = {
-      id: 'user-1',
+      id: '00000000-0000-4000-d000-000000000001',
       role: 'mj', // lowercase
     } as unknown as User
 
@@ -317,7 +317,7 @@ test.group('RoleMiddleware - Response Handling', () => {
     let errorMessage: string | undefined
 
     const mockUser = {
-      id: 'user-1',
+      id: '00000000-0000-4000-d000-000000000001',
       role: 'STREAMER',
     } as User
 

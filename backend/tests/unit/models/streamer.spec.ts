@@ -1,5 +1,5 @@
 import { test } from '@japa/runner'
-import testUtils from '@adonisjs/core/services/test_utils'
+import testUtils from '#tests/helpers/database'
 import { streamer as Streamer } from '#models/streamer'
 import { createTestUser } from '#tests/helpers/test_utils'
 import encryption from '@adonisjs/core/services/encryption'

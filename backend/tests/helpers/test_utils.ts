@@ -10,14 +10,14 @@ import hash from '@adonisjs/core/services/hash'
 
 /**
  * Factory: Create a test user with optional overrides
+ * Note: User model only has id, role, displayName, email
+ * Twitch info is in the Streamer model
  */
 export async function createTestUser(overrides: Partial<any> = {}): Promise<User> {
   const userData = {
-    twitchUserId: overrides.twitchUserId || faker.string.numeric(8),
-    twitchLogin: overrides.twitchLogin || faker.internet.username().toLowerCase(),
-    twitchDisplayName: overrides.twitchDisplayName || faker.internet.username(),
-    profileImageUrl: overrides.profileImageUrl || faker.image.avatar(),
     role: overrides.role || 'MJ',
+    displayName: overrides.displayName || faker.internet.username(),
+    email: overrides.email || null,
     ...overrides,
   }
 
@@ -25,19 +25,21 @@ export async function createTestUser(overrides: Partial<any> = {}): Promise<User
 }
 
 /**
- * Factory: Create an authenticated user with session token
- * For now, just returns the user and a mock token
- * Real authentication will be handled by the auth system
+ * Factory: Create an authenticated user with access token
+ * Generates a real access token using User.accessTokens
  */
 export async function createAuthenticatedUser(
   overrides: Partial<any> = {}
 ): Promise<{ user: User; token: string }> {
   const user = await createTestUser(overrides)
 
-  // Generate mock bearer token for authentication in tests
-  const token = faker.string.alphanumeric(64)
+  // Generate a real access token for API authentication
+  const accessToken = await User.accessTokens.create(user, ['*'], {
+    name: 'test-token',
+    expiresIn: '1 day',
+  })
 
-  return { user, token }
+  return { user, token: accessToken.value!.release() }
 }
 
 /**
@@ -61,11 +63,9 @@ export async function createTestStreamer(overrides: Partial<any> = {}): Promise<
     accessToken: overrides.accessToken || faker.string.alphanumeric(30),
     refreshToken: overrides.refreshToken || faker.string.alphanumeric(50),
     scopes: overrides.scopes || ['channel:manage:polls', 'channel:read:polls'],
-    tokenExpiresAt: overrides.tokenExpiresAt || DateTime.now().plus({ hours: 4 }),
-    ...overrides,
   }
 
-  return await Streamer.create(streamerData)
+  return await Streamer.createWithEncryptedTokens(streamerData)
 }
 
 /**

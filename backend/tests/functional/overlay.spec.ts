@@ -1,5 +1,5 @@
 import { test } from '@japa/runner'
-import testUtils from '@adonisjs/core/services/test_utils'
+import testUtils from '#tests/helpers/database'
 import {
   createTestStreamer,
   createTestPollInstance,
