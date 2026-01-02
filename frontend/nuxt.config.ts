@@ -2,6 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: true },
+  ssr: false, // SPA mode - variables must be set at build time
 
   modules: ["@nuxt/ui", "@pinia/nuxt", "@vite-pwa/nuxt"],
 
