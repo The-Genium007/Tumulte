@@ -14,8 +14,8 @@ services:
       PORT: 3000
       HOST: 0.0.0.0
 
-      # API URL
-      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:3333}
+      # API URL (must be provided via .env file)
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE}
     networks:
       - dokploy-network
     restart: unless-stopped

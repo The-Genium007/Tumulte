@@ -18,8 +18,8 @@ RUN npm ci && npm cache clean --force
 # Copy source code
 COPY . .
 
-# Build arguments for runtime URLs
-ARG NUXT_PUBLIC_API_BASE=http://localhost:3333
+# Build arguments for runtime URLs (no default, must be provided via .env or build args)
+ARG NUXT_PUBLIC_API_BASE
 ENV NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE}
 ENV NODE_ENV=production
 
