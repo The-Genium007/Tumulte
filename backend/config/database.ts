@@ -30,7 +30,7 @@ BaseModel.namingStrategy = {
     return string.pluralize(string.snakeCase(model.name))
   },
   columnName(_model, propertyName) {
-    return string.snakeCase(propertyName)
+    return propertyName
   },
   serializedName(_model, propertyName) {
     return propertyName
