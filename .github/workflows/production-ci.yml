@@ -13,6 +13,7 @@ jobs:
   backend-quality:
     name: Backend Quality (TypeCheck + Lint)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -40,6 +41,7 @@ jobs:
   frontend-quality:
     name: Frontend Quality (TypeCheck + Lint)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -68,6 +70,7 @@ jobs:
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [backend-quality, frontend-quality]
 
     steps:
@@ -93,6 +96,7 @@ jobs:
   backend-unit-tests:
     name: Backend Unit Tests (Required)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: backend-quality
 
     services:
@@ -161,6 +165,7 @@ jobs:
   frontend-unit-tests:
     name: Frontend Unit Tests (Required)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: frontend-quality
 
     steps:
@@ -208,6 +213,7 @@ jobs:
   backend-functional-tests:
     name: Backend Functional Tests (Required)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: backend-unit-tests
 
     services:
@@ -293,6 +299,7 @@ jobs:
         run: npm run test -- --filter=functional
 
       - name: Upload functional test coverage
+        if: always() && hashFiles('backend/coverage/**') != ''
         uses: actions/upload-artifact@v4
         with:
           name: backend-functional-coverage
@@ -302,6 +309,7 @@ jobs:
   backend-e2e-tests:
     name: Backend E2E Tests (Required)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: backend-unit-tests
 
     services:
@@ -387,7 +395,7 @@ jobs:
         run: npm run test -- --filter=e2e
 
       - name: Upload E2E test results
-        if: always()
+        if: always() && hashFiles('backend/coverage/**') != ''
         uses: actions/upload-artifact@v4
         with:
           name: backend-e2e-results
@@ -397,6 +405,7 @@ jobs:
   build-production:
     name: Build Production
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [backend-functional-tests, backend-e2e-tests, frontend-unit-tests, security-audit]
 
     steps:
@@ -440,12 +449,11 @@ jobs:
           echo "Frontend build size:" && du -sh .output
 
       - name: Upload production build
+        if: hashFiles('frontend/.output/**') != ''
         uses: actions/upload-artifact@v4
         with:
           name: production-build
-          path: |
-            frontend/.output/
-            backend/build/
+          path: frontend/.output/
 
   # Phase 6 : Tests E2E Frontend (BLOQUANT en production)
   frontend-e2e-tests:
@@ -577,6 +585,7 @@ jobs:
   deployment-ready:
     name: Ready for Production
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [backend-quality, frontend-quality, security-audit, backend-unit-tests, frontend-unit-tests, backend-functional-tests, backend-e2e-tests, build-production, frontend-e2e-tests]
     if: success()
 
