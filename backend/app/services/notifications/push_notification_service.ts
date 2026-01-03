@@ -31,27 +31,33 @@ export class PushNotificationService {
 
   /**
    * Envoyer une notification push à un utilisateur
+   * @param bypassPreferences - Ignore les préférences utilisateur (utile pour les tests dev)
    */
   async sendToUser(
     userId: string,
     type: NotificationType,
-    payload: PushPayload
+    payload: PushPayload,
+    bypassPreferences: boolean = false
   ): Promise<{ sent: number; failed: number }> {
-    // Vérifier les préférences utilisateur
-    const preferences = await this.preferenceRepository.findByUserId(userId)
+    // Vérifier les préférences utilisateur (sauf si bypassPreferences)
+    if (!bypassPreferences) {
+      const preferences = await this.preferenceRepository.findByUserId(userId)
 
-    // Si pas de préférences, l'utilisateur n'a jamais configuré = on envoie par défaut
-    if (preferences) {
-      if (!preferences.pushEnabled) {
-        logger.debug({ userId, type }, 'Push notification skipped: push globally disabled')
-        return { sent: 0, failed: 0 }
-      }
+      // Si pas de préférences, l'utilisateur n'a jamais configuré = on envoie par défaut
+      if (preferences) {
+        if (!preferences.pushEnabled) {
+          logger.debug({ userId, type }, 'Push notification skipped: push globally disabled')
+          return { sent: 0, failed: 0 }
+        }
 
-      const preferenceKey = notificationTypeToPreference[type]
-      if (!preferences[preferenceKey]) {
-        logger.debug({ userId, type }, 'Push notification skipped: type disabled by user')
-        return { sent: 0, failed: 0 }
+        const preferenceKey = notificationTypeToPreference[type]
+        if (!preferences[preferenceKey]) {
+          logger.debug({ userId, type }, 'Push notification skipped: type disabled by user')
+          return { sent: 0, failed: 0 }
+        }
       }
+    } else {
+      logger.debug({ userId, type }, 'Push notification: bypassing preferences check')
     }
 
     // Récupérer toutes les subscriptions de l'utilisateur

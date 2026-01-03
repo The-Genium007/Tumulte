@@ -88,6 +88,17 @@ export class PollCreationService {
           })
         })
       }
+
+      // En mode dev, envoyer une notification de test au MJ
+      if (!app.inProduction) {
+        this.sendDevTestNotification(pollInstance).catch((err: unknown) => {
+          logger.warn({
+            event: 'push_notification_dev_test_failed',
+            pollInstanceId: pollInstance.id,
+            error: err instanceof Error ? err.message : String(err),
+          })
+        })
+      }
     } else {
       // Mode legacy : charger tous les streamers actifs
       streamers = await Streamer.query().where('isActive', true)
@@ -472,6 +483,8 @@ export class PollCreationService {
       .filter((m) => m.streamer.userId)
       .map((m) => m.streamer.userId as string)
 
+    const campaignName = membershipsWithUsers[0]?.campaign?.name || 'une campagne'
+
     if (userIds.length === 0) {
       logger.info({
         event: 'push_notification_skipped',
@@ -480,8 +493,6 @@ export class PollCreationService {
       })
       return
     }
-
-    const campaignName = membershipsWithUsers[0]?.campaign?.name || 'une campagne'
 
     const pushService = new PushNotificationService()
     await pushService.sendToUsers(userIds, 'session:reminder', {
@@ -500,6 +511,48 @@ export class PollCreationService {
       pollInstanceId: pollInstance.id,
       userIds,
       count: userIds.length,
+    })
+  }
+
+  /**
+   * Envoie une notification de test au MJ en mode développement
+   */
+  private async sendDevTestNotification(pollInstance: PollInstance): Promise<void> {
+    // Charger la campagne avec son owner
+    await pollInstance.load('campaign')
+    const campaign = pollInstance.campaign
+
+    if (!campaign?.ownerId) {
+      logger.info({
+        event: 'push_notification_dev_test_skipped',
+        pollInstanceId: pollInstance.id,
+        reason: 'No campaign owner found',
+      })
+      return
+    }
+
+    const pushService = new PushNotificationService()
+    // Bypass les préférences en dev pour permettre de tester même si le type est désactivé
+    await pushService.sendToUser(
+      campaign.ownerId,
+      'session:reminder',
+      {
+        title: '[DEV] Session lancée !',
+        body: `La session "${pollInstance.title}" a été lancée sur "${campaign.name}".`,
+        data: {
+          url: `/mj/campaigns/${campaign.id}`,
+          campaignId: campaign.id,
+          pollInstanceId: pollInstance.id,
+        },
+        actions: [{ action: 'view', title: 'Voir la session' }],
+      },
+      true // bypassPreferences
+    )
+
+    logger.info({
+      event: 'push_notification_dev_test_sent',
+      pollInstanceId: pollInstance.id,
+      ownerId: campaign.ownerId,
     })
   }
 }
