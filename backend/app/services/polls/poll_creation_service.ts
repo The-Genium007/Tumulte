@@ -8,6 +8,7 @@ import { streamer as Streamer } from '#models/streamer'
 import { campaignMembership as CampaignMembership } from '#models/campaign_membership'
 import { twitchPollService as TwitchPollService } from '../twitch/twitch_poll_service.js'
 import { TwitchApiService } from '../twitch/twitch_api_service.js'
+import { PushNotificationService } from '#services/notifications/push_notification_service'
 
 /**
  * Service pour créer des polls Twitch pour tous les streamers d'une campagne
@@ -73,6 +74,18 @@ export class PollCreationService {
           campaign_id: pollInstance.campaignId,
           count: unauthorizedCount,
           streamerIds: unauthorizedStreamers,
+        })
+
+        // Envoyer une notification push aux streamers non autorisés
+        this.notifyUnauthorizedStreamers(
+          allActiveMemberships.filter((am) => unauthorizedStreamers.includes(am.streamerId)),
+          pollInstance
+        ).catch((err: unknown) => {
+          logger.warn({
+            event: 'push_notification_failed',
+            pollInstanceId: pollInstance.id,
+            error: err instanceof Error ? err.message : String(err),
+          })
         })
       }
     } else {
@@ -436,6 +449,58 @@ export class PollCreationService {
       const message = error instanceof Error ? error.message : 'Unknown error'
       logger.error({ message: 'Failed to refresh streamer info before polls', error: message })
     }
+  }
+
+  /**
+   * Envoie une notification push aux streamers non autorisés pour les inviter à autoriser leur chaîne
+   */
+  private async notifyUnauthorizedStreamers(
+    unauthorizedMemberships: CampaignMembership[],
+    pollInstance: PollInstance
+  ): Promise<void> {
+    // Charger les streamers avec leurs users
+    const membershipIds = unauthorizedMemberships.map((m) => m.id)
+    const membershipsWithUsers = await CampaignMembership.query()
+      .whereIn('id', membershipIds)
+      .preload('streamer', (query) => {
+        query.preload('user')
+      })
+      .preload('campaign')
+
+    // Récupérer les userIds des streamers qui ont un compte
+    const userIds = membershipsWithUsers
+      .filter((m) => m.streamer.userId)
+      .map((m) => m.streamer.userId as string)
+
+    if (userIds.length === 0) {
+      logger.info({
+        event: 'push_notification_skipped',
+        pollInstanceId: pollInstance.id,
+        reason: 'No registered users among unauthorized streamers',
+      })
+      return
+    }
+
+    const campaignName = membershipsWithUsers[0]?.campaign?.name || 'une campagne'
+
+    const pushService = new PushNotificationService()
+    await pushService.sendToUsers(userIds, 'session:reminder', {
+      title: 'Sondage en cours !',
+      body: `Un sondage a été lancé sur "${campaignName}" mais tu n'as pas autorisé ta chaîne.`,
+      data: {
+        url: `/streamer/campaigns/${pollInstance.campaignId}`,
+        campaignId: pollInstance.campaignId || undefined,
+        pollInstanceId: pollInstance.id,
+      },
+      actions: [{ action: 'authorize', title: 'Autoriser maintenant' }],
+    })
+
+    logger.info({
+      event: 'push_notification_sent',
+      pollInstanceId: pollInstance.id,
+      userIds,
+      count: userIds.length,
+    })
   }
 }
 
