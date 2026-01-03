@@ -576,7 +576,6 @@ const config = useRuntimeConfig();
 const API_URL = config.public.apiBase;
 const route = useRoute();
 const router = useRouter();
-const toast = useToast();
 const {
   createTemplate,
   deleteTemplate,
@@ -738,20 +737,10 @@ const _handleCreateTemplate = async () => {
   const options = optionsText.value.split("\n").filter((o) => o.trim());
 
   if (options.length < 2 || options.length > 5) {
-    toast.add({
-      title: "Erreur",
-      description: "Vous devez fournir entre 2 et 5 options",
-      color: "error",
-    });
     return;
   }
 
   if (!selectedCampaignId.value) {
-    toast.add({
-      title: "Erreur",
-      description: "Veuillez sélectionner une campagne",
-      color: "error",
-    });
     return;
   }
 
@@ -767,22 +756,13 @@ const _handleCreateTemplate = async () => {
       },
       selectedCampaignId.value,
     );
-    toast.add({
-      title: "Succès",
-      description: "Template créé avec succès",
-      color: "success",
-    });
     showCreateModal.value = false;
     newTemplate.label = "";
     newTemplate.title = "";
     newTemplate.durationSeconds = 60;
     optionsText.value = "";
   } catch {
-    toast.add({
-      title: "Erreur",
-      description: "Impossible de créer le template",
-      color: "error",
-    });
+    // Error handled silently
   } finally {
     creating.value = false;
   }
@@ -790,27 +770,13 @@ const _handleCreateTemplate = async () => {
 
 const _handleLaunchPoll = async (templateId: string) => {
   if (!selectedCampaignId.value) {
-    toast.add({
-      title: "Erreur",
-      description: "Veuillez sélectionner une campagne",
-      color: "error",
-    });
     return;
   }
 
   try {
     await launchPoll(templateId, selectedCampaignId.value);
-    toast.add({
-      title: "Succès",
-      description: "Sondage lancé sur tous les streamers actifs",
-      color: "success",
-    });
   } catch {
-    toast.add({
-      title: "Erreur",
-      description: "Impossible de lancer le sondage",
-      color: "error",
-    });
+    // Error handled silently
   }
 };
 
@@ -820,27 +786,13 @@ const _handleDeleteTemplate = async (templateId: string) => {
   }
 
   if (!selectedCampaignId.value) {
-    toast.add({
-      title: "Erreur",
-      description: "Veuillez sélectionner une campagne",
-      color: "error",
-    });
     return;
   }
 
   try {
     await deleteTemplate(templateId, selectedCampaignId.value);
-    toast.add({
-      title: "Succès",
-      description: "Template supprimé",
-      color: "success",
-    });
   } catch {
-    toast.add({
-      title: "Erreur",
-      description: "Impossible de supprimer le template",
-      color: "error",
-    });
+    // Error handled silently
   }
 };
 
@@ -896,11 +848,6 @@ const launchSession = async (session: Session) => {
 
   // Vérifier si une session est déjà active
   if (activeSession.value) {
-    toast.add({
-      title: "Session déjà active",
-      description: "Une session de sondage est déjà en cours. Veuillez l'annuler avant de lancer une nouvelle session.",
-      color: "warning",
-    });
     return;
   }
 
@@ -926,12 +873,6 @@ const launchSession = async (session: Session) => {
       if (streamerNames.length > 0) {
         showHealthCheckError.value = true;
         expiredStreamersNames.value = streamerNames;
-      } else {
-        toast.add({
-          title: "Erreur système",
-          description: errorData.error || "Le système n'est pas prêt pour lancer la session.",
-          color: "error",
-        });
       }
       return;
     }
@@ -943,11 +884,6 @@ const launchSession = async (session: Session) => {
 
     // Vérifier s'il y a au moins un sondage (normalement géré côté backend)
     if (polls.length === 0) {
-      toast.add({
-        title: "Session vide",
-        description: "Cette session ne contient aucun sondage. Veuillez ajouter au moins un sondage avant de lancer la session.",
-        color: "warning",
-      });
       return;
     }
 
@@ -963,20 +899,9 @@ const launchSession = async (session: Session) => {
 
     // Sauvegarder explicitement l'état immédiatement
     pollControlStore.saveState();
-
-    toast.add({
-      title: "Session prête",
-      description: `${polls.length} sondage(s) chargé(s) - Système vérifié`,
-      color: "success",
-    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
     console.error('[Session Launch] Error:', errorMessage);
-    toast.add({
-      title: "Erreur",
-      description: "Impossible de charger la session",
-      color: "error",
-    });
   }
 };
 
@@ -1064,19 +989,8 @@ const cancelPoll = async () => {
       if (!response.ok) {
         throw new Error('Failed to cancel poll');
       }
-
-      toast.add({
-        title: "Sondage annulé",
-        description: "Le sondage a été annulé sur tous les streamers",
-        color: "warning",
-      });
     } catch (error) {
       console.error('Failed to cancel poll:', error);
-      toast.add({
-        title: "Erreur",
-        description: "Impossible d'annuler le sondage",
-        color: "error",
-      });
     }
   }
 
@@ -1233,22 +1147,11 @@ const sendPoll = async () => {
       });
     }
 
-    // Vérifier s'il y a des streamers en échec
+    // Vérifier s'il y a des streamers en échec (log uniquement)
     if (result.data.failed_streamers && result.data.failed_streamers.length > 0) {
       const failedCount = result.data.failed_streamers.length;
       const successCount = result.data.streamers_count - failedCount;
-
-      toast.add({
-        title: "Sondage partiellement lancé",
-        description: `${successCount} streamer(s) OK, ${failedCount} streamer(s) incompatible(s) (non Affilié/Partenaire)`,
-        color: "warning",
-      });
-    } else {
-      toast.add({
-        title: "Sondage lancé",
-        description: "Le sondage a été envoyé à tous les streamers actifs",
-        color: "success",
-      });
+      console.log(`[Poll] ${successCount} streamer(s) OK, ${failedCount} streamer(s) incompatible(s)`);
     }
 
     // Démarrer le compte à rebours
@@ -1259,27 +1162,7 @@ const sendPoll = async () => {
     saveCurrentPollState();
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Impossible d'envoyer le sondage";
-
-    // Détecter les erreurs spécifiques
-    if (errorMessage.includes('No active streamers')) {
-      toast.add({
-        title: "Aucun streamer actif",
-        description: "Aucun streamer n'est connecté dans cette campagne",
-        color: "error",
-      });
-    } else if (errorMessage.includes('not a partner or affiliate')) {
-      toast.add({
-        title: "Streamers incompatibles",
-        description: "Les streamers doivent être Affiliés ou Partenaires Twitch pour utiliser les sondages",
-        color: "error",
-      });
-    } else {
-      toast.add({
-        title: "Erreur",
-        description: errorMessage,
-        color: "error",
-      });
-    }
+    console.error('[Poll] Error:', errorMessage);
     pollStatus.value = 'idle';
     pollStartTime.value = null;
     pollDuration.value = null;
@@ -1478,11 +1361,7 @@ const fetchSessions = async (campaignId: string) => {
     const data = await response.json();
     sessions.value = data.data;
   } catch {
-    toast.add({
-      title: "Erreur",
-      description: "Impossible de charger les sessions",
-      color: "error",
-    });
+    // Error handled silently
   } finally {
     sessionsLoading.value = false;
   }
@@ -1490,20 +1369,10 @@ const fetchSessions = async (campaignId: string) => {
 
 const handleCreateSession = async () => {
   if (!newSession.name || !newSession.defaultDurationSeconds) {
-    toast.add({
-      title: "Erreur",
-      description: "Veuillez remplir tous les champs",
-      color: "error",
-    });
     return;
   }
 
   if (!selectedCampaignId.value) {
-    toast.add({
-      title: "Erreur",
-      description: "Veuillez sélectionner une campagne",
-      color: "error",
-    });
     return;
   }
 
@@ -1521,23 +1390,13 @@ const handleCreateSession = async () => {
 
     if (!response.ok) throw new Error("Failed to create session");
 
-    toast.add({
-      title: "Succès",
-      description: "Session créée avec succès",
-      color: "success",
-    });
-
     showCreateSessionModal.value = false;
     newSession.name = "";
     newSession.defaultDurationSeconds = 60;
 
     await fetchSessions(selectedCampaignId.value);
   } catch {
-    toast.add({
-      title: "Erreur",
-      description: "Impossible de créer la session",
-      color: "error",
-    });
+    // Error handled silently
   } finally {
     creating.value = false;
   }
@@ -1562,22 +1421,12 @@ const confirmDeleteSession = async () => {
 
     if (!response.ok) throw new Error("Failed to delete session");
 
-    toast.add({
-      title: "Succès",
-      description: "Session supprimée avec succès",
-      color: "success",
-    });
-
     showDeleteSessionConfirm.value = false;
     currentSession.value = null;
 
     await fetchSessions(selectedCampaignId.value);
   } catch {
-    toast.add({
-      title: "Erreur",
-      description: "Impossible de supprimer la session",
-      color: "error",
-    });
+    // Error handled silently
   } finally {
     deleting.value = false;
   }

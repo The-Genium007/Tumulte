@@ -260,7 +260,6 @@ const config = useRuntimeConfig();
 const API_URL = config.public.apiBase;
 const { user: _user } = useAuth();
 const { fetchInvitations, getAuthorizationStatus, grantAuthorization, revokeAuthorization } = useCampaigns();
-const toast = useToast();
 
 // Dev mode
 const isDev = import.meta.dev;
@@ -286,11 +285,7 @@ const fetchOverlayUrl = async () => {
     const data = await response.json();
     overlayUrl.value = data.data.overlay_url;
   } catch {
-    toast.add({
-      title: "Erreur",
-      description: "Impossible de générer l'URL de l'overlay",
-      color: "error",
-    });
+    // Error silently handled
   } finally {
     loadingOverlay.value = false;
   }
@@ -305,11 +300,7 @@ const copyOverlayUrl = async () => {
         copySuccess.value = false;
       }, 3000);
     } catch {
-      toast.add({
-        title: "Erreur",
-        description: "Impossible de copier l'URL",
-        color: "error",
-      });
+      // Error silently handled
     }
   }
 };
@@ -397,36 +388,18 @@ const startRefreshInterval = () => {
 const handleAuthorize = async (campaignId: string) => {
   try {
     await grantAuthorization(campaignId);
-    toast.add({
-      title: "Autorisation accordée",
-      description: "Les sondages peuvent maintenant être lancés sur votre chaîne pour les 12 prochaines heures",
-      color: "success",
-    });
     await loadAuthorizationStatus();
   } catch {
-    toast.add({
-      title: "Erreur",
-      description: "Impossible d'accorder l'autorisation",
-      color: "error",
-    });
+    // Error silently handled
   }
 };
 
 const handleRevokeAuth = async (campaignId: string) => {
   try {
     await revokeAuthorization(campaignId);
-    toast.add({
-      title: "Autorisation révoquée",
-      description: "Les sondages ne pourront plus être lancés sur votre chaîne",
-      color: "success",
-    });
     await loadAuthorizationStatus();
   } catch {
-    toast.add({
-      title: "Erreur",
-      description: "Impossible de révoquer l'autorisation",
-      color: "error",
-    });
+    // Error silently handled
   }
 };
 

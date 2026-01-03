@@ -360,7 +360,6 @@ definePageMeta({
 });
 
 const _router = useRouter()
-const toast = useToast()
 const { user, logout } = useAuth()
 const { revokeTwitchAccess, deleteAccount } = useSettings()
 
@@ -386,18 +385,9 @@ const confirmRevokeTwitch = async () => {
   revokeLoading.value = true
   try {
     await revokeTwitchAccess()
-    toast.add({
-      title: 'Accès révoqué',
-      description: 'Votre accès Twitch a été révoqué avec succès',
-      color: 'success',
-    })
     showRevokeModal.value = false
   } catch (error: unknown) {
-    toast.add({
-      title: 'Erreur',
-      description: (error as Error).message,
-      color: 'error',
-    })
+    // Error handled silently
   } finally {
     revokeLoading.value = false
   }
@@ -411,21 +401,12 @@ const handleDeleteAccount = async () => {
   deleteLoading.value = true
   try {
     await deleteAccount()
-    toast.add({
-      title: 'Compte supprimé',
-      description: 'Votre compte et vos données ont été anonymisés avec succès',
-      color: 'success',
-    })
     showDeleteModal.value = false
     // Déconnecter et rediriger
     await logout()
     _router.push('/')
   } catch (error: unknown) {
-    toast.add({
-      title: 'Erreur',
-      description: (error as Error).message,
-      color: 'error',
-    })
+    // Error handled silently
   } finally {
     deleteLoading.value = false
   }

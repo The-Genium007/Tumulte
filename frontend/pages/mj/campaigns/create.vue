@@ -105,7 +105,6 @@ definePageMeta({
 });
 
 const _router = useRouter();
-const toast = useToast();
 const { createCampaign } = useCampaigns();
 
 const name = ref("");
@@ -114,11 +113,6 @@ const creating = ref(false);
 
 const handleCreate = async () => {
   if (!name.value.trim()) {
-    toast.add({
-      title: "Erreur",
-      description: "Le nom de la campagne est requis",
-      color: "error",
-    });
     return;
   }
 
@@ -129,20 +123,9 @@ const handleCreate = async () => {
       description: description.value.trim() || undefined,
     });
 
-    toast.add({
-      title: "Succès",
-      description: `Campagne "${name.value}" créée avec succès`,
-      color: "success",
-    });
-
     _router.push("/mj/campaigns");
   } catch (error: unknown) {
     console.error("Failed to create campaign:", error);
-    toast.add({
-      title: "Erreur",
-      description: (error as { data?: { error?: string } })?.data?.error || "Impossible de créer la campagne",
-      color: "error",
-    });
   } finally {
     creating.value = false;
   }
