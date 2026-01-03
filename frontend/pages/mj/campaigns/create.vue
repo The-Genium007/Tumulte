@@ -2,15 +2,18 @@
 
     <div class="min-h-screen py-6">
       <div class="space-y-6">
+        <!-- Bouton retour -->
+        <UButton
+          color="neutral"
+          variant="soft"
+          icon="i-lucide-arrow-left"
+          label="Retour aux campagnes"
+          @click="_router.push('/mj/campaigns')"
+        />
+
         <!-- Header -->
         <UCard>
           <div class="flex items-center gap-4">
-            <UButton
-              color="neutral"
-              variant="ghost"
-              icon="i-lucide-arrow-left"
-              @click="_router.push('/mj/campaigns')"
-            />
             <div class="bg-primary-500/10 p-3 rounded-xl">
               <UIcon name="i-lucide-folder-plus" class="size-8 text-primary-500" />
             </div>
