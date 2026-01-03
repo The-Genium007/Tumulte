@@ -4,6 +4,7 @@ import type {
   CampaignMembership,
   CampaignInvitation,
   StreamerSearchResult,
+  LiveStatusMap,
 } from "@/types";
 
 export interface CampaignMember {
@@ -12,6 +13,7 @@ export interface CampaignMember {
   isOwner: boolean;
   streamer: {
     id: string;
+    twitchUserId: string;
     twitchDisplayName: string;
     twitchLogin: string;
     profileImageUrl?: string;
@@ -120,7 +122,6 @@ export const useCampaigns = () => {
     });
     if (!response.ok) throw new Error("Failed to fetch campaign members");
     const data = await response.json();
-    console.log("📊 Campaign members from API:", data.data.members);
     return data.data.members;
   };
 
@@ -323,6 +324,21 @@ export const useCampaigns = () => {
   };
 
   /**
+   * Récupère le statut live des membres d'une campagne
+   */
+  const getLiveStatus = async (campaignId: string): Promise<LiveStatusMap> => {
+    const response = await fetch(
+      `${API_URL}/mj/campaigns/${campaignId}/live-status`,
+      {
+        credentials: "include",
+      },
+    );
+    if (!response.ok) throw new Error("Failed to fetch live status");
+    const data = await response.json();
+    return data.data;
+  };
+
+  /**
    * Récupère le statut d'autorisation pour toutes les campagnes
    */
   const getAuthorizationStatus = async (): Promise<
@@ -380,5 +396,8 @@ export const useCampaigns = () => {
     grantAuthorization,
     revokeAuthorization,
     getAuthorizationStatus,
+
+    // Live Status
+    getLiveStatus,
   };
 };

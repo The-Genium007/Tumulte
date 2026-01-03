@@ -432,6 +432,7 @@ export class PollPollingService {
 
   /**
    * Envoie des messages automatiques dans le chat en fonction du temps restant
+   * Note: Les affiliés/partners ont déjà le countdown natif Twitch, donc on ne leur envoie pas
    */
   private async sendAutomaticChatMessages(
     pollInstanceId: string,
@@ -448,60 +449,73 @@ export class PollPollingService {
 
     const sentSet = this.sentMessages.get(pollInstanceId)!
 
-    // Message à la moitié du temps
-    const halfwaySeconds = Math.floor(durationSeconds / 2)
-    if (
-      remainingSeconds <= halfwaySeconds &&
-      remainingSeconds > halfwaySeconds - 3 &&
-      !sentSet.has(messageKey(halfwaySeconds))
-    ) {
-      sentSet.add(messageKey(halfwaySeconds))
-      await this.broadcastMessage(
-        channelLinks,
-        `⏱️ Il reste ${remainingSeconds} secondes pour voter !`
-      )
-    }
+    // Filtrer : ne pas envoyer le countdown aux affiliés/partners (ils ont le timer natif Twitch)
+    // On garde seulement les streamers en mode chat (non-affiliés) pour les messages de countdown
+    const nonAffiliateLinks = channelLinks.filter((link) => {
+      const broadcasterType = (link.streamer?.broadcasterType || '').toLowerCase()
+      return broadcasterType !== 'affiliate' && broadcasterType !== 'partner'
+    })
 
-    // Message à 10 secondes
-    if (remainingSeconds <= 10 && remainingSeconds > 7 && !sentSet.has(messageKey(10))) {
-      sentSet.add(messageKey(10))
-      await this.broadcastMessage(channelLinks, `⏱️ Plus que 10 secondes pour voter !`)
-    }
+    // Messages de countdown uniquement pour les non-affiliés (ils n'ont pas le timer natif Twitch)
+    if (nonAffiliateLinks.length > 0) {
+      // Message à la moitié du temps
+      const halfwaySeconds = Math.floor(durationSeconds / 2)
+      if (
+        remainingSeconds <= halfwaySeconds &&
+        remainingSeconds > halfwaySeconds - 3 &&
+        !sentSet.has(messageKey(halfwaySeconds))
+      ) {
+        sentSet.add(messageKey(halfwaySeconds))
+        await this.broadcastMessage(
+          nonAffiliateLinks,
+          `⏱️ Il reste ${remainingSeconds} secondes pour voter !`
+        )
+      }
 
-    // Message à 5 secondes - condition élargie pour tenir compte du cycle de 3s
-    if (remainingSeconds <= 6 && remainingSeconds > 3 && !sentSet.has(messageKey(5))) {
-      sentSet.add(messageKey(5))
-      await this.broadcastMessage(channelLinks, `⏱️ 5 secondes restantes !`)
-    }
+      // Message à 10 secondes
+      if (remainingSeconds <= 10 && remainingSeconds > 7 && !sentSet.has(messageKey(10))) {
+        sentSet.add(messageKey(10))
+        await this.broadcastMessage(nonAffiliateLinks, `⏱️ Plus que 10 secondes pour voter !`)
+      }
 
-    // Message à 4 secondes - condition élargie
-    if (remainingSeconds <= 5 && remainingSeconds > 2 && !sentSet.has(messageKey(4))) {
-      sentSet.add(messageKey(4))
-      await this.broadcastMessage(channelLinks, `⏱️ 4...`)
-    }
+      // Message à 5 secondes - condition élargie pour tenir compte du cycle de 3s
+      if (remainingSeconds <= 6 && remainingSeconds > 3 && !sentSet.has(messageKey(5))) {
+        sentSet.add(messageKey(5))
+        await this.broadcastMessage(nonAffiliateLinks, `⏱️ 5 secondes restantes !`)
+      }
 
-    // Message à 3 secondes
-    if (remainingSeconds <= 4 && remainingSeconds > 1 && !sentSet.has(messageKey(3))) {
-      sentSet.add(messageKey(3))
-      await this.broadcastMessage(channelLinks, `⏱️ 3...`)
-    }
+      // Message à 4 secondes - condition élargie
+      if (remainingSeconds <= 5 && remainingSeconds > 2 && !sentSet.has(messageKey(4))) {
+        sentSet.add(messageKey(4))
+        await this.broadcastMessage(nonAffiliateLinks, `⏱️ 4...`)
+      }
 
-    // Message à 2 secondes - condition élargie
-    if (remainingSeconds <= 3 && remainingSeconds > 0 && !sentSet.has(messageKey(2))) {
-      sentSet.add(messageKey(2))
-      await this.broadcastMessage(channelLinks, `⏱️ 2...`)
-    }
+      // Message à 3 secondes
+      if (remainingSeconds <= 4 && remainingSeconds > 1 && !sentSet.has(messageKey(3))) {
+        sentSet.add(messageKey(3))
+        await this.broadcastMessage(nonAffiliateLinks, `⏱️ 3...`)
+      }
 
-    // Message à 1 seconde - condition élargie pour accepter aussi les valeurs négatives
-    if (remainingSeconds <= 2 && remainingSeconds >= -1 && !sentSet.has(messageKey(1))) {
-      sentSet.add(messageKey(1))
-      await this.broadcastMessage(channelLinks, `⏱️ 1...`)
-    }
+      // Message à 2 secondes - condition élargie
+      if (remainingSeconds <= 3 && remainingSeconds > 0 && !sentSet.has(messageKey(2))) {
+        sentSet.add(messageKey(2))
+        await this.broadcastMessage(nonAffiliateLinks, `⏱️ 2...`)
+      }
 
-    // Message de clôture - déclenché quand il reste 0 seconde ou moins
-    if (remainingSeconds <= 0 && !sentSet.has(messageKey(0))) {
-      sentSet.add(messageKey(0))
-      await this.broadcastMessage(channelLinks, `🔒 Les votes sont clôturés ! Merci d'avoir voté !`)
+      // Message à 1 seconde - condition élargie pour accepter aussi les valeurs négatives
+      if (remainingSeconds <= 2 && remainingSeconds >= -1 && !sentSet.has(messageKey(1))) {
+        sentSet.add(messageKey(1))
+        await this.broadcastMessage(nonAffiliateLinks, `⏱️ 1...`)
+      }
+
+      // Message de clôture pour les non-affiliés
+      if (remainingSeconds <= 0 && !sentSet.has(messageKey(0))) {
+        sentSet.add(messageKey(0))
+        await this.broadcastMessage(
+          nonAffiliateLinks,
+          `🔒 Les votes sont clôturés ! Merci d'avoir voté !`
+        )
+      }
     }
   }
 

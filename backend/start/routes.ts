@@ -63,6 +63,7 @@ router
     router.delete('/campaigns/:id', '#controllers/mj/campaigns_controller.destroy')
     router.post('/campaigns/:id/invite', '#controllers/mj/campaigns_controller.invite')
     router.get('/campaigns/:id/members', '#controllers/mj/campaigns_controller.listMembers')
+    router.get('/campaigns/:id/live-status', '#controllers/mj/campaigns_controller.liveStatus')
     router.delete(
       '/campaigns/:id/members/:memberId',
       '#controllers/mj/campaigns_controller.removeMember'
