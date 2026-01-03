@@ -337,6 +337,7 @@ import { useSessionPollsStore } from "@/stores/sessionPolls";
 
 definePageMeta({
   layout: "authenticated" as const,
+  middleware: ["auth"],
 });
 
 const config = useRuntimeConfig();

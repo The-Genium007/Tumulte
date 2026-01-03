@@ -558,6 +558,7 @@ import { useWebSocket } from "@/composables/useWebSocket";
 
 definePageMeta({
   layout: "authenticated" as const,
+  middleware: ["auth"],
 });
 
 const config = useRuntimeConfig();
