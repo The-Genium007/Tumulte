@@ -39,17 +39,14 @@ export class PollRepository {
   }
 
   async getNextOrderIndex(sessionId: string): Promise<number> {
-    const result = await Poll.query().where('sessionId', sessionId).max('orderIndex as maxIndex')
+    const result = await Poll.query().where('sessionId', sessionId).max('order_index as maxIndex')
     const maxIndex = result[0]?.$extras?.maxIndex
     return maxIndex !== null && maxIndex !== undefined ? maxIndex + 1 : 0
   }
 
   async reorderPolls(sessionId: string, pollIds: string[]): Promise<void> {
     for (const [i, pollId] of pollIds.entries()) {
-      await Poll.query()
-        .where('id', pollId)
-        .where('sessionId', sessionId)
-        .update({ order_index: i })
+      await Poll.query().where('id', pollId).where('sessionId', sessionId).update({ orderIndex: i })
     }
   }
 }

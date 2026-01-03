@@ -8,14 +8,15 @@ export const useSettings = () => {
     try {
       const response = await $fetch("/streamer/revoke", {
         method: "POST",
-        baseURL: config.public.apiBaseUrl as string,
+        baseURL: config.public.apiBase as string,
         credentials: "include",
       });
 
       return response;
     } catch (error: unknown) {
       console.error("Failed to revoke Twitch access:", error);
-      throw new Error(error.data?.error || "Erreur lors de la révocation");
+      const errorData = error as { data?: { error?: string } };
+      throw new Error(errorData.data?.error || "Erreur lors de la révocation");
     }
   };
 
@@ -26,15 +27,16 @@ export const useSettings = () => {
     try {
       const response = await $fetch("/account/delete", {
         method: "DELETE",
-        baseURL: config.public.apiBaseUrl as string,
+        baseURL: config.public.apiBase as string,
         credentials: "include",
       });
 
       return response;
     } catch (error: unknown) {
       console.error("Failed to delete account:", error);
+      const errorData = error as { data?: { error?: string } };
       throw new Error(
-        error.data?.error || "Erreur lors de la suppression du compte",
+        errorData.data?.error || "Erreur lors de la suppression du compte",
       );
     }
   };

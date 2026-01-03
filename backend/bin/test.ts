@@ -43,13 +43,28 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
   })
   .testRunner()
   .configure(async (app) => {
-    processCLIArgs(process.argv.splice(2))
+    const { plugins, runnerHooks, reporters, suites } = await import('../tests/bootstrap.js')
+
+    // Check for --suite parameter to filter suites
+    const args = process.argv.slice(2)
+    const suiteIndex = args.findIndex((arg: string) => arg.startsWith('--suite='))
+    let filteredSuites = suites
+
+    if (suiteIndex !== -1) {
+      const suiteName = args[suiteIndex].split('=')[1]
+      filteredSuites = suites.filter((s: { name: string }) => s.name === suiteName)
+      // Remove --suite from args before processCLIArgs
+      args.splice(suiteIndex, 1)
+    }
+
+    processCLIArgs(args)
     configure({
       ...app.rcFile.tests,
-      ...{
-        setup: [],
-        teardown: [() => app.terminate()],
-      },
+      plugins,
+      reporters,
+      suites: filteredSuites,
+      ...runnerHooks,
+      teardown: [...(runnerHooks.teardown || []), () => app.terminate()],
     })
   })
   .run(() => run())

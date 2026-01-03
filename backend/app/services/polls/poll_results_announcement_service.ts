@@ -183,7 +183,7 @@ export class PollResultsAnnouncementService {
   }
 
   /**
-   * Envoie le message à tous les streamers (3 fois chacun)
+   * Envoie le message à tous les streamers (1 fois chacun)
    */
   private async broadcastResults(
     streamerIds: string[],
@@ -197,30 +197,22 @@ export class PollResultsAnnouncementService {
 
     const results = await Promise.allSettled(
       streamerIds.map(async (streamerId) => {
-        for (let attempt = 1; attempt <= 3; attempt++) {
-          try {
-            await chatService.sendMessage(streamerId, message)
+        try {
+          await chatService.sendMessage(streamerId, message)
 
-            logger.debug({
-              event: 'poll_results_sent',
-              pollInstanceId,
-              streamerId,
-              attempt,
-            })
-
-            // Délai avant le message suivant (sauf après le 3ème)
-            if (attempt < 3) {
-              await new Promise((resolve) => setTimeout(resolve, 2000))
-            }
-          } catch (error) {
-            logger.error({
-              event: 'poll_results_send_failed',
-              pollInstanceId,
-              streamerId,
-              attempt,
-              error: error instanceof Error ? error.message : String(error),
-            })
-          }
+          logger.debug({
+            event: 'poll_results_sent',
+            pollInstanceId,
+            streamerId,
+          })
+        } catch (error) {
+          logger.error({
+            event: 'poll_results_send_failed',
+            pollInstanceId,
+            streamerId,
+            error: error instanceof Error ? error.message : String(error),
+          })
+          throw error
         }
       })
     )

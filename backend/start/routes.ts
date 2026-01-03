@@ -40,9 +40,13 @@ router
   .group(() => {
     router.get('/twitch/redirect', [authController, 'redirect'])
     router.get('/twitch/callback', [authController, 'callback'])
-    router.post('/logout', [authController, 'logout']).use(middleware.auth())
-    router.get('/me', [authController, 'me']).use(middleware.auth())
-    router.post('/switch-role', [authController, 'switchRole']).use(middleware.auth())
+    router
+      .post('/logout', [authController, 'logout'])
+      .use(middleware.auth({ guards: ['web', 'api'] }))
+    router.get('/me', [authController, 'me']).use(middleware.auth({ guards: ['web', 'api'] }))
+    router
+      .post('/switch-role', [authController, 'switchRole'])
+      .use(middleware.auth({ guards: ['web', 'api'] }))
   })
   .prefix('/auth')
 
@@ -59,6 +63,7 @@ router
     router.delete('/campaigns/:id', '#controllers/mj/campaigns_controller.destroy')
     router.post('/campaigns/:id/invite', '#controllers/mj/campaigns_controller.invite')
     router.get('/campaigns/:id/members', '#controllers/mj/campaigns_controller.listMembers')
+    router.get('/campaigns/:id/live-status', '#controllers/mj/campaigns_controller.liveStatus')
     router.delete(
       '/campaigns/:id/members/:memberId',
       '#controllers/mj/campaigns_controller.removeMember'
@@ -127,7 +132,7 @@ router
     router.get('/streamers/search', '#controllers/mj/streamers_controller.search')
   })
   .prefix('/mj')
-  .use(middleware.auth())
+  .use(middleware.auth({ guards: ['web', 'api'] }))
   .use(middleware.role({ role: 'MJ' }))
 
 // ==========================================
@@ -166,7 +171,7 @@ router
     router.post('/revoke', '#controllers/streamer/authorization_controller.revokeAccess')
   })
   .prefix('/streamer')
-  .use(middleware.auth())
+  .use(middleware.auth({ guards: ['web', 'api'] }))
   .use(middleware.role({ role: 'STREAMER' }))
 
 // ==========================================
@@ -192,7 +197,7 @@ router
     router.delete('/delete', '#controllers/account_controller.deleteAccount')
   })
   .prefix('/account')
-  .use(middleware.auth())
+  .use(middleware.auth({ guards: ['web', 'api'] }))
 
 // ==========================================
 // Routes Support (accessible à tous les rôles authentifiés)
@@ -202,7 +207,7 @@ router
     router.post('/report', [supportController, 'report'])
   })
   .prefix('/support')
-  .use(middleware.auth())
+  .use(middleware.auth({ guards: ['web', 'api'] }))
 
 // ==========================================
 // Transmit WebSocket routes

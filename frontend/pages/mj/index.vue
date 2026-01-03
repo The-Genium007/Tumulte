@@ -123,11 +123,14 @@
                 class="flex items-center justify-between p-3 bg-gray-800/30 rounded-lg"
               >
                 <div class="flex items-center gap-2">
-                  <TwitchAvatar
-                    :image-url="streamer.profileImageUrl"
-                    :display-name="streamer.twitchDisplayName"
-                    size="sm"
-                  />
+                  <div class="relative">
+                    <TwitchAvatar
+                      :image-url="streamer.profileImageUrl"
+                      :display-name="streamer.twitchDisplayName"
+                      size="sm"
+                    />
+                    <LiveBadge :live-status="liveStatus[streamer.twitchUserId]" />
+                  </div>
                   <div>
                     <p class="font-semibold text-white text-sm">
                       {{ streamer.twitchDisplayName }}
@@ -555,6 +558,7 @@ import { useWebSocket } from "@/composables/useWebSocket";
 
 definePageMeta({
   layout: "authenticated" as const,
+  middleware: ["auth"],
 });
 
 const config = useRuntimeConfig();
@@ -567,7 +571,7 @@ const {
   deleteTemplate,
   launchPoll,
 } = usePollTemplates();
-const { campaigns, fetchCampaigns, selectedCampaign, getCampaignMembers } = useCampaigns();
+const { campaigns, fetchCampaigns, selectedCampaign, getCampaignMembers, getLiveStatus } = useCampaigns();
 
 // WebSocket setup
 const { subscribeToPoll } = useWebSocket();
@@ -579,6 +583,9 @@ interface Poll {
   id: string;
   question: string;
   options: string[];
+  type?: "UNIQUE" | "STANDARD";
+  channelPointsEnabled?: boolean;
+  channelPointsAmount?: number;
 }
 
 interface Session {
@@ -596,6 +603,7 @@ interface ActiveSession {
 
 interface StreamerDisplay {
   id: string;
+  twitchUserId: string;
   twitchDisplayName: string;
   twitchLogin: string;
   profileImageUrl: string;
@@ -631,6 +639,10 @@ const selectCampaign = (campaignId: string) => {
 const streamersLoading = ref(false);
 const campaignMembers = ref<CampaignMember[]>([]);
 
+// Live status
+import type { LiveStatusMap } from "@/types";
+const liveStatus = ref<LiveStatusMap>({});
+
 // Filtrer les streamers par campagne sélectionnée
 const selectedCampaignStreamers = computed<StreamerDisplay[]>(() => {
   // Retourner uniquement les membres actifs de la campagne
@@ -638,6 +650,7 @@ const selectedCampaignStreamers = computed<StreamerDisplay[]>(() => {
     .filter((member) => member.status === 'ACTIVE')
     .map((member): StreamerDisplay => ({
       id: member.streamer.id,
+      twitchUserId: member.streamer.twitchUserId,
       twitchDisplayName: member.streamer.twitchDisplayName,
       twitchLogin: member.streamer.twitchLogin,
       profileImageUrl: member.streamer.profileImageUrl || '',
@@ -662,11 +675,25 @@ const formatAuthTime = (seconds: number | null): string => {
   return `${hours}h${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
+// Fetch live status for streamers
+const fetchLiveStatus = async (campaignId: string) => {
+  try {
+    const status = await getLiveStatus(campaignId);
+    liveStatus.value = status;
+  } catch (error) {
+    console.error("Error fetching live status:", error);
+  }
+};
+
 // Charger les membres de la campagne sélectionnée
 const loadCampaignMembers = async (campaignId: string) => {
   streamersLoading.value = true;
   try {
-    campaignMembers.value = await getCampaignMembers(campaignId);
+    const [members] = await Promise.all([
+      getCampaignMembers(campaignId),
+      fetchLiveStatus(campaignId),
+    ]);
+    campaignMembers.value = members;
     console.log('🎯 Campaign members loaded:', campaignMembers.value);
     console.log('🖼️ Streamers with images:', selectedCampaignStreamers.value);
   } catch (error) {
@@ -1074,7 +1101,10 @@ const sendPoll = async () => {
         title: currentPoll.value.question,
         options: currentPoll.value.options,
         durationSeconds: pollDuration.value,
-        type: currentPoll.value.type || 'STANDARD', // Vote unique ou multiple
+        type: currentPoll.value.type || 'STANDARD',
+        // Channel points from poll configuration (set in session poll creation)
+        channelPointsEnabled: currentPoll.value.channelPointsEnabled ?? false,
+        channelPointsAmount: currentPoll.value.channelPointsAmount ?? null,
       }),
     });
 
@@ -1153,8 +1183,8 @@ const sendPoll = async () => {
           pollStatus.value = 'sent';
           console.log('[WebSocket] pollStatus set to:', pollStatus.value);
 
-          // Utiliser finalVotes au lieu de votesByOption pour poll:end
-          const votesData = ('finalVotes' in data ? (data as { finalVotes: Record<string, number> }).finalVotes : data.votesByOption);
+          // Utiliser votesByOption pour poll:end
+          const votesData = data.votesByOption;
           console.log('[WebSocket] votesData:', votesData);
 
           if (votesData) {
@@ -1369,7 +1399,7 @@ onMounted(async () => {
         pollStatus.value = 'sent';
         console.log('[WebSocket] pollStatus set to:', pollStatus.value);
 
-        const votesData = ('finalVotes' in data ? (data as { finalVotes: Record<string, number> }).finalVotes : data.votesByOption);
+        const votesData = data.votesByOption;
         console.log('[WebSocket] votesData:', votesData);
 
         if (votesData) {
