@@ -4,16 +4,7 @@
     class="absolute -top-1 -right-1 flex items-center justify-center"
     :title="tooltipText"
   >
-    <span class="relative flex size-4">
-      <span
-        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"
-      ></span>
-      <span
-        class="relative inline-flex rounded-full size-4 bg-red-600 items-center justify-center"
-      >
-        <span class="text-[8px] font-bold text-white">LIVE</span>
-      </span>
-    </span>
+    <span class="inline-flex rounded-full size-3 bg-red-600"></span>
   </div>
 </template>
 

@@ -49,13 +49,13 @@
             </div>
           </UCard>
 
-          <UCard>
+          <UCard class="cursor-pointer hover:bg-gray-800/50 transition-colors" @click="fetchLiveStatus">
             <div class="flex items-center gap-4">
               <div class="bg-red-500/10 p-3 rounded-xl">
                 <UIcon name="i-lucide-radio" class="size-8 text-red-500" />
               </div>
               <div>
-                <p class="text-sm text-gray-400">En Live</p>
+                <p class="text-sm text-gray-400">En Live <span class="text-xs">(clic pour refresh)</span></p>
                 <p class="text-2xl font-bold text-white">{{ liveMembersCount }}</p>
               </div>
             </div>
@@ -526,10 +526,12 @@ const stopAutoRefresh = () => {
 // Fetch live status for all members
 const fetchLiveStatus = async () => {
   try {
+    console.log("[LiveStatus] Fetching live status for campaign:", campaignId);
     const status = await getLiveStatus(campaignId);
+    console.log("[LiveStatus] Response:", JSON.stringify(status));
     liveStatus.value = status;
   } catch (error) {
-    console.error("Error fetching live status:", error);
+    console.error("[LiveStatus] Error fetching live status:", error);
   }
 };
 

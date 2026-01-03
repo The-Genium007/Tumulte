@@ -189,6 +189,13 @@ export default class CampaignsController {
         ?.filter((m) => m.status === 'ACTIVE' && m.streamer?.twitchUserId)
         .map((m) => m.streamer.twitchUserId) || []
 
+    logger.info({
+      event: 'live_status_request',
+      campaignId: params.id,
+      twitchUserIds,
+      memberCount: campaign.memberships?.length || 0,
+    })
+
     if (twitchUserIds.length === 0) {
       return response.ok({ data: {} })
     }
@@ -197,11 +204,22 @@ export default class CampaignsController {
       // Récupérer un app token pour l'API Twitch
       const accessToken = await this.twitchApiService.getAppAccessToken()
 
+      logger.info({
+        event: 'twitch_app_token_obtained',
+        tokenPrefix: accessToken.substring(0, 10) + '...',
+      })
+
       // Récupérer les streams en cours
       const liveStreams = await this.twitchApiService.getStreamsByUserIds(
         twitchUserIds,
         accessToken
       )
+
+      logger.info({
+        event: 'twitch_streams_response',
+        liveStreamCount: liveStreams.size,
+        liveUserIds: Array.from(liveStreams.keys()),
+      })
 
       // Construire la réponse: map twitchUserId -> live info (snake_case for API response)
       interface LiveStatusEntry {

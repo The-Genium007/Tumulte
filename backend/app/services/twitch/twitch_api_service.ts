@@ -233,7 +233,10 @@ class TwitchApiService {
       const params = chunk.map((id) => `user_id=${encodeURIComponent(id)}`).join('&')
 
       try {
-        const response = await fetch(`https://api.twitch.tv/helix/streams?${params}`, {
+        const url = `https://api.twitch.tv/helix/streams?${params}`
+        logger.info(`Fetching Twitch streams: ${url}`)
+
+        const response = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'Client-Id': clientId,
@@ -247,6 +250,8 @@ class TwitchApiService {
         }
 
         const data = (await response.json()) as { data: TwitchStream[] }
+
+        logger.info(`Twitch streams response: ${JSON.stringify(data.data.map((s) => s.user_id))}`)
 
         // Ajouter les streams actifs à la map
         for (const stream of data.data) {

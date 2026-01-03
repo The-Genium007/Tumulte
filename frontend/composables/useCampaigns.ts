@@ -13,6 +13,7 @@ export interface CampaignMember {
   isOwner: boolean;
   streamer: {
     id: string;
+    twitchUserId: string;
     twitchDisplayName: string;
     twitchLogin: string;
     profileImageUrl?: string;
