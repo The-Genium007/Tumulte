@@ -1,6 +1,6 @@
 <template>
   <UAlert
-    v-if="showBanner"
+    v-if="shouldShowBanner"
     color="info"
     variant="soft"
     icon="i-lucide-bell"
@@ -38,20 +38,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import { usePushNotifications } from "@/composables/usePushNotifications";
 
 const {
   loading,
   permissionStatus,
   subscribe,
-  shouldShowPermissionBanner,
+  shouldShowBanner,
   dismissPermissionBanner,
 } = usePushNotifications();
 
 const showDeniedModal = ref(false);
-
-const showBanner = computed(() => shouldShowPermissionBanner());
 
 const handleEnable = async () => {
   const success = await subscribe();

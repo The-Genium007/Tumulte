@@ -241,11 +241,16 @@ export const usePushNotificationsStore = defineStore(
       }
     }
 
-    function shouldShowPermissionBanner(): boolean {
+    const shouldShowBanner = computed(() => {
       if (!isSupported.value) return false;
       if (permissionStatus.value !== "default") return false;
       if (bannerDismissed.value) return false;
       return true;
+    });
+
+    // Fonction legacy pour compatibilité
+    function shouldShowPermissionBanner(): boolean {
+      return shouldShowBanner.value;
     }
 
     function dismissPermissionBanner(): void {
@@ -277,6 +282,7 @@ export const usePushNotificationsStore = defineStore(
       isPushEnabled,
       canRequestPermission,
       isPermissionDenied,
+      shouldShowBanner,
 
       // Actions
       fetchVapidPublicKey,

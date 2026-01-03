@@ -19,6 +19,7 @@ export function usePushNotifications() {
     isPushEnabled,
     canRequestPermission,
     isPermissionDenied,
+    shouldShowBanner,
   } = storeToRefs(store);
 
   // Initialiser le statut de permission au montage
@@ -40,6 +41,7 @@ export function usePushNotifications() {
     isPushEnabled,
     canRequestPermission,
     isPermissionDenied,
+    shouldShowBanner,
 
     // Actions
     subscribe: store.subscribe,
