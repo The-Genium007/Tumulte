@@ -1,7 +1,10 @@
 services:
   # Backend - AdonisJS API + WebSocket
+  # ENV_SUFFIX differentiates environments: "prod" or "staging"
+  # Cloudflare tunnel uses: tumulte-backend-prod:3333 or tumulte-backend-staging:3333
   backend:
-    container_name: ${COMPOSE_PROJECT_NAME:-tumulte}-backend
+    container_name: tumulte-backend-${ENV_SUFFIX:-prod}
+    hostname: tumulte-backend-${ENV_SUFFIX:-prod}
     build:
       context: .
       dockerfile: Dockerfile

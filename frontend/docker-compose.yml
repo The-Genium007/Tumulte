@@ -1,7 +1,10 @@
 services:
   # Frontend - Nuxt dashboard
+  # ENV_SUFFIX differentiates environments: "prod" or "staging"
+  # Cloudflare tunnel uses: tumulte-frontend-prod:3000 or tumulte-frontend-staging:3000
   frontend:
-    container_name: ${COMPOSE_PROJECT_NAME:-tumulte}-frontend
+    container_name: tumulte-frontend-${ENV_SUFFIX:-prod}
+    hostname: tumulte-frontend-${ENV_SUFFIX:-prod}
     build:
       context: .
       dockerfile: Dockerfile
