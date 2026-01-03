@@ -175,41 +175,6 @@
 
         <!-- Grille des zones de danger -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Révocation Twitch (si streamer) -->
-          <UCard v-if="user?.role === 'STREAMER'" class="border-error-500/50">
-            <template #header>
-              <div class="flex items-center gap-3">
-                <div class="bg-error-500/10 p-3 rounded-xl">
-                  <UIcon name="i-lucide-twitch" class="size-6 text-error-500" />
-                </div>
-                <div>
-                  <h2 class="text-xl font-semibold text-white">Révocation Twitch</h2>
-                  <p class="text-sm text-gray-400">Gérer votre connexion Twitch</p>
-                </div>
-              </div>
-            </template>
-
-            <div class="space-y-4">
-              <div class="p-4 rounded-lg bg-error-500/5 border border-error-500/20">
-                <div class="flex items-start justify-between">
-                  <div class="flex-1">
-                    <h3 class="font-semibold text-white mb-1">Révoquer l'accès Twitch</h3>
-                    <p class="text-sm text-gray-400">
-                      Révoque l'accès de Tumulte à votre compte Twitch et désactive votre compte streamer.
-                    </p>
-                  </div>
-                  <UButton
-                    color="error"
-                    variant="solid"
-                    label="Révoquer l'accès"
-                    :loading="revokeLoading"
-                    @click="handleRevokeTwitch"
-                  />
-                </div>
-              </div>
-            </div>
-          </UCard>
-
           <!-- Révocation de compte -->
           <UCard class="border-error-500/50" :class="{ 'md:col-span-2': user?.role !== 'STREAMER' }">
           <template #header>
@@ -415,10 +380,6 @@ const goBackToDashboard = () => {
   } else {
     _router.push('/')
   }
-}
-
-const handleRevokeTwitch = () => {
-  showRevokeModal.value = true
 }
 
 const confirmRevokeTwitch = async () => {
