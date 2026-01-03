@@ -1,10 +1,12 @@
 import { inject } from '@adonisjs/core'
+import app from '@adonisjs/core/services/app'
 import type { HttpContext } from '@adonisjs/core/http'
 import logger from '@adonisjs/core/services/logger'
 import { PollSessionRepository } from '#repositories/poll_session_repository'
 import { PollRepository } from '#repositories/poll_repository'
 import { CampaignRepository } from '#repositories/campaign_repository'
 import { HealthCheckService } from '#services/health_check_service'
+import { PushNotificationService } from '#services/notifications/push_notification_service'
 import { PollSessionDto } from '#dtos/polls/poll_session_dto'
 import { PollDto } from '#dtos/polls/poll_dto'
 import { validateRequest } from '#middleware/validate_middleware'
@@ -132,6 +134,41 @@ export default class PollSessionsController {
     }
 
     logger.info({ campaignId, sessionId }, 'Health check passed, session ready to launch')
+
+    // En mode dev, envoyer une notification de test au MJ
+    if (!app.inProduction) {
+      const pushService = new PushNotificationService()
+      pushService
+        .sendToUser(
+          userId,
+          'session:reminder',
+          {
+            title: '[DEV] Session lancée !',
+            body: `La session "${session.name}" est prête à être lancée.`,
+            data: {
+              url: `/mj/campaigns/${campaignId}`,
+              campaignId,
+            },
+            actions: [{ action: 'view', title: 'Voir' }],
+          },
+          true // bypassPreferences
+        )
+        .then((result) => {
+          logger.info(
+            { event: 'push_notification_dev_test_sent', userId, sent: result.sent },
+            'Dev test notification sent'
+          )
+        })
+        .catch((err: unknown) => {
+          logger.warn(
+            {
+              event: 'push_notification_dev_test_failed',
+              error: err instanceof Error ? err.message : String(err),
+            },
+            'Failed to send dev test notification'
+          )
+        })
+    }
 
     // Retourner la session avec ses polls
     return response.ok({

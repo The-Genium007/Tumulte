@@ -20,6 +20,12 @@ export class PushNotificationService {
   constructor() {
     this.subscriptionRepository = new PushSubscriptionRepository()
     this.preferenceRepository = new NotificationPreferenceRepository()
+
+    // S'assurer que la config VAPID est initialisée au démarrage
+    // L'accès au getter déclenche l'initialisation et l'appel à webPush.setVapidDetails()
+    if (!pushConfig.isConfigured) {
+      logger.warn('Push notifications are not configured - VAPID keys missing')
+    }
   }
 
   /**
