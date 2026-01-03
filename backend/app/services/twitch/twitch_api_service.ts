@@ -23,6 +23,23 @@ interface TwitchUserInfo {
   broadcaster_type: string
 }
 
+interface TwitchStream {
+  id: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  user_id: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  user_login: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  user_name: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  game_name: string
+  title: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  viewer_count: number
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  started_at: string
+}
+
 class TwitchApiService {
   private appAccessToken: string | null = null
   private tokenExpiry: number = 0
@@ -183,6 +200,63 @@ class TwitchApiService {
 
       const data = (await response.json()) as { data: TwitchUserInfo[] }
       results.push(...data.data)
+    }
+
+    return results
+  }
+
+  /**
+   * Récupère les streams en cours pour une liste d'IDs utilisateur
+   * @param userIds - Liste des IDs utilisateur Twitch
+   * @param accessToken - Token d'accès (app ou user)
+   * @returns Map des user_id -> stream info (seulement ceux qui sont live)
+   */
+  async getStreamsByUserIds(
+    userIds: string[],
+    accessToken: string
+  ): Promise<Map<string, TwitchStream>> {
+    if (userIds.length === 0) {
+      return new Map()
+    }
+
+    const clientId = env.get('TWITCH_CLIENT_ID')
+
+    if (!clientId) {
+      throw new Error('Missing Twitch Client ID in environment')
+    }
+
+    const results = new Map<string, TwitchStream>()
+    const chunkSize = 100 // Twitch API limite à 100 IDs par requête
+
+    for (let i = 0; i < userIds.length; i += chunkSize) {
+      const chunk = userIds.slice(i, i + chunkSize)
+      const params = chunk.map((id) => `user_id=${encodeURIComponent(id)}`).join('&')
+
+      try {
+        const response = await fetch(`https://api.twitch.tv/helix/streams?${params}`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Client-Id': clientId,
+          },
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          logger.error(`Twitch API error (streams): ${response.status} - ${errorText}`)
+          throw new Error(`Twitch API error: ${response.status}`)
+        }
+
+        const data = (await response.json()) as { data: TwitchStream[] }
+
+        // Ajouter les streams actifs à la map
+        for (const stream of data.data) {
+          results.set(stream.user_id, stream)
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        logger.error(`Failed to get Twitch streams: ${errorMessage}`)
+        throw error
+      }
     }
 
     return results

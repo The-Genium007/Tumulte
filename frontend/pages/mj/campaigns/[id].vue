@@ -36,7 +36,7 @@
         </div>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <UCard>
             <div class="flex items-center gap-4">
               <div class="bg-primary-500/10 p-3 rounded-xl">
@@ -51,12 +51,36 @@
 
           <UCard>
             <div class="flex items-center gap-4">
+              <div class="bg-red-500/10 p-3 rounded-xl">
+                <UIcon name="i-lucide-radio" class="size-8 text-red-500" />
+              </div>
+              <div>
+                <p class="text-sm text-gray-400">En Live</p>
+                <p class="text-2xl font-bold text-white">{{ liveMembersCount }}</p>
+              </div>
+            </div>
+          </UCard>
+
+          <UCard>
+            <div class="flex items-center gap-4">
               <div class="bg-green-500/10 p-3 rounded-xl">
                 <UIcon name="i-lucide-user-check" class="size-8 text-green-500" />
               </div>
               <div>
                 <p class="text-sm text-gray-400">Actifs</p>
                 <p class="text-2xl font-bold text-white">{{ activeMembersCount }}</p>
+              </div>
+            </div>
+          </UCard>
+
+          <UCard>
+            <div class="flex items-center gap-4">
+              <div class="bg-blue-500/10 p-3 rounded-xl">
+                <UIcon name="i-lucide-shield-check" class="size-8 text-blue-500" />
+              </div>
+              <div>
+                <p class="text-sm text-gray-400">Autorisés</p>
+                <p class="text-2xl font-bold text-white">{{ authorizedMembersCount }}</p>
               </div>
             </div>
           </UCard>
@@ -108,22 +132,27 @@
 
           <div v-else class="space-y-3">
             <div
-              v-for="member in members"
+              v-for="member in sortedMembers"
               :key="member.id"
               class="flex items-center justify-between p-4 bg-gray-800/30 rounded-lg hover:bg-gray-700/30 transition-colors"
             >
               <div class="flex items-center gap-4">
-                <img
-                  v-if="member.streamer.profileImageUrl"
-                  :src="member.streamer.profileImageUrl"
-                  :alt="member.streamer.twitchDisplayName"
-                  class="size-12 rounded-full ring-2 ring-purple-500/20"
-                />
-                <div
-                  v-else
-                  class="size-12 rounded-full ring-2 ring-purple-500/20 bg-purple-500/20 flex items-center justify-center"
-                >
-                  <UIcon name="i-lucide-user" class="size-6 text-purple-500" />
+                <!-- Avatar with Live Badge -->
+                <div class="relative">
+                  <img
+                    v-if="member.streamer.profileImageUrl"
+                    :src="member.streamer.profileImageUrl"
+                    :alt="member.streamer.twitchDisplayName"
+                    class="size-12 rounded-full ring-2"
+                    :class="liveStatus[member.streamer.twitchUserId]?.is_live ? 'ring-red-500' : 'ring-purple-500/20'"
+                  />
+                  <div
+                    v-else
+                    class="size-12 rounded-full ring-2 ring-purple-500/20 bg-purple-500/20 flex items-center justify-center"
+                  >
+                    <UIcon name="i-lucide-user" class="size-6 text-purple-500" />
+                  </div>
+                  <LiveBadge :live-status="liveStatus[member.streamer.twitchUserId]" />
                 </div>
                 <div>
                   <div class="flex items-center gap-2">
@@ -133,6 +162,21 @@
                     <UBadge
                       :label="member.status === 'ACTIVE' ? 'Actif' : 'En attente'"
                       :color="member.status === 'ACTIVE' ? 'success' : 'warning'"
+                      variant="soft"
+                      size="sm"
+                    />
+                    <!-- Broadcaster type badge -->
+                    <UBadge
+                      v-if="member.streamer.broadcasterType === 'partner'"
+                      label="Partner"
+                      color="primary"
+                      variant="soft"
+                      size="sm"
+                    />
+                    <UBadge
+                      v-else-if="member.streamer.broadcasterType === 'affiliate'"
+                      label="Affiliate"
+                      color="info"
                       variant="soft"
                       size="sm"
                     />
@@ -146,10 +190,26 @@
                     @{{ member.streamer.twitchLogin }}
                     <UIcon name="i-lucide-external-link" class="size-3" />
                   </a>
+                  <!-- Live info -->
+                  <p
+                    v-if="liveStatus[member.streamer.twitchUserId]?.is_live"
+                    class="text-xs text-red-400 mt-1"
+                  >
+                    🔴 En live{{ liveStatus[member.streamer.twitchUserId]?.game_name ? ` sur ${liveStatus[member.streamer.twitchUserId].game_name}` : '' }}
+                    {{ liveStatus[member.streamer.twitchUserId]?.viewer_count !== undefined ? `(${liveStatus[member.streamer.twitchUserId].viewer_count} viewers)` : '' }}
+                  </p>
                 </div>
               </div>
 
-              <div class="flex gap-2">
+              <div class="flex items-center gap-4">
+                <!-- Authorization status badge with countdown -->
+                <MemberAuthorizationBadge
+                  v-if="member.status === 'ACTIVE'"
+                  :is-poll-authorized="member.isPollAuthorized"
+                  :remaining-seconds="member.authorizationRemainingSeconds"
+                  @expired="handleAuthorizationExpired"
+                />
+
                 <UButton
                   icon="i-lucide-x"
                   label="Révoquer"
@@ -342,19 +402,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useCampaigns } from "@/composables/useCampaigns";
-import type { Campaign, CampaignMembership, StreamerSearchResult } from "@/types";
+import type { Campaign, CampaignMembership, StreamerSearchResult, LiveStatusMap } from "@/types";
 
 const _router = useRouter();
 const route = useRoute();
 const campaignId = route.params.id as string;
 
-const { getCampaignDetails, inviteStreamer, removeMember, searchTwitchStreamers, deleteCampaign } = useCampaigns();
+const { getCampaignDetails, inviteStreamer, removeMember, searchTwitchStreamers, deleteCampaign, getLiveStatus } = useCampaigns();
 const toast = useToast();
 
 const campaign = ref<Campaign | null>(null);
+const liveStatus = ref<LiveStatusMap>({});
 
 definePageMeta({
   layout: "authenticated" as const,
@@ -369,9 +430,59 @@ const searchQuery = ref("");
 const searchResults = ref<StreamerSearchResult[]>([]);
 const searching = ref(false);
 
+// Auto-refresh interval for authorization status
+let refreshInterval: ReturnType<typeof setInterval> | null = null;
+const REFRESH_INTERVAL_MS = 60000; // Refresh every 60 seconds
+
 // Computed properties
 const activeMembersCount = computed(() => members.value.filter((m) => m.status === "ACTIVE").length);
 const pendingMembersCount = computed(() => members.value.filter((m) => m.status === "PENDING").length);
+const authorizedMembersCount = computed(() => members.value.filter((m) => m.status === "ACTIVE" && m.isPollAuthorized).length);
+const liveMembersCount = computed(() => {
+  return members.value.filter((m) => {
+    const twitchUserId = m.streamer?.twitchUserId;
+    return twitchUserId && liveStatus.value[twitchUserId]?.is_live;
+  }).length;
+});
+
+// Helper to get broadcaster type priority (lower = higher priority)
+const getBroadcasterTypePriority = (broadcasterType?: string): number => {
+  switch (broadcasterType) {
+    case "partner":
+      return 0;
+    case "affiliate":
+      return 1;
+    default:
+      return 2; // Non-affiliated
+  }
+};
+
+// Sorted members by priority: Live > Authorized > Partner > Affiliate > Non-affiliated > Not authorized
+const sortedMembers = computed(() => {
+  return [...members.value].sort((a, b) => {
+    const aLive = liveStatus.value[a.streamer?.twitchUserId]?.is_live ?? false;
+    const bLive = liveStatus.value[b.streamer?.twitchUserId]?.is_live ?? false;
+
+    // 1. Live status (live first)
+    if (aLive !== bLive) return aLive ? -1 : 1;
+
+    // 2. Authorization status (authorized first, but only for ACTIVE members)
+    const aAuthorized = a.status === "ACTIVE" && a.isPollAuthorized;
+    const bAuthorized = b.status === "ACTIVE" && b.isPollAuthorized;
+    if (aAuthorized !== bAuthorized) return aAuthorized ? -1 : 1;
+
+    // 3. Member status (ACTIVE before PENDING)
+    if (a.status !== b.status) return a.status === "ACTIVE" ? -1 : 1;
+
+    // 4. Broadcaster type (partner > affiliate > non-affiliated)
+    const aPriority = getBroadcasterTypePriority(a.streamer?.broadcasterType);
+    const bPriority = getBroadcasterTypePriority(b.streamer?.broadcasterType);
+    if (aPriority !== bPriority) return aPriority - bPriority;
+
+    // 5. Alphabetical by display name
+    return (a.streamer?.twitchDisplayName || "").localeCompare(b.streamer?.twitchDisplayName || "");
+  });
+});
 
 // Check if streamer is already invited
 const isStreamerAlreadyInvited = (streamerId: string | null) => {
@@ -387,12 +498,67 @@ const filteredSearchResults = computed(() => {
 // Load campaign and members
 onMounted(async () => {
   await loadMembers();
+  startAutoRefresh();
 });
+
+onUnmounted(() => {
+  stopAutoRefresh();
+  if (searchTimeout) {
+    clearTimeout(searchTimeout);
+    searchTimeout = null;
+  }
+});
+
+const startAutoRefresh = () => {
+  if (refreshInterval) return;
+  refreshInterval = setInterval(async () => {
+    await refreshMembersQuietly();
+  }, REFRESH_INTERVAL_MS);
+};
+
+const stopAutoRefresh = () => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = null;
+  }
+};
+
+// Fetch live status for all members
+const fetchLiveStatus = async () => {
+  try {
+    const status = await getLiveStatus(campaignId);
+    liveStatus.value = status;
+  } catch (error) {
+    console.error("Error fetching live status:", error);
+  }
+};
+
+// Refresh members without showing loading state (background refresh)
+const refreshMembersQuietly = async () => {
+  try {
+    const [data] = await Promise.all([
+      getCampaignDetails(campaignId),
+      fetchLiveStatus(),
+    ]);
+    campaign.value = data.campaign;
+    members.value = data.members;
+  } catch (error) {
+    console.error("Error refreshing members:", error);
+  }
+};
+
+// Handle authorization expiry - trigger a refresh
+const handleAuthorizationExpired = () => {
+  refreshMembersQuietly();
+};
 
 const loadMembers = async () => {
   loadingMembers.value = true;
   try {
-    const data = await getCampaignDetails(campaignId);
+    const [data] = await Promise.all([
+      getCampaignDetails(campaignId),
+      fetchLiveStatus(),
+    ]);
     campaign.value = data.campaign;
     members.value = data.members;
   } catch (error) {

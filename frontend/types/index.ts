@@ -147,3 +147,18 @@ export interface PollEndEvent {
   winningOptionIndex: number | null;
   endedAt: string;
 }
+
+// Live status types (snake_case from Twitch API response)
+export interface LiveStatus {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  is_live: boolean;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  game_name?: string;
+  title?: string;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  viewer_count?: number;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  started_at?: string;
+}
+
+export type LiveStatusMap = Record<string, LiveStatus>;

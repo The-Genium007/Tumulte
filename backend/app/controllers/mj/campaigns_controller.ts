@@ -1,8 +1,10 @@
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
+import logger from '@adonisjs/core/services/logger'
 import { CampaignService } from '#services/campaigns/campaign_service'
 import { MembershipService } from '#services/campaigns/membership_service'
 import { StreamerRepository } from '#repositories/streamer_repository'
+import { TwitchApiService } from '#services/twitch/twitch_api_service'
 import { CampaignDto } from '#dtos/campaigns/campaign_dto'
 import { CampaignDetailDto } from '#dtos/campaigns/campaign_detail_dto'
 import { CampaignInvitationDto } from '#dtos/campaigns/campaign_invitation_dto'
@@ -21,7 +23,8 @@ export default class CampaignsController {
   constructor(
     private campaignService: CampaignService,
     private membershipService: MembershipService,
-    private streamerRepository: StreamerRepository
+    private streamerRepository: StreamerRepository,
+    private twitchApiService: TwitchApiService
   ) {}
 
   /**
@@ -168,5 +171,83 @@ export default class CampaignsController {
           : null,
       })),
     })
+  }
+
+  /**
+   * Récupère le statut live des membres d'une campagne
+   * GET /api/v2/mj/campaigns/:id/live-status
+   */
+  async liveStatus({ auth, params, response }: HttpContext) {
+    const userId = auth.user!.id
+
+    // Vérifier que l'utilisateur a accès à cette campagne
+    const campaign = await this.campaignService.getCampaignWithMembers(params.id, userId)
+
+    // Extraire les twitchUserId des membres actifs
+    const twitchUserIds =
+      campaign.memberships
+        ?.filter((m) => m.status === 'ACTIVE' && m.streamer?.twitchUserId)
+        .map((m) => m.streamer.twitchUserId) || []
+
+    if (twitchUserIds.length === 0) {
+      return response.ok({ data: {} })
+    }
+
+    try {
+      // Récupérer un app token pour l'API Twitch
+      const accessToken = await this.twitchApiService.getAppAccessToken()
+
+      // Récupérer les streams en cours
+      const liveStreams = await this.twitchApiService.getStreamsByUserIds(
+        twitchUserIds,
+        accessToken
+      )
+
+      // Construire la réponse: map twitchUserId -> live info (snake_case for API response)
+      interface LiveStatusEntry {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        is_live: boolean
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        game_name?: string
+        title?: string
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        viewer_count?: number
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        started_at?: string
+      }
+
+      const liveStatus: Record<string, LiveStatusEntry> = {}
+
+      for (const twitchUserId of twitchUserIds) {
+        const stream = liveStreams.get(twitchUserId)
+        if (stream) {
+          liveStatus[twitchUserId] = {
+            // eslint-disable-next-line camelcase
+            is_live: true,
+            // eslint-disable-next-line camelcase
+            game_name: stream.game_name,
+            title: stream.title,
+            // eslint-disable-next-line camelcase
+            viewer_count: stream.viewer_count,
+
+            started_at: stream.started_at,
+          }
+        } else {
+          // eslint-disable-next-line camelcase
+          liveStatus[twitchUserId] = { is_live: false }
+        }
+      }
+
+      return response.ok({ data: liveStatus })
+    } catch (error) {
+      logger.error({
+        event: 'live_status_fetch_failed',
+        campaignId: params.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+
+      // En cas d'erreur, retourner un objet vide plutôt qu'échouer
+      return response.ok({ data: {} })
+    }
   }
 }
