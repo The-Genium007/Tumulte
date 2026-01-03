@@ -80,12 +80,12 @@ test.group('Account Deletion (GDPR Anonymization)', (group) => {
 
   test('should anonymize campaigns owned by user', async ({ assert }) => {
     const user = await createTestUser({ role: 'MJ' })
-    const campaign1 = await createTestCampaign({
+    await createTestCampaign({
       ownerId: user.id,
       name: 'Ma Campagne RPG',
       description: 'Description détaillée',
     })
-    const campaign2 = await createTestCampaign({
+    await createTestCampaign({
       ownerId: user.id,
       name: 'Autre Campagne',
       description: 'Autre description',
