@@ -207,10 +207,12 @@
                   v-if="member.status === 'ACTIVE'"
                   :is-poll-authorized="member.isPollAuthorized"
                   :remaining-seconds="member.authorizationRemainingSeconds"
+                  :is-owner="member.isOwner"
                   @expired="handleAuthorizationExpired"
                 />
 
                 <UButton
+                  v-if="!member.isOwner"
                   icon="i-lucide-x"
                   label="Révoquer"
                   color="error"

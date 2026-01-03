@@ -73,7 +73,7 @@
                 v-for="status in authorizationStatuses"
                 :key="status.campaignId"
                 class="flex items-center justify-between p-4 rounded-lg border"
-                :class="status.isAuthorized ? 'border-green-500/50 bg-green-500/5' : 'border-gray-700 bg-gray-800/30'"
+                :class="(status.isOwner || status.isAuthorized) ? 'border-green-500/50 bg-green-500/5' : 'border-gray-700 bg-gray-800/30'"
               >
                 <!-- Campaign name -->
                 <div class="flex-1">
@@ -82,8 +82,9 @@
 
                 <!-- Authorization button/status -->
                 <div class="flex items-center gap-3">
+                  <!-- Owners are always authorized, members need to authorize -->
                   <UButton
-                    v-if="!status.isAuthorized"
+                    v-if="!status.isOwner && !status.isAuthorized"
                     color="primary"
                     size="lg"
                     icon="i-lucide-shield-check"
@@ -339,6 +340,7 @@ const loadAuthorizationStatus = async () => {
     authorizationStatuses.value = data.map((item) => ({
       campaignId: item.campaign_id,
       campaignName: item.campaign_name,
+      isOwner: item.is_owner,
       isAuthorized: item.is_authorized,
       expiresAt: item.expires_at,
       remainingSeconds: item.remaining_seconds,

@@ -175,7 +175,18 @@
                   />
                   <!-- Badge d'autorisation -->
                   <UBadge
-                    v-if="streamer.isPollAuthorized"
+                    v-if="streamer.isOwner"
+                    color="primary"
+                    variant="soft"
+                    size="xs"
+                  >
+                    <div class="flex items-center gap-1">
+                      <UIcon name="i-lucide-infinity" class="size-3" />
+                      <span>Permanent</span>
+                    </div>
+                  </UBadge>
+                  <UBadge
+                    v-else-if="streamer.isPollAuthorized"
                     color="success"
                     variant="soft"
                     size="xs"
@@ -611,6 +622,7 @@ interface StreamerDisplay {
   isActive: boolean;
   isPollAuthorized: boolean;
   authorizationRemainingSeconds: number | null;
+  isOwner: boolean;
 }
 
 // Campaign management
@@ -658,6 +670,7 @@ const selectedCampaignStreamers = computed<StreamerDisplay[]>(() => {
       isActive: true,
       isPollAuthorized: member.isPollAuthorized,
       authorizationRemainingSeconds: member.authorizationRemainingSeconds,
+      isOwner: member.isOwner,
     }));
 });
 
