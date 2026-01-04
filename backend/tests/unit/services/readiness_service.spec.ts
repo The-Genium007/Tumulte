@@ -143,7 +143,7 @@ test.group('ReadinessService - getCampaignReadiness', (group) => {
       tokenExpiresAt: DateTime.now().plus({ hours: 2 }),
     })
 
-    const membership = await createTestMembership({
+    await createTestMembership({
       campaignId: campaign.id,
       streamerId: streamer.id,
       status: 'ACTIVE',
