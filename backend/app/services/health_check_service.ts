@@ -1,6 +1,7 @@
 import { inject } from '@adonisjs/core'
 import logger from '@adonisjs/core/services/logger'
 import transmit from '@adonisjs/transmit/services/main'
+import env from '#start/env'
 import { redisService as RedisService } from './cache/redis_service.js'
 import { CampaignMembershipRepository } from '#repositories/campaign_membership_repository'
 import { UserRepository } from '#repositories/user_repository'
@@ -135,9 +136,9 @@ export class HealthCheckService {
   private async checkTwitchApi(): Promise<void> {
     // Utiliser une route simple de l'API Twitch pour tester la connectivité
     // On peut utiliser GET /users avec un ID Twitch connu
-    const testUserId = '141981764' // Twitch's own user ID
-    const clientId = process.env.TWITCH_CLIENT_ID
-    const clientSecret = process.env.TWITCH_CLIENT_SECRET
+    const testUserId = env.get('TWITCH_TEST_USER_ID', '141981764') // Twitch's own user ID as default
+    const clientId = env.get('TWITCH_CLIENT_ID')
+    const clientSecret = env.get('TWITCH_CLIENT_SECRET')
 
     if (!clientId || !clientSecret) {
       throw new Error('Twitch credentials not configured')

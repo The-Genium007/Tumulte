@@ -386,8 +386,8 @@ const confirmRevokeTwitch = async () => {
   try {
     await revokeTwitchAccess()
     showRevokeModal.value = false
-  } catch {
-    // Error handled silently
+  } catch (error) {
+    console.error('[Settings] Failed to revoke Twitch access:', error)
   } finally {
     revokeLoading.value = false
   }
@@ -405,8 +405,8 @@ const handleDeleteAccount = async () => {
     // Déconnecter et rediriger
     await logout()
     _router.push('/')
-  } catch {
-    // Error handled silently
+  } catch (error) {
+    console.error('[Settings] Failed to delete account:', error)
   } finally {
     deleteLoading.value = false
   }

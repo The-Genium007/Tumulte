@@ -1,18 +1,11 @@
 import webPush from 'web-push'
-import { writeFileSync, readFileSync, existsSync } from 'node:fs'
-import { join } from 'node:path'
 
 /**
  * Configuration des notifications push avec VAPID
  *
- * Les clés VAPID sont auto-générées en développement si non définies.
- * En production, elles doivent être définies dans les variables d'environnement.
+ * Les clés VAPID doivent être définies dans les variables d'environnement.
+ * Générer avec: npx web-push generate-vapid-keys
  */
-
-interface VapidKeys {
-  publicKey: string
-  privateKey: string
-}
 
 interface PushConfig {
   vapidPublicKey: string
@@ -23,62 +16,6 @@ interface PushConfig {
 
 let cachedConfig: PushConfig | null = null
 
-function getVapidKeys(): VapidKeys | null {
-  // Vérifier les variables d'environnement
-  const envPublicKey = process.env.VAPID_PUBLIC_KEY
-  const envPrivateKey = process.env.VAPID_PRIVATE_KEY
-
-  if (envPublicKey && envPrivateKey) {
-    return {
-      publicKey: envPublicKey,
-      privateKey: envPrivateKey,
-    }
-  }
-
-  // En production, les clés doivent être définies
-  const nodeEnv = process.env.NODE_ENV
-  if (nodeEnv === 'production') {
-    console.error(
-      '[Push Config] VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY must be defined in production'
-    )
-    return null
-  }
-
-  // En développement/test, auto-générer les clés
-  const keysFilePath = join(process.cwd(), '.vapid-keys.json')
-
-  if (existsSync(keysFilePath)) {
-    try {
-      const content = readFileSync(keysFilePath, 'utf-8')
-      const keys = JSON.parse(content) as VapidKeys
-      console.log('[Push Config] VAPID keys loaded from .vapid-keys.json')
-      return keys
-    } catch {
-      console.warn('[Push Config] Failed to read .vapid-keys.json, generating new keys')
-    }
-  }
-
-  // Générer de nouvelles clés
-  const newKeys = webPush.generateVAPIDKeys()
-  const keys: VapidKeys = {
-    publicKey: newKeys.publicKey,
-    privateKey: newKeys.privateKey,
-  }
-
-  // Sauvegarder pour réutilisation
-  try {
-    writeFileSync(keysFilePath, JSON.stringify(keys, null, 2))
-    console.log('[Push Config] Generated new VAPID keys and saved to .vapid-keys.json')
-    console.log('[Push Config] Add these to your .env for persistence:')
-    console.log(`VAPID_PUBLIC_KEY=${keys.publicKey}`)
-    console.log(`VAPID_PRIVATE_KEY=${keys.privateKey}`)
-  } catch {
-    console.warn('[Push Config] Could not save VAPID keys to file')
-  }
-
-  return keys
-}
-
 /**
  * Initialise la configuration push de manière lazy
  * Appelé uniquement quand la config est effectivement utilisée
@@ -88,9 +25,15 @@ function initPushConfig(): PushConfig {
     return cachedConfig
   }
 
-  const vapidKeys = getVapidKeys()
+  const vapidPublicKey = process.env.VAPID_PUBLIC_KEY
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY
 
-  if (!vapidKeys) {
+  if (!vapidPublicKey || !vapidPrivateKey) {
+    process.stderr.write(
+      '[Push Config] ERROR: VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY must be defined in .env\n'
+    )
+    process.stderr.write('[Push Config] Generate keys with: npx web-push generate-vapid-keys\n')
+
     cachedConfig = {
       vapidPublicKey: '',
       vapidPrivateKey: '',
@@ -101,7 +44,6 @@ function initPushConfig(): PushConfig {
   }
 
   // VAPID subject doit être une URL https: ou mailto:
-  // En développement, FRONTEND_URL est http://localhost:3000 qui n'est pas valide
   let vapidSubject = process.env.VAPID_SUBJECT
 
   if (!vapidSubject) {
@@ -115,11 +57,11 @@ function initPushConfig(): PushConfig {
   }
 
   // Configurer web-push avec les clés VAPID
-  webPush.setVapidDetails(vapidSubject, vapidKeys.publicKey, vapidKeys.privateKey)
+  webPush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey)
 
   cachedConfig = {
-    vapidPublicKey: vapidKeys.publicKey,
-    vapidPrivateKey: vapidKeys.privateKey,
+    vapidPublicKey,
+    vapidPrivateKey,
     vapidSubject,
     isConfigured: true,
   }

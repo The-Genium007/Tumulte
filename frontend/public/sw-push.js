@@ -98,7 +98,6 @@ self.addEventListener("notificationclick", (event) => {
 });
 
 // Gestionnaire de fermeture de notification (optionnel, pour tracking)
-self.addEventListener("notificationclose", (event) => {
+self.addEventListener("notificationclose", () => {
   // On pourrait envoyer un event analytics ici si nécessaire
-  console.debug("Notification closed:", event.notification.tag);
 });
