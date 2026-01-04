@@ -386,7 +386,7 @@ const confirmRevokeTwitch = async () => {
   try {
     await revokeTwitchAccess()
     showRevokeModal.value = false
-  } catch (error: unknown) {
+  } catch {
     // Error handled silently
   } finally {
     revokeLoading.value = false
@@ -405,7 +405,7 @@ const handleDeleteAccount = async () => {
     // Déconnecter et rediriger
     await logout()
     _router.push('/')
-  } catch (error: unknown) {
+  } catch {
     // Error handled silently
   } finally {
     deleteLoading.value = false

@@ -8,6 +8,7 @@ export type NotificationType =
   | 'poll:ended'
   | 'campaign:member_joined'
   | 'session:reminder'
+  | 'token:refresh_failed'
 
 /**
  * Mapping entre les types de notification et les champs de préférences
@@ -20,6 +21,7 @@ export const notificationTypeToPreference: Record<
   | 'pollEnded'
   | 'campaignMemberJoined'
   | 'sessionReminder'
+  | 'tokenRefreshFailed'
 > = {
   'campaign:invitation': 'campaignInvitations',
   'critical:alert': 'criticalAlerts',
@@ -27,6 +29,7 @@ export const notificationTypeToPreference: Record<
   'poll:ended': 'pollEnded',
   'campaign:member_joined': 'campaignMemberJoined',
   'session:reminder': 'sessionReminder',
+  'token:refresh_failed': 'tokenRefreshFailed',
 }
 
 /**
@@ -62,6 +65,7 @@ export type NotificationUrgency = 'very-low' | 'low' | 'normal' | 'high'
 export function getDefaultUrgency(type: NotificationType): NotificationUrgency {
   switch (type) {
     case 'critical:alert':
+    case 'token:refresh_failed':
       return 'high'
     case 'poll:started':
     case 'poll:ended':

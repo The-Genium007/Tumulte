@@ -124,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from "vue";
+import { reactive, onMounted, watch } from "vue";
 import { usePushNotifications } from "@/composables/usePushNotifications";
 import type { NotificationPreferences, PushSubscription } from "@/types";
 

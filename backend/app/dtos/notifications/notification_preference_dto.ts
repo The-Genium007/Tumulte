@@ -8,6 +8,7 @@ export class NotificationPreferenceDto {
   pollEnded!: boolean
   campaignMemberJoined!: boolean
   sessionReminder!: boolean
+  tokenRefreshFailed!: boolean
 
   static fromModel(preference: NotificationPreference): NotificationPreferenceDto {
     return {
@@ -18,6 +19,7 @@ export class NotificationPreferenceDto {
       pollEnded: preference.pollEnded,
       campaignMemberJoined: preference.campaignMemberJoined,
       sessionReminder: preference.sessionReminder,
+      tokenRefreshFailed: preference.tokenRefreshFailed,
     }
   }
 
@@ -33,6 +35,7 @@ export class NotificationPreferenceDto {
       pollEnded: true,
       campaignMemberJoined: false,
       sessionReminder: false,
+      tokenRefreshFailed: true,
     }
   }
 }

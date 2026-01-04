@@ -1,3 +1,4 @@
+/* global clients */
 /**
  * Service Worker Push Notifications Handler
  * Ce fichier est importé par le service worker généré par Workbox
