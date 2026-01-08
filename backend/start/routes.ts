@@ -151,7 +151,6 @@ router
   })
   .prefix('/mj')
   .use(middleware.auth({ guards: ['web', 'api'] }))
-  .use(middleware.role({ role: 'MJ' }))
   .use(middleware.validateUuid())
 
 // ==========================================
@@ -235,7 +234,6 @@ router
   })
   .prefix('/streamer')
   .use(middleware.auth({ guards: ['web', 'api'] }))
-  .use(middleware.role({ role: 'STREAMER' }))
   .use(middleware.validateUuid())
 
 // ==========================================
