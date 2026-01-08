@@ -108,7 +108,8 @@ export default defineNuxtConfig({
             // Images: self + data URIs + Twitch CDN for profile images
             "img-src 'self' data: https: blob:",
             // Connect: API backend + Twitch API + GitHub API + WebSocket + Iconify
-            "connect-src 'self' http://localhost:3333 https://*.twitch.tv wss://*.twitch.tv https://api.github.com https://api.iconify.design https://zerocase-umami-2548df-51-83-45-107.traefik.me",
+            // Note: Backend URL is dynamic based on environment
+            `connect-src 'self' ${process.env.NUXT_PUBLIC_API_BASE || "http://localhost:3333"} https://*.twitch.tv wss://*.twitch.tv https://api.github.com https://api.iconify.design https://zerocase-umami-2548df-51-83-45-107.traefik.me https://*.traefik.me`,
             // Fonts: self + data URIs
             "font-src 'self' data:",
             // Workers: self + blob (for PWA service worker)
