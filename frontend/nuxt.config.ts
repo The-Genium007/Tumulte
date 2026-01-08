@@ -107,8 +107,8 @@ export default defineNuxtConfig({
             "style-src 'self' 'unsafe-inline'",
             // Images: self + data URIs + Twitch CDN for profile images
             "img-src 'self' data: https: blob:",
-            // Connect: API backend + Twitch API + GitHub API + WebSocket
-            "connect-src 'self' http://localhost:3333 https://*.twitch.tv wss://*.twitch.tv https://api.github.com https://zerocase-umami-2548df-51-83-45-107.traefik.me",
+            // Connect: API backend + Twitch API + GitHub API + WebSocket + Iconify
+            "connect-src 'self' http://localhost:3333 https://*.twitch.tv wss://*.twitch.tv https://api.github.com https://api.iconify.design https://zerocase-umami-2548df-51-83-45-107.traefik.me",
             // Fonts: self + data URIs
             "font-src 'self' data:",
             // Workers: self + blob (for PWA service worker)
