@@ -113,17 +113,16 @@ export default defineNuxtConfig({
             "font-src 'self' data:",
             // Workers: self + blob (for PWA service worker)
             "worker-src 'self' blob:",
-            // Frame ancestors: none (prevent clickjacking)
-            "frame-ancestors 'none'",
+            // Note: frame-ancestors must be set via HTTP header, not meta tag
             // Base URI: self only
             "base-uri 'self'",
             // Form action: self only
             "form-action 'self'",
           ].join("; "),
         },
-        // Additional security headers
+        // X-Content-Type-Options works via meta tag
         { "http-equiv": "X-Content-Type-Options", content: "nosniff" },
-        { "http-equiv": "X-Frame-Options", content: "DENY" },
+        // Note: X-Frame-Options and frame-ancestors must be set via HTTP headers on your reverse proxy
       ],
       link: [{ rel: "apple-touch-icon", href: "/apple-touch-icon.png" }],
       script: [
