@@ -39,7 +39,10 @@ router.get('/health', async ({ response }) => {
 router
   .group(() => {
     router.get('/twitch/redirect', [authController, 'redirect'])
-    router.get('/twitch/callback', [authController, 'callback'])
+    // Rate limit OAuth callback to prevent brute force attacks on state
+    router
+      .get('/twitch/callback', [authController, 'callback'])
+      .use(middleware.rateLimit({ maxRequests: 10, windowSeconds: 60, keyPrefix: 'auth_callback' }))
     router
       .post('/logout', [authController, 'logout'])
       .use(middleware.auth({ guards: ['web', 'api'] }))
@@ -61,7 +64,12 @@ router
     router.get('/campaigns/:id', '#controllers/mj/campaigns_controller.show')
     router.put('/campaigns/:id', '#controllers/mj/campaigns_controller.update')
     router.delete('/campaigns/:id', '#controllers/mj/campaigns_controller.destroy')
-    router.post('/campaigns/:id/invite', '#controllers/mj/campaigns_controller.invite')
+    // Rate limited to prevent invitation spam
+    router
+      .post('/campaigns/:id/invite', '#controllers/mj/campaigns_controller.invite')
+      .use(
+        middleware.rateLimit({ maxRequests: 30, windowSeconds: 60, keyPrefix: 'campaign_invite' })
+      )
     router.get('/campaigns/:id/members', '#controllers/mj/campaigns_controller.listMembers')
     router.get('/campaigns/:id/live-status', '#controllers/mj/campaigns_controller.liveStatus')
     router.get(
@@ -127,8 +135,10 @@ router
     // Active Session (récupérer la session/poll en cours)
     router.get('/active-session', '#controllers/mj/active_session_controller.show')
 
-    // Polls (lancement et contrôle)
-    router.post('/campaigns/:campaignId/polls/launch', '#controllers/mj/polls_controller.launch')
+    // Polls (lancement et contrôle) - Rate limited to prevent spam
+    router
+      .post('/campaigns/:campaignId/polls/launch', '#controllers/mj/polls_controller.launch')
+      .use(middleware.rateLimit({ maxRequests: 20, windowSeconds: 60, keyPrefix: 'poll_launch' }))
     router.get('/polls', '#controllers/mj/polls_controller.index')
     router.get('/polls/:id', '#controllers/mj/polls_controller.show')
     router.post('/polls/:id/cancel', '#controllers/mj/polls_controller.cancel')
@@ -142,6 +152,7 @@ router
   .prefix('/mj')
   .use(middleware.auth({ guards: ['web', 'api'] }))
   .use(middleware.role({ role: 'MJ' }))
+  .use(middleware.validateUuid())
 
 // ==========================================
 // Routes Streamer - Architecture modulaire
@@ -225,6 +236,7 @@ router
   .prefix('/streamer')
   .use(middleware.auth({ guards: ['web', 'api'] }))
   .use(middleware.role({ role: 'STREAMER' }))
+  .use(middleware.validateUuid())
 
 // ==========================================
 // Routes Overlay (publiques, sans authentification)
@@ -244,6 +256,7 @@ router
     )
   })
   .prefix('/overlay')
+  .use(middleware.validateUuid())
 // Pas de middleware auth - routes publiques pour OBS
 
 // ==========================================

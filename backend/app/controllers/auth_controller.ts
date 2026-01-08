@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
-import { randomBytes } from 'node:crypto'
+import { randomBytes, timingSafeEqual } from 'node:crypto'
 import logger from '@adonisjs/core/services/logger'
 import env from '#start/env'
 import { user as User } from '#models/user'
@@ -19,6 +19,18 @@ function getErrorMessage(error: unknown): string {
     return error.message
   }
   return 'Unknown error'
+}
+
+/**
+ * Compare deux chaînes de manière sécurisée contre les timing attacks
+ * Retourne true si les chaînes sont identiques, false sinon
+ */
+function secureCompare(a: string, b: string): boolean {
+  // Les chaînes doivent avoir la même longueur pour timingSafeEqual
+  if (a.length !== b.length) {
+    return false
+  }
+  return timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'))
 }
 
 @inject()
@@ -131,8 +143,8 @@ export default class AuthController {
       clientId: env.get('TWITCH_CLIENT_ID'),
     })
 
-    // Valider le state CSRF
-    if (!storedState || state !== storedState) {
+    // Valider le state CSRF avec comparaison à temps constant (protection contre timing attacks)
+    if (!storedState || !secureCompare(state, storedState)) {
       logger.warn('OAuth callback: state mismatch')
       return response.redirect(`${env.get('FRONTEND_URL')}/login?error=invalid_state`)
     }

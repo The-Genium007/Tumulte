@@ -1,13 +1,19 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV === "development" },
   ssr: false, // SPA mode - variables must be set at build time
+
+  // Disable source maps in production for security
+  sourcemap: {
+    server: false,
+    client: process.env.NODE_ENV === "development",
+  },
 
   modules: ["@nuxt/ui", "@pinia/nuxt", "@vite-pwa/nuxt", "@tresjs/nuxt"],
 
   tres: {
-    devtools: true,
+    devtools: process.env.NODE_ENV === "development",
   },
 
   runtimeConfig: {
@@ -90,6 +96,34 @@ export default defineNuxtConfig({
           content: "black-translucent",
         },
         { name: "mobile-web-app-capable", content: "yes" },
+        // Content Security Policy for defense in depth
+        {
+          "http-equiv": "Content-Security-Policy",
+          content: [
+            "default-src 'self'",
+            // Scripts: self + inline (Vue/Nuxt needs it) + Umami analytics
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://zerocase-umami-2548df-51-83-45-107.traefik.me",
+            // Styles: self + inline (Tailwind/Vue needs it)
+            "style-src 'self' 'unsafe-inline'",
+            // Images: self + data URIs + Twitch CDN for profile images
+            "img-src 'self' data: https: blob:",
+            // Connect: API backend + Twitch API + GitHub API + WebSocket
+            "connect-src 'self' http://localhost:3333 https://*.twitch.tv wss://*.twitch.tv https://api.github.com https://zerocase-umami-2548df-51-83-45-107.traefik.me",
+            // Fonts: self + data URIs
+            "font-src 'self' data:",
+            // Workers: self + blob (for PWA service worker)
+            "worker-src 'self' blob:",
+            // Frame ancestors: none (prevent clickjacking)
+            "frame-ancestors 'none'",
+            // Base URI: self only
+            "base-uri 'self'",
+            // Form action: self only
+            "form-action 'self'",
+          ].join("; "),
+        },
+        // Additional security headers
+        { "http-equiv": "X-Content-Type-Options", content: "nosniff" },
+        { "http-equiv": "X-Frame-Options", content: "DENY" },
       ],
       link: [{ rel: "apple-touch-icon", href: "/apple-touch-icon.png" }],
       script: [
