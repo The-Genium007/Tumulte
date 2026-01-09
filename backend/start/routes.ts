@@ -287,6 +287,7 @@ router
     router.delete('/subscriptions/:id', '#controllers/notifications_controller.deleteSubscription')
     router.get('/preferences', '#controllers/notifications_controller.getPreferences')
     router.put('/preferences', '#controllers/notifications_controller.updatePreferences')
+    router.post('/test', '#controllers/notifications_controller.sendTestNotification')
   })
   .prefix('/notifications')
   .use(middleware.auth({ guards: ['web', 'api'] }))

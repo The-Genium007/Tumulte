@@ -118,15 +118,31 @@
             Activer sur cet appareil
           </UButton>
         </div>
+
+        <!-- Bouton de test -->
+        <div v-if="isCurrentBrowserSubscribed" class="pt-4">
+          <UButton
+            color="neutral"
+            variant="outline"
+            :loading="testLoading"
+            @click="handleSendTestNotification"
+          >
+            <UIcon name="i-lucide-send" class="mr-2" />
+            Envoyer une notification de test
+          </UButton>
+        </div>
       </template>
     </div>
   </UCard>
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted, watch } from "vue";
+import { reactive, ref, onMounted, watch } from "vue";
 import { usePushNotifications } from "@/composables/usePushNotifications";
 import type { NotificationPreferences, PushSubscription } from "@/types";
+
+const config = useRuntimeConfig();
+const toast = useToast();
 
 const {
   subscriptions,
@@ -142,6 +158,8 @@ const {
   deleteSubscription,
   checkCurrentBrowserSubscription,
 } = usePushNotifications();
+
+const testLoading = ref(false);
 
 const localPreferences = reactive<NotificationPreferences>({
   pushEnabled: true,
@@ -194,7 +212,6 @@ watch(
 onMounted(async () => {
   try {
     await Promise.all([fetchPreferences(), fetchSubscriptions()]);
-    // Vérifier si le navigateur actuel est inscrit
     await checkCurrentBrowserSubscription();
   } catch (error) {
     console.error("Failed to fetch notification settings:", error);
@@ -228,6 +245,40 @@ const handleSubscribe = async () => {
 
 const handleDeleteDevice = async (id: string) => {
   await deleteSubscription(id);
+};
+
+const handleSendTestNotification = async () => {
+  testLoading.value = true;
+  try {
+    const response = await fetch(`${config.public.apiBase}/notifications/test`, {
+      method: "POST",
+      credentials: "include",
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      toast.add({
+        title: "Notification envoyée",
+        description: data.message,
+        color: "success",
+      });
+    } else {
+      toast.add({
+        title: "Échec",
+        description: data.message,
+        color: "warning",
+      });
+    }
+  } catch {
+    toast.add({
+      title: "Erreur",
+      description: "Impossible d'envoyer la notification de test",
+      color: "error",
+    });
+  } finally {
+    testLoading.value = false;
+  }
 };
 
 const getDeviceName = (sub: PushSubscription): string => {

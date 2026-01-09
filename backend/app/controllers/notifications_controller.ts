@@ -164,4 +164,46 @@ export default class NotificationsController {
       data: NotificationPreferenceDto.fromModel(preferences),
     })
   }
+
+  /**
+   * Envoie une notification de test à l'utilisateur connecté
+   * POST /notifications/test
+   * Utile pour vérifier que les notifications push fonctionnent
+   */
+  async sendTestNotification({ auth, response }: HttpContext) {
+    const userId = auth.user!.id
+
+    const result = await this.pushService.sendToUser(
+      userId,
+      'critical:alert',
+      {
+        title: 'Test de notification',
+        body: 'Si vous voyez cette notification, les notifications push fonctionnent correctement !',
+        data: {
+          url: '/settings',
+          test: true,
+        },
+      },
+      true // bypassPreferences - on envoie même si les notifs sont désactivées pour les tests
+    )
+
+    if (result.sent === 0 && result.failed === 0) {
+      return response.ok({
+        success: false,
+        message: 'Aucun appareil enregistré pour recevoir les notifications',
+        sent: 0,
+        failed: 0,
+      })
+    }
+
+    return response.ok({
+      success: result.sent > 0,
+      message:
+        result.sent > 0
+          ? `Notification envoyée à ${result.sent} appareil(s)`
+          : "Échec de l'envoi de la notification",
+      sent: result.sent,
+      failed: result.failed,
+    })
+  }
 }

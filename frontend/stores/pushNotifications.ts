@@ -346,7 +346,9 @@ export const usePushNotificationsStore = defineStore(
 
     /**
      * Vérifie si le navigateur actuel a une subscription push active
-     * et stocke l'endpoint pour comparaison
+     * et stocke l'endpoint pour comparaison.
+     * Détecte aussi les désynchronisations (subscription locale sans correspondance backend)
+     * et nettoie automatiquement les subscriptions orphelines.
      */
     async function checkCurrentBrowserSubscription(): Promise<void> {
       if (!isSupported.value) {
@@ -360,7 +362,30 @@ export const usePushNotificationsStore = defineStore(
           await registration.pushManager.getSubscription();
 
         if (pushSubscription) {
-          currentBrowserEndpoint.value = pushSubscription.endpoint;
+          const browserEndpoint = pushSubscription.endpoint;
+
+          // Vérifier si cette subscription existe côté backend
+          const existsInBackend = subscriptions.value.some(
+            (s) => s.endpoint === browserEndpoint,
+          );
+
+          if (existsInBackend) {
+            currentBrowserEndpoint.value = browserEndpoint;
+          } else {
+            // Subscription locale orpheline - désabonner pour resynchroniser
+            console.warn(
+              "[Push] Local subscription not found in backend, cleaning up...",
+            );
+            try {
+              await pushSubscription.unsubscribe();
+            } catch (unsubError) {
+              console.warn(
+                "Failed to unsubscribe orphan subscription:",
+                unsubError,
+              );
+            }
+            currentBrowserEndpoint.value = null;
+          }
         } else {
           currentBrowserEndpoint.value = null;
         }
