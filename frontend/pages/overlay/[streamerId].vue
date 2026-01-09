@@ -100,12 +100,9 @@ onMounted(async () => {
 
     unsubscribe = subscribeToStreamerPolls(streamerId.value, {
     onPollStart: (data) => {
-      let totalDuration = 60;
-      if (data.endsAt) {
-        const now = Date.now();
-        const end = new Date(data.endsAt).getTime();
-        totalDuration = Math.max(1, Math.round((end - now) / 1000));
-      }
+      // Utiliser durationSeconds du backend (durée totale configurée)
+      // plutôt que de calculer depuis endsAt (qui donnerait le temps restant)
+      const totalDuration = data.durationSeconds || 60;
       activePoll.value = { ...data, totalDuration };
       isEnding.value = false;
     },

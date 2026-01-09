@@ -29,8 +29,16 @@ export default class NotificationsController {
    * GET /notifications/vapid-public-key
    */
   async vapidPublicKey({ response }: HttpContext) {
+    const publicKey = this.pushService.getVapidPublicKey()
+
+    if (!publicKey) {
+      return response.serviceUnavailable({
+        error: 'Push notifications are not configured on this server',
+      })
+    }
+
     return response.ok({
-      publicKey: this.pushService.getVapidPublicKey(),
+      publicKey,
     })
   }
 
@@ -38,15 +46,10 @@ export default class NotificationsController {
    * Inscrit un appareil aux notifications push
    * POST /notifications/subscribe
    */
-  async subscribe({ auth, request, response, logger }: HttpContext) {
-    logger.info('[Push Subscribe] Request received')
+  async subscribe({ auth, request, response }: HttpContext) {
     const result = subscribePushSchema.safeParse(request.body())
 
     if (!result.success) {
-      logger.error(
-        { errors: result.error.flatten().fieldErrors },
-        '[Push Subscribe] Validation failed'
-      )
       return response.badRequest({
         error: 'Données invalides',
         details: result.error.flatten().fieldErrors,
@@ -55,10 +58,6 @@ export default class NotificationsController {
 
     const { endpoint, keys, deviceName } = result.data
     const userId = auth.user!.id
-    logger.info(
-      { userId, endpoint: endpoint.substring(0, 50) },
-      '[Push Subscribe] Creating subscription'
-    )
 
     const subscription = await this.subscriptionRepository.upsert({
       userId,
@@ -68,11 +67,6 @@ export default class NotificationsController {
       userAgent: request.header('user-agent') || null,
       deviceName: deviceName || null,
     })
-
-    logger.info(
-      { subscriptionId: subscription.id },
-      '[Push Subscribe] Subscription created/updated'
-    )
 
     // S'assurer que les préférences existent
     await this.preferenceRepository.findOrCreate(userId)
@@ -107,11 +101,9 @@ export default class NotificationsController {
    * Liste les appareils inscrits de l'utilisateur
    * GET /notifications/subscriptions
    */
-  async listSubscriptions({ auth, response, logger }: HttpContext) {
+  async listSubscriptions({ auth, response }: HttpContext) {
     const userId = auth.user!.id
-    logger.info({ userId }, '[Push List] Fetching subscriptions')
     const subscriptions = await this.subscriptionRepository.findByUserId(userId)
-    logger.info({ userId, count: subscriptions.length }, '[Push List] Subscriptions found')
 
     return response.ok({
       data: PushSubscriptionDto.fromModelArray(subscriptions),
@@ -186,25 +178,13 @@ export default class NotificationsController {
    * POST /notifications/test
    * Disponible uniquement en mode développement
    */
-  async sendTestNotification({ auth, response, logger }: HttpContext) {
+  async sendTestNotification({ auth, response }: HttpContext) {
     // Route disponible uniquement en développement
     if (process.env.NODE_ENV === 'production') {
       return response.notFound({ error: 'Route non disponible' })
     }
 
     const userId = auth.user!.id
-    logger.info({ userId }, '[Test Push] Sending test notification')
-
-    // Vérifier les subscriptions de l'utilisateur
-    const subscriptions = await this.subscriptionRepository.findByUserId(userId)
-    logger.info({ userId, count: subscriptions.length }, '[Test Push] User subscriptions found')
-
-    if (subscriptions.length > 0) {
-      logger.info(
-        { endpoints: subscriptions.map((s) => s.endpoint.substring(0, 50) + '...') },
-        '[Test Push] Subscription endpoints'
-      )
-    }
 
     const result = await this.pushService.sendToUser(
       userId,
