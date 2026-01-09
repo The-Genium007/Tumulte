@@ -6,6 +6,9 @@
     <!-- Main Content -->
     <main class="flex-1 flex flex-col">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl flex-1">
+        <!-- Indicateur hors-ligne -->
+        <OfflineIndicator />
+
         <!-- Banner de permission notifications push -->
         <NotificationsPushPermissionBanner />
 
