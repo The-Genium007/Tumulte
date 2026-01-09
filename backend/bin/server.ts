@@ -34,24 +34,6 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
     app.booting(async () => {
       await import('#start/env')
     })
-    app.ready(async () => {
-      // Debug: Log VAPID configuration at startup
-      const vapidPublic = process.env.VAPID_PUBLIC_KEY
-      const vapidPrivate = process.env.VAPID_PRIVATE_KEY
-      console.log('[Startup] VAPID config check:', {
-        hasPublicKey: !!vapidPublic,
-        publicKeyLength: vapidPublic?.length || 0,
-        publicKeyStart: vapidPublic?.substring(0, 10) || 'N/A',
-        hasPrivateKey: !!vapidPrivate,
-        privateKeyLength: vapidPrivate?.length || 0,
-      })
-      // Debug: List all env vars that start with VAPID or contain PUSH
-      const relevantEnvVars = Object.keys(process.env).filter(
-        (key) => key.includes('VAPID') || key.includes('PUSH') || key.includes('vapid')
-      )
-      console.log('[Startup] Environment vars containing VAPID/PUSH:', relevantEnvVars)
-      console.log('[Startup] Total env vars count:', Object.keys(process.env).length)
-    })
     app.listen('SIGTERM', () => app.terminate())
     app.listenIf(app.managedByPm2, 'SIGINT', () => app.terminate())
   })
