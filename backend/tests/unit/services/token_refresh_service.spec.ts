@@ -131,7 +131,7 @@ test.group('TokenRefreshService - findStreamersWithActiveAuthorization', (group)
     const service = new TokenRefreshService()
 
     // Create campaign and streamer with active authorization
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const campaign = await createTestCampaign({ ownerId: user.id })
     const streamer = await createTestStreamer()
 
@@ -155,7 +155,7 @@ test.group('TokenRefreshService - findStreamersWithActiveAuthorization', (group)
     const service = new TokenRefreshService()
 
     // Create campaign and streamer without authorization
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const campaign = await createTestCampaign({ ownerId: user.id })
     const streamer = await createTestStreamer()
 
@@ -176,7 +176,7 @@ test.group('TokenRefreshService - findStreamersWithActiveAuthorization', (group)
     const service = new TokenRefreshService()
 
     // Create campaign and streamer with expired authorization
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const campaign = await createTestCampaign({ ownerId: user.id })
     const streamer = await createTestStreamer()
 
@@ -202,7 +202,7 @@ test.group('TokenRefreshService - findStreamersWithActiveAuthorization', (group)
     const service = new TokenRefreshService()
 
     // Create inactive streamer with authorization
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const campaign = await createTestCampaign({ ownerId: user.id })
     const streamer = await createTestStreamer()
 
@@ -231,7 +231,7 @@ test.group('TokenRefreshService - findStreamersWithActiveAuthorization', (group)
     const service = new TokenRefreshService()
 
     // Create streamer in multiple campaigns
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const campaign1 = await createTestCampaign({ ownerId: user.id })
     const campaign2 = await createTestCampaign({ ownerId: user.id })
     const streamer = await createTestStreamer()
@@ -402,7 +402,7 @@ test.group('TokenRefreshService - refreshAllActiveTokens report', (group) => {
     const service = new TokenRefreshService()
 
     // Create streamer with authorization but token not expiring soon
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const campaign = await createTestCampaign({ ownerId: user.id })
     const streamer = await createTestStreamer()
 

@@ -11,7 +11,7 @@ test.group('BackendLogService - Integration', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('getUserLogs should return empty array for new user', async ({ assert }) => {
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const service = new BackendLogService()
 
     const logs = await service.getUserLogs(user.id.toString())
@@ -21,7 +21,7 @@ test.group('BackendLogService - Integration', (group) => {
   })
 
   test('pushLog should store log entry for user', async ({ assert }) => {
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const service = new BackendLogService()
 
     const logEntry = BackendLogService.createLogEntry({
@@ -45,7 +45,7 @@ test.group('BackendLogService - Integration', (group) => {
   })
 
   test('logs should be returned in reverse chronological order', async ({ assert }) => {
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const service = new BackendLogService()
 
     // Push logs in order
@@ -87,7 +87,7 @@ test.group('BackendLogService - Integration', (group) => {
   })
 
   test('getUserLogs should respect limit parameter', async ({ assert }) => {
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const service = new BackendLogService()
 
     // Push 5 logs
@@ -113,7 +113,7 @@ test.group('BackendLogService - Integration', (group) => {
   })
 
   test('clearUserLogs should remove all logs for user', async ({ assert }) => {
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const service = new BackendLogService()
 
     // Push some logs
@@ -139,8 +139,8 @@ test.group('BackendLogService - Integration', (group) => {
   })
 
   test('logs should be isolated per user', async ({ assert }) => {
-    const user1 = await createTestUser({ role: 'MJ' })
-    const user2 = await createTestUser({ role: 'MJ' })
+    const user1 = await createTestUser({})
+    const user2 = await createTestUser({})
     const service = new BackendLogService()
 
     // Push log for user1
@@ -195,7 +195,7 @@ test.group('BackendLogService - Integration', (group) => {
   })
 
   test('should store error logs correctly', async ({ assert }) => {
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const service = new BackendLogService()
 
     const logEntry = BackendLogService.createLogEntry({

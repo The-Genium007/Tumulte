@@ -161,10 +161,10 @@ The `helpers/test_utils.ts` file provides factories to create test data:
 
 ```typescript
 // Create a basic user
-const user = await createTestUser({ role: 'MJ' })
+const user = await createTestUser({})
 
 // Create an authenticated user with token
-const { user, token } = await createAuthenticatedUser({ role: 'STREAMER' })
+const { user, token } = await createAuthenticatedUser({})
 ```
 
 ### Campaigns
@@ -346,7 +346,7 @@ test.group('Campaigns API', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
   test('should create campaign', async ({ client, assert }) => {
-    const { user, token } = await createAuthenticatedUser({ role: 'MJ' })
+    const { user, token } = await createAuthenticatedUser({})
 
     const response = await client
       .post('/api/v2/mj/campaigns')

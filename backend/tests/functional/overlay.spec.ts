@@ -84,7 +84,7 @@ test.group('Overlay URL Generation', (group) => {
   group.each.setup(() => testUtils.db().withGlobalTransaction())
 
   test('Overlay URL should be correctly formatted with streamer ID', async ({ assert }) => {
-    const user = await createTestUser({ role: 'STREAMER' })
+    const user = await createTestUser({})
     const streamer = await createTestStreamer({ userId: user.id })
 
     const frontendUrl = env.get('FRONTEND_URL')
@@ -98,7 +98,7 @@ test.group('Overlay URL Generation', (group) => {
 
   test('Streamer must have associated user for authenticated endpoints', async ({ assert }) => {
     // Create a streamer with an associated user (standard case)
-    const user = await createTestUser({ role: 'STREAMER' })
+    const user = await createTestUser({})
     const streamer = await createTestStreamer({ userId: user.id })
 
     // Verify streamer is correctly linked to user

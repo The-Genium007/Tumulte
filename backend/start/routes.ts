@@ -114,6 +114,16 @@ router
       '/campaigns/:campaignId/sessions/:sessionId/launch',
       '#controllers/mj/poll_sessions_controller.launch'
     )
+    // Status de session (validation état frontend/backend)
+    router.get(
+      '/campaigns/:campaignId/sessions/:sessionId/status',
+      '#controllers/mj/poll_sessions_controller.status'
+    )
+    // Heartbeat de session (synchronisation temps réel)
+    router.post(
+      '/campaigns/:campaignId/sessions/:sessionId/heartbeat',
+      '#controllers/mj/poll_sessions_controller.heartbeat'
+    )
 
     // Poll Templates (nested sous campaigns OU standalone)
     router.get(
@@ -287,6 +297,7 @@ router
     router.delete('/subscriptions/:id', '#controllers/notifications_controller.deleteSubscription')
     router.get('/preferences', '#controllers/notifications_controller.getPreferences')
     router.put('/preferences', '#controllers/notifications_controller.updatePreferences')
+    router.post('/test', '#controllers/notifications_controller.sendTestNotification')
   })
   .prefix('/notifications')
   .use(middleware.auth({ guards: ['web', 'api'] }))

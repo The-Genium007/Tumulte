@@ -43,7 +43,13 @@ export const usePushNotificationsStore = defineStore(
     const loading = ref(false);
     const permissionStatus = ref<NotificationPermission>("default");
     const bannerDismissed = ref(false);
-    const currentBrowserEndpoint = ref<string | null>(null);
+
+    // État interne pour suivre l'endpoint du navigateur actuel
+    // Cet endpoint est récupéré directement depuis le PushManager du navigateur
+    const browserEndpoint = ref<string | null>(null);
+
+    // Flag pour savoir si l'initialisation a été faite
+    const initialized = ref(false);
 
     // Computed
     const isSupported = computed(
@@ -65,13 +71,79 @@ export const usePushNotificationsStore = defineStore(
       () => permissionStatus.value === "denied",
     );
 
-    // Vérifie si le navigateur actuel a une subscription push active
-    // On vérifie simplement si currentBrowserEndpoint est défini (= le navigateur a une subscription)
+    /**
+     * Vérifie si le navigateur actuel a une subscription push active ET enregistrée côté backend.
+     * Cette computed se base sur :
+     * 1. browserEndpoint : l'endpoint du navigateur (depuis PushManager)
+     * 2. subscriptions : la liste des subscriptions du backend
+     */
     const isCurrentBrowserSubscribed = computed(() => {
-      return !!currentBrowserEndpoint.value;
+      if (!browserEndpoint.value) return false;
+      return subscriptions.value.some(
+        (s) => s.endpoint === browserEndpoint.value,
+      );
     });
 
     // Actions
+
+    /**
+     * Récupère l'endpoint push du navigateur actuel depuis le PushManager.
+     * Cette fonction ne fait AUCUNE comparaison avec le backend, elle récupère juste l'état local.
+     */
+    async function refreshBrowserEndpoint(): Promise<void> {
+      if (!isSupported.value) {
+        browserEndpoint.value = null;
+        return;
+      }
+
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const pushSubscription =
+          await registration.pushManager.getSubscription();
+
+        browserEndpoint.value = pushSubscription?.endpoint ?? null;
+      } catch {
+        browserEndpoint.value = null;
+      }
+    }
+
+    /**
+     * Initialise le store : charge les données backend et l'état du navigateur.
+     * Cette fonction doit être appelée une seule fois au démarrage de l'app (après authentification).
+     */
+    async function initialize(): Promise<void> {
+      if (initialized.value) return;
+
+      try {
+        // Charger en parallèle :
+        // 1. L'état du navigateur (endpoint local)
+        // 2. Les données backend (subscriptions, preferences)
+        await Promise.all([
+          refreshBrowserEndpoint(),
+          fetchSubscriptions(),
+          fetchPreferences(),
+        ]);
+
+        // Mettre à jour le statut de permission
+        checkPermissionStatus();
+
+        initialized.value = true;
+      } catch (error) {
+        console.error("Failed to initialize push notifications:", error);
+        // On ne throw pas, l'app peut fonctionner sans les notifications
+      }
+    }
+
+    /**
+     * Reset le store (à appeler lors de la déconnexion)
+     */
+    function reset(): void {
+      subscriptions.value = [];
+      preferences.value = null;
+      initialized.value = false;
+      // On ne reset PAS browserEndpoint car il est lié au navigateur, pas à l'utilisateur
+    }
+
     async function fetchVapidPublicKey(): Promise<string> {
       if (vapidPublicKey.value) return vapidPublicKey.value;
 
@@ -93,16 +165,26 @@ export const usePushNotificationsStore = defineStore(
 
     async function fetchSubscriptions(): Promise<void> {
       try {
+        console.log("[Push] fetchSubscriptions() - calling backend...");
         const response = await fetch(`${API_URL}/notifications/subscriptions`, {
           credentials: "include",
         });
 
+        console.log(
+          "[Push] fetchSubscriptions() - response status:",
+          response.status,
+        );
         if (!response.ok) {
           throw new Error("Failed to fetch subscriptions");
         }
 
         const data = await response.json();
+        console.log("[Push] fetchSubscriptions() - raw data:", data);
         subscriptions.value = data.data;
+        console.log(
+          "[Push] fetchSubscriptions() - subscriptions set:",
+          subscriptions.value?.length,
+        );
       } catch (error) {
         triggerSupportForError("push_subscriptions_fetch", error);
         throw error;
@@ -151,33 +233,53 @@ export const usePushNotificationsStore = defineStore(
     }
 
     async function subscribe(deviceName?: string): Promise<boolean> {
-      if (!isSupported.value) return false;
+      console.log("[Push] subscribe() called, isSupported:", isSupported.value);
+      if (!isSupported.value) {
+        console.log("[Push] Not supported, returning false");
+        return false;
+      }
 
       try {
         loading.value = true;
+        console.log("[Push] Requesting notification permission...");
 
         // Demander la permission
         const permission = await Notification.requestPermission();
         permissionStatus.value = permission;
+        console.log("[Push] Permission result:", permission);
 
         if (permission !== "granted") {
+          console.log("[Push] Permission not granted, returning false");
           return false;
         }
 
         // Attendre que le service worker soit prêt
+        console.log("[Push] Waiting for service worker...");
         const registration = await navigator.serviceWorker.ready;
+        console.log("[Push] Service worker ready");
 
         // Récupérer la clé VAPID
+        console.log("[Push] Fetching VAPID key...");
         const publicKey = await fetchVapidPublicKey();
+        console.log(
+          "[Push] VAPID key received:",
+          publicKey?.substring(0, 20) + "...",
+        );
 
         // S'inscrire aux notifications push
         let pushSubscription;
         try {
+          console.log("[Push] Subscribing to push manager...");
           pushSubscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(publicKey),
           });
+          console.log(
+            "[Push] Push subscription created:",
+            pushSubscription?.endpoint?.substring(0, 50) + "...",
+          );
         } catch (subscribeError) {
+          console.error("[Push] Subscribe error:", subscribeError);
           // Si l'erreur est due à un changement de clé VAPID, désabonner et réessayer
           if (
             subscribeError instanceof Error &&
@@ -199,14 +301,21 @@ export const usePushNotificationsStore = defineStore(
         }
 
         // Extraire les clés
+        console.log("[Push] Extracting keys...");
         const p256dhKey = pushSubscription.getKey("p256dh");
         const authKey = pushSubscription.getKey("auth");
 
         if (!p256dhKey || !authKey) {
+          console.error("[Push] Failed to get keys:", {
+            p256dhKey: !!p256dhKey,
+            authKey: !!authKey,
+          });
           throw new Error("Failed to get subscription keys");
         }
+        console.log("[Push] Keys extracted successfully");
 
         // Envoyer au backend
+        console.log("[Push] Sending to backend...");
         const response = await fetch(`${API_URL}/notifications/subscribe`, {
           method: "POST",
           credentials: "include",
@@ -221,11 +330,25 @@ export const usePushNotificationsStore = defineStore(
           }),
         });
 
+        console.log("[Push] Backend response status:", response.status);
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error("[Push] Backend error:", errorText);
           throw new Error("Failed to register subscription");
         }
 
+        // Mettre à jour l'endpoint du navigateur
+        browserEndpoint.value = pushSubscription.endpoint;
+        console.log("[Push] browserEndpoint updated");
+
+        // Recharger les subscriptions pour avoir l'ID et autres infos
+        console.log("[Push] Fetching subscriptions...");
         await fetchSubscriptions();
+        console.log(
+          "[Push] Subscribe complete! Subscriptions count:",
+          subscriptions.value.length,
+        );
+
         return true;
       } catch (error) {
         console.error("Failed to subscribe to push notifications:", error);
@@ -245,19 +368,22 @@ export const usePushNotificationsStore = defineStore(
           await registration.pushManager.getSubscription();
 
         if (pushSubscription) {
-          // Désinscrire du navigateur
-          await pushSubscription.unsubscribe();
-
-          // Supprimer du backend
+          // Supprimer du backend d'abord
           await fetch(`${API_URL}/notifications/subscribe`, {
             method: "DELETE",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ endpoint: pushSubscription.endpoint }),
           });
+
+          // Puis désinscrire du navigateur
+          await pushSubscription.unsubscribe();
         }
 
+        // Mettre à jour l'état local
+        browserEndpoint.value = null;
         await fetchSubscriptions();
+
         return true;
       } catch (error) {
         console.error("Failed to unsubscribe:", error);
@@ -270,10 +396,34 @@ export const usePushNotificationsStore = defineStore(
 
     async function deleteSubscription(id: string): Promise<void> {
       try {
+        // Trouver la subscription pour vérifier si c'est le navigateur actuel
+        const subscriptionToDelete = subscriptions.value.find(
+          (s) => s.id === id,
+        );
+
         await fetch(`${API_URL}/notifications/subscriptions/${id}`, {
           method: "DELETE",
           credentials: "include",
         });
+
+        // Si c'est le navigateur actuel, désabonner aussi localement
+        if (
+          subscriptionToDelete &&
+          browserEndpoint.value &&
+          subscriptionToDelete.endpoint === browserEndpoint.value
+        ) {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            const pushSubscription =
+              await registration.pushManager.getSubscription();
+            if (pushSubscription) {
+              await pushSubscription.unsubscribe();
+            }
+          } catch (unsubError) {
+            console.warn("Failed to unsubscribe browser locally:", unsubError);
+          }
+          browserEndpoint.value = null;
+        }
 
         await fetchSubscriptions();
       } catch (error) {
@@ -321,29 +471,11 @@ export const usePushNotificationsStore = defineStore(
     }
 
     /**
-     * Vérifie si le navigateur actuel a une subscription push active
-     * et stocke l'endpoint pour comparaison
+     * @deprecated Utiliser initialize() à la place qui charge tout correctement
+     * Conservé pour compatibilité avec le code existant
      */
     async function checkCurrentBrowserSubscription(): Promise<void> {
-      if (!isSupported.value) {
-        currentBrowserEndpoint.value = null;
-        return;
-      }
-
-      try {
-        const registration = await navigator.serviceWorker.ready;
-        const pushSubscription =
-          await registration.pushManager.getSubscription();
-
-        if (pushSubscription) {
-          currentBrowserEndpoint.value = pushSubscription.endpoint;
-        } else {
-          currentBrowserEndpoint.value = null;
-        }
-      } catch (error) {
-        console.error("Failed to check browser subscription:", error);
-        currentBrowserEndpoint.value = null;
-      }
+      await refreshBrowserEndpoint();
     }
 
     return {
@@ -354,6 +486,7 @@ export const usePushNotificationsStore = defineStore(
       loading,
       permissionStatus,
       bannerDismissed,
+      initialized,
 
       // Computed
       isSupported,
@@ -365,6 +498,9 @@ export const usePushNotificationsStore = defineStore(
       isCurrentBrowserSubscribed,
 
       // Actions
+      initialize,
+      reset,
+      refreshBrowserEndpoint,
       fetchVapidPublicKey,
       fetchSubscriptions,
       fetchPreferences,
@@ -376,7 +512,7 @@ export const usePushNotificationsStore = defineStore(
       shouldShowPermissionBanner,
       dismissPermissionBanner,
       resetBannerDismissal,
-      checkCurrentBrowserSubscription,
+      checkCurrentBrowserSubscription, // deprecated
     };
   },
 );
