@@ -168,9 +168,14 @@ export default class NotificationsController {
   /**
    * Envoie une notification de test à l'utilisateur connecté
    * POST /notifications/test
-   * Utile pour vérifier que les notifications push fonctionnent
+   * Disponible uniquement en mode développement
    */
   async sendTestNotification({ auth, response }: HttpContext) {
+    // Route disponible uniquement en développement
+    if (process.env.NODE_ENV === 'production') {
+      return response.notFound({ error: 'Route non disponible' })
+    }
+
     const userId = auth.user!.id
 
     const result = await this.pushService.sendToUser(

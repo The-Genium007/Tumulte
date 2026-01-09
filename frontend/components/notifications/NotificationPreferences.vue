@@ -119,8 +119,8 @@
           </UButton>
         </div>
 
-        <!-- Bouton de test -->
-        <div v-if="isCurrentBrowserSubscribed" class="pt-4">
+        <!-- Bouton de test (dev uniquement) -->
+        <div v-if="isCurrentBrowserSubscribed && isDev" class="pt-4">
           <UButton
             color="neutral"
             variant="outline"
@@ -143,6 +143,7 @@ import type { NotificationPreferences, PushSubscription } from "@/types";
 
 const config = useRuntimeConfig();
 const toast = useToast();
+const isDev = process.env.NODE_ENV !== "production";
 
 const {
   subscriptions,
