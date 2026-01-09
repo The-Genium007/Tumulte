@@ -44,10 +44,18 @@ export default class StreamersController {
         s.twitchDisplayName.toLowerCase().includes(query.toLowerCase())
       )
 
-      // Si on a des résultats locaux, les retourner
+      // Si on a des résultats locaux, les retourner au même format que l'API Twitch
       if (filtered.length > 0) {
         return response.ok({
-          data: filtered.map((s) => StreamerDto.fromModel(s)),
+          data: filtered.map((s) => ({
+            twitchUserId: s.twitchUserId,
+            twitchUsername: s.twitchLogin,
+            twitchDisplayName: s.twitchDisplayName,
+            profileImageUrl: s.profileImageUrl,
+            broadcasterType: s.broadcasterType || '',
+            isActive: s.isActive,
+            isRegistered: true,
+          })),
         })
       }
 
