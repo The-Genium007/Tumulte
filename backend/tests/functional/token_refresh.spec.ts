@@ -17,9 +17,9 @@ test.group('Token Refresh - Authorization Grant Integration', (group) => {
   test('grantPollAuthorization should set pollAuthorizationExpiresAt correctly', async ({
     assert,
   }) => {
-    const streamerUser = await createTestUser({ role: 'STREAMER' })
+    const streamerUser = await createTestUser({})
     const streamer = await createTestStreamer({ userId: streamerUser.id })
-    const ownerUser = await createTestUser({ role: 'MJ' })
+    const ownerUser = await createTestUser({})
     const campaign = await createTestCampaign({ ownerId: ownerUser.id })
 
     const membership = await createTestMembership({
@@ -49,7 +49,7 @@ test.group('Token Refresh - Authorization Grant Integration', (group) => {
   test('isPollAuthorizationActive should return true when authorization is valid', async ({
     assert,
   }) => {
-    const streamerUser = await createTestUser({ role: 'STREAMER' })
+    const streamerUser = await createTestUser({})
     const streamer = await createTestStreamer({ userId: streamerUser.id })
     const campaign = await createTestCampaign()
 
@@ -68,7 +68,7 @@ test.group('Token Refresh - Authorization Grant Integration', (group) => {
   test('isPollAuthorizationActive should return false when authorization is expired', async ({
     assert,
   }) => {
-    const streamerUser = await createTestUser({ role: 'STREAMER' })
+    const streamerUser = await createTestUser({})
     const streamer = await createTestStreamer({ userId: streamerUser.id })
     const campaign = await createTestCampaign()
 
@@ -88,7 +88,7 @@ test.group('Token Refresh - Authorization Grant Integration', (group) => {
   })
 
   test('authorizationRemainingSeconds should return correct value', async ({ assert }) => {
-    const streamerUser = await createTestUser({ role: 'STREAMER' })
+    const streamerUser = await createTestUser({})
     const streamer = await createTestStreamer({ userId: streamerUser.id })
     const campaign = await createTestCampaign()
 
@@ -111,7 +111,7 @@ test.group('Token Refresh - Authorization Grant Integration', (group) => {
   })
 
   test('authorizationRemainingSeconds should return null when expired', async ({ assert }) => {
-    const streamerUser = await createTestUser({ role: 'STREAMER' })
+    const streamerUser = await createTestUser({})
     const streamer = await createTestStreamer({ userId: streamerUser.id })
     const campaign = await createTestCampaign()
 
@@ -208,7 +208,7 @@ test.group('Token Refresh - Service Integration', (group) => {
     const service = new TokenRefreshService()
 
     // Create 3 streamers with different authorization states
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const campaign = await createTestCampaign({ ownerId: user.id })
 
     // Streamer 1: Active authorization
@@ -279,7 +279,7 @@ test.group('Token Refresh - Service Integration', (group) => {
     const service = new TokenRefreshService()
 
     // Create streamer with active authorization and fresh token
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const campaign = await createTestCampaign({ ownerId: user.id })
     const streamer = await createTestStreamer()
 
@@ -313,7 +313,7 @@ test.group('Token Refresh - Edge Cases', (group) => {
     const { TokenRefreshService } = await import('#services/auth/token_refresh_service')
     const service = new TokenRefreshService()
 
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const campaign1 = await createTestCampaign({ ownerId: user.id })
     const campaign2 = await createTestCampaign({ ownerId: user.id })
     const streamer = await createTestStreamer()
@@ -348,7 +348,7 @@ test.group('Token Refresh - Edge Cases', (group) => {
     const { TokenRefreshService } = await import('#services/auth/token_refresh_service')
     const service = new TokenRefreshService()
 
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const campaign = await createTestCampaign({ ownerId: user.id })
     const streamer = await createTestStreamer()
 
@@ -373,7 +373,7 @@ test.group('Token Refresh - Edge Cases', (group) => {
     const { TokenRefreshService } = await import('#services/auth/token_refresh_service')
     const service = new TokenRefreshService()
 
-    const user = await createTestUser({ role: 'MJ' })
+    const user = await createTestUser({})
     const campaign = await createTestCampaign({ ownerId: user.id })
     const streamer = await createTestStreamer()
 
