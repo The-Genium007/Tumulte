@@ -524,17 +524,17 @@ const handleTransformEnd = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0a0a12;
+  background: var(--color-dark-bg-deepest);
 }
 
 .canvas-wrapper {
   position: relative;
-  background: #1a1a2e;
+  background: var(--color-dark-bg-surface);
   border-radius: 8px;
   overflow: visible; /* Important pour le gizmo */
   box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.1),
-    0 4px 24px rgba(0, 0, 0, 0.5);
+    0 0 0 1px var(--color-overlay-highlight),
+    0 4px 24px var(--color-overlay-backdrop);
 }
 
 .canvas-info {
@@ -544,12 +544,12 @@ const handleTransformEnd = () => {
   display: flex;
   gap: 12px;
   font-size: 12px;
-  color: #888;
+  color: var(--color-dark-text-muted);
   z-index: 10;
 }
 
 .info-item {
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--color-overlay-backdrop);
   padding: 4px 8px;
   border-radius: 4px;
 }
@@ -565,16 +565,16 @@ const handleTransformEnd = () => {
   top: 0;
   bottom: 0;
   width: 1px;
-  background: #f472b6;
-  box-shadow: 0 0 4px #f472b6;
+  background: var(--color-gizmo-handle);
+  box-shadow: 0 0 4px var(--color-gizmo-handle-glow);
 }
 
 .snap-guide-horizontal {
   left: 0;
   right: 0;
   height: 1px;
-  background: #f472b6;
-  box-shadow: 0 0 4px #f472b6;
+  background: var(--color-gizmo-handle);
+  box-shadow: 0 0 4px var(--color-gizmo-handle-glow);
 }
 
 /* Panneau propriétés élément */
@@ -585,7 +585,7 @@ const handleTransformEnd = () => {
   display: flex;
   gap: 8px;
   font-size: 12px;
-  color: #888;
+  color: var(--color-dark-text-muted);
   z-index: 10;
   align-items: center;
 }
@@ -594,19 +594,19 @@ const handleTransformEnd = () => {
   display: flex;
   align-items: center;
   gap: 4px;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--color-overlay-backdrop);
   padding: 4px 8px;
   border-radius: 4px;
 }
 
 .property-label {
-  color: #666;
+  color: var(--color-dark-text-subtle);
   font-weight: 500;
   min-width: 12px;
 }
 
 .property-value {
-  color: #ccc;
+  color: var(--color-dark-text-secondary);
   cursor: pointer;
   min-width: 40px;
   text-align: right;
@@ -616,16 +616,16 @@ const handleTransformEnd = () => {
 }
 
 .property-value:hover {
-  background: rgba(147, 51, 234, 0.3);
-  color: #fff;
+  background: var(--color-overlay-border-brand);
+  color: var(--color-dark-text-primary);
 }
 
 .property-input {
   width: 50px;
-  background: rgba(147, 51, 234, 0.2);
-  border: 1px solid #9333ea;
+  background: var(--color-overlay-shadow-brand-soft);
+  border: 1px solid var(--color-gizmo-border);
   border-radius: 2px;
-  color: #fff;
+  color: var(--color-dark-text-primary);
   font-size: 12px;
   padding: 2px 4px;
   text-align: right;
@@ -633,12 +633,12 @@ const handleTransformEnd = () => {
 }
 
 .property-input:focus {
-  background: rgba(147, 51, 234, 0.3);
+  background: var(--color-overlay-border-brand);
 }
 
 .property-separator {
   width: 1px;
   height: 16px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-overlay-highlight-strong);
 }
 </style>

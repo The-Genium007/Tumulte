@@ -14,12 +14,12 @@
         <!-- Header -->
         <UCard>
           <div class="flex items-center gap-4">
-            <div class="bg-primary-500/10 p-3 rounded-xl">
+            <div class="bg-primary-light p-3 rounded-xl">
               <UIcon name="i-lucide-folder-plus" class="size-8 text-primary-500" />
             </div>
             <div>
-              <h1 class="text-3xl font-bold text-white">Créer une campagne</h1>
-              <p class="text-gray-400 mt-1">
+              <h1 class="text-3xl font-bold text-primary">Créer une campagne</h1>
+              <p class="text-muted mt-1">
                 Configurez votre nouvelle campagne multi-stream
               </p>
             </div>
@@ -29,7 +29,7 @@
         <!-- Form Card -->
         <UCard>
           <template #header>
-            <h2 class="text-xl font-semibold text-white">
+            <h2 class="text-xl font-semibold text-primary">
               Informations de la campagne
             </h2>
           </template>
@@ -37,8 +37,8 @@
           <div class="space-y-6">
             <!-- Name Field -->
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">
-                Nom de la campagne <span class="text-red-400">*</span>
+              <label class="block text-sm font-medium text-secondary mb-2">
+                Nom de la campagne <span class="text-error-500">*</span>
               </label>
               <UInput
                 v-model="name"
@@ -48,14 +48,14 @@
                 icon="i-lucide-folder"
                 autofocus
               />
-              <p class="text-xs text-gray-400 mt-1">
+              <p class="text-xs text-muted mt-1">
                 Le nom de votre campagne (visible par tous les membres)
               </p>
             </div>
 
             <!-- Description Field -->
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">
+              <label class="block text-sm font-medium text-secondary mb-2">
                 Description
               </label>
               <UInput
@@ -64,7 +64,7 @@
                 placeholder="Description de la campagne..."
                 :rows="6"
               />
-              <p class="text-xs text-gray-400 mt-1">
+              <p class="text-xs text-muted mt-1">
                 Une brève description (optionnel)
               </p>
             </div>

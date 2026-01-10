@@ -10,7 +10,31 @@ export default defineNuxtConfig({
     client: process.env.NODE_ENV === "development",
   },
 
-  modules: ["@nuxt/ui", "@pinia/nuxt", "@vite-pwa/nuxt", "@tresjs/nuxt"],
+  modules: [
+    "@nuxt/ui",
+    "@pinia/nuxt",
+    "@vite-pwa/nuxt",
+    "@tresjs/nuxt",
+    "@nuxt/fonts",
+  ],
+
+  // Force light theme only - no dark mode
+  colorMode: {
+    preference: "light",
+    fallback: "light",
+    forced: true, // Désactive complètement le dark mode
+  },
+
+  // Google Fonts configuration
+  fonts: {
+    families: [
+      {
+        name: "Inter",
+        provider: "google",
+        weights: [400, 500, 600, 700],
+      },
+    ],
+  },
 
   tres: {
     devtools: process.env.NODE_ENV === "development",
@@ -29,8 +53,8 @@ export default defineNuxtConfig({
       name: "Tumulte - Multi-Stream Polling",
       short_name: "Tumulte",
       description: "Gestion de sondages multi-chaînes pour MJ de JDR",
-      theme_color: "#8b5cf6",
-      background_color: "#030712",
+      theme_color: "#a855f7",
+      background_color: "#ffffff",
       display: "standalone",
       orientation: "portrait",
       scope: "/",
@@ -185,17 +209,8 @@ export default defineNuxtConfig({
         { name: "apple-mobile-web-app-title", content: "Tumulte" },
         { name: "mobile-web-app-capable", content: "yes" },
         { name: "format-detection", content: "telephone=no" },
-        // Theme color adaptatif selon le mode clair/sombre
-        {
-          name: "theme-color",
-          content: "#8b5cf6",
-          media: "(prefers-color-scheme: light)",
-        },
-        {
-          name: "theme-color",
-          content: "#030712",
-          media: "(prefers-color-scheme: dark)",
-        },
+        // Theme color - Light mode only
+        { name: "theme-color", content: "#a855f7" },
         // Content Security Policy for defense in depth
         {
           "http-equiv": "Content-Security-Policy",

@@ -6,15 +6,15 @@
     <div class="text-center space-y-8 px-4 max-w-lg">
       <!-- Icon -->
       <div class="flex justify-center">
-        <div class="bg-warning-500/10 p-6 rounded-full">
+        <div class="bg-warning-light p-6 rounded-full">
           <UIcon name="i-lucide-cloud-off" class="size-16 text-warning-500" />
         </div>
       </div>
 
       <!-- Title & Description -->
       <div class="space-y-3">
-        <h1 class="text-3xl font-bold text-white">Vous êtes hors-ligne</h1>
-        <p class="text-gray-400">
+        <h1 class="text-3xl font-bold text-primary">Vous êtes hors-ligne</h1>
+        <p class="text-muted">
           Impossible de charger cette page sans connexion internet.
           Vos données précédemment consultées restent disponibles.
         </p>
@@ -28,7 +28,7 @@
             <span class="font-medium">Données disponibles hors-ligne</span>
           </div>
         </template>
-        <ul class="space-y-2 text-sm text-gray-300">
+        <ul class="space-y-2 text-sm text-secondary">
           <li v-if="hasCampaigns" class="flex items-center gap-2">
             <UIcon name="i-lucide-check" class="size-4 text-success-500" />
             Vos campagnes
@@ -37,7 +37,7 @@
             <UIcon name="i-lucide-check" class="size-4 text-success-500" />
             Votre profil
           </li>
-          <li class="flex items-center gap-2 text-gray-500">
+          <li class="flex items-center gap-2 text-muted">
             <UIcon name="i-lucide-info" class="size-4" />
             Mode lecture seule
           </li>
@@ -68,7 +68,7 @@
       </div>
 
       <!-- Last sync info -->
-      <p v-if="lastSyncText" class="text-xs text-gray-500">
+      <p v-if="lastSyncText" class="text-xs text-muted">
         Dernière synchronisation : {{ lastSyncText }}
       </p>
     </div>

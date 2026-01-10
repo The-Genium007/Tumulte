@@ -6,19 +6,19 @@
       <template #header>
         <div class="text-center space-y-3">
           <div class="flex justify-center">
-            <div class="bg-primary-500/10 p-4 rounded-2xl">
+            <div class="bg-primary-light p-4 rounded-2xl">
               <UIcon name="i-lucide-chart-bar" class="size-12 text-primary-500" />
             </div>
           </div>
-          <h1 class="text-3xl font-bold text-white">Sondage Multi-Stream</h1>
-          <p class="text-sm text-gray-400">
+          <h1 class="text-3xl font-bold text-primary">Sondage Multi-Stream</h1>
+          <p class="text-sm text-muted">
             Système de sondages Twitch synchronisés
           </p>
         </div>
       </template>
 
       <div class="space-y-6">
-        <p class="text-gray-300 text-center">
+        <p class="text-secondary text-center">
           Connectez-vous avec votre compte Twitch pour accéder au système de
           sondages multi-streams.
         </p>

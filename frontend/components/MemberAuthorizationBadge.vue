@@ -3,7 +3,7 @@
     <!-- Owner: Permanent authorization -->
     <div
       v-if="isOwner"
-      class="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-primary-500/10 text-primary-400 border border-primary-500/20"
+      class="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-primary-light text-primary-400 border border-primary-light"
     >
       <UIcon name="i-lucide-infinity" class="size-3.5" />
       <span>Permanent</span>
@@ -22,7 +22,7 @@
     <!-- Not authorized -->
     <div
       v-else-if="!isPollAuthorized"
-      class="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-gray-500/10 text-gray-400 border border-gray-500/20"
+      class="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-neutral-200/10 text-muted border border-default/20"
     >
       <UIcon name="i-lucide-shield-off" class="size-3.5" />
       <span>Non autorisé</span>
@@ -31,7 +31,7 @@
     <!-- Expired (was authorized but time ran out) -->
     <div
       v-else
-      class="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20"
+      class="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-warning-light text-warning-500 border border-warning-light"
     >
       <UIcon name="i-lucide-clock" class="size-3.5" />
       <span>Expiré</span>
@@ -60,13 +60,13 @@ let countdownInterval: ReturnType<typeof setInterval> | null = null;
 const urgencyClass = computed(() => {
   if (displaySeconds.value <= 300) {
     // Less than 5 minutes - red/urgent
-    return "bg-red-500/10 text-red-400 border border-red-500/20";
+    return "bg-error-light text-error-500 border border-error-light";
   } else if (displaySeconds.value <= 1800) {
     // Less than 30 minutes - amber/warning
-    return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+    return "bg-warning-light text-warning-500 border border-warning-light";
   } else {
     // More than 30 minutes - green/safe
-    return "bg-green-500/10 text-green-400 border border-green-500/20";
+    return "bg-success-light text-success-500 border border-success-light";
   }
 });
 

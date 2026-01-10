@@ -31,10 +31,10 @@
         <UCard>
           <template #header>
             <div class="flex items-center gap-3">
-              <div class="bg-blue-500/10 p-2 rounded-lg">
-                <UIcon name="i-lucide-shield" class="size-6 text-blue-500" />
+              <div class="bg-info-light p-2 rounded-lg">
+                <UIcon name="i-lucide-shield" class="size-6 text-info-500" />
               </div>
-              <h2 class="text-xl font-semibold text-white">Autorisations de sondages</h2>
+              <h2 class="text-xl font-semibold text-primary">Autorisations de sondages</h2>
               <UBadge v-if="authorizationStatuses.length > 0" color="info" variant="soft">
                 {{ authorizationStatuses.length }}
               </UBadge>
@@ -46,11 +46,11 @@
           </div>
 
           <div v-else-if="authorizationStatuses.length === 0" class="text-center py-12">
-            <div class="bg-gray-800/50 p-4 rounded-2xl mb-4 inline-block">
-              <UIcon name="i-lucide-shield-off" class="size-12 text-gray-600" />
+            <div class="bg-neutral-100 p-4 rounded-2xl mb-4 inline-block">
+              <UIcon name="i-lucide-shield-off" class="size-12 text-neutral-400" />
             </div>
-            <p class="text-gray-400 mb-2">Aucune campagne active</p>
-            <p class="text-sm text-gray-500">
+            <p class="text-muted mb-2">Aucune campagne active</p>
+            <p class="text-sm text-muted">
               Acceptez une invitation pour gérer vos autorisations de sondages
             </p>
           </div>
@@ -73,11 +73,11 @@
                 v-for="status in authorizationStatuses"
                 :key="status.campaignId"
                 class="flex items-center justify-between p-4 rounded-lg border"
-                :class="(status.isOwner || status.isAuthorized) ? 'border-green-500/50 bg-green-500/5' : 'border-gray-700 bg-gray-800/30'"
+                :class="(status.isOwner || status.isAuthorized) ? 'border-success-light bg-success-light' : 'border-default bg-neutral-100'"
               >
                 <!-- Campaign name -->
                 <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-white">{{ status.campaignName }}</h3>
+                  <h3 class="text-lg font-semibold text-primary">{{ status.campaignName }}</h3>
                 </div>
 
                 <!-- Authorization button/status -->
@@ -129,14 +129,14 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <UIcon name="i-lucide-link" class="size-6 text-primary-500" />
-                <h2 class="text-xl font-semibold text-white">URL de l'overlay OBS</h2>
+                <h2 class="text-xl font-semibold text-primary">URL de l'overlay OBS</h2>
               </div>
               <button
-                class="flex items-center justify-center size-8 rounded-full bg-gray-700/50 hover:bg-gray-600/50 transition-colors"
+                class="flex items-center justify-center size-8 rounded-full bg-neutral-200 hover:bg-neutral-300 transition-colors"
                 title="Comment configurer l'overlay"
                 @click="showObsInstructions = true"
               >
-                <UIcon name="i-lucide-info" class="size-5 text-gray-300" />
+                <UIcon name="i-lucide-info" class="size-5 text-secondary" />
               </button>
             </div>
           </template>
@@ -146,8 +146,8 @@
             <div v-if="overlayUrl" class="space-y-3">
               <div class="flex gap-2">
                 <div class="flex-1 relative">
-                  <div class="flex items-center gap-2 px-3.5 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white font-mono text-sm overflow-x-auto">
-                    <UIcon name="i-lucide-link" class="size-4 text-gray-400 shrink-0" />
+                  <div class="flex items-center gap-2 px-3.5 py-2.5 bg-neutral-100 border border-default rounded-lg text-primary font-mono text-sm overflow-x-auto">
+                    <UIcon name="i-lucide-link" class="size-4 text-muted shrink-0" />
                     <span class="select-all">{{ overlayUrl }}</span>
                   </div>
                 </div>
@@ -188,7 +188,7 @@
             </div>
 
             <!-- Bouton dev pour accéder au studio -->
-            <div v-if="isDev" class="pt-4 border-t border-gray-700">
+            <div v-if="isDev" class="pt-4 border-t border-default">
               <UButton
                 color="warning"
                 variant="soft"
@@ -211,26 +211,26 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <UIcon name="i-lucide-tv" class="size-6 text-primary-500" />
-                <h2 class="text-xl font-semibold text-white">Comment ajouter l'overlay dans OBS</h2>
+                <h2 class="text-xl font-semibold text-primary">Comment ajouter l'overlay dans OBS</h2>
               </div>
               <button
-                class="flex items-center justify-center size-8 rounded-full hover:bg-gray-700/50 transition-colors"
+                class="flex items-center justify-center size-8 rounded-full hover:bg-neutral-200 transition-colors"
                 @click="showObsInstructions = false"
               >
-                <UIcon name="i-lucide-x" class="size-5 text-gray-400" />
+                <UIcon name="i-lucide-x" class="size-5 text-muted" />
               </button>
             </div>
           </template>
 
-          <ol class="list-decimal list-inside space-y-3 text-gray-300">
-            <li>Cliquez sur <strong class="text-white">"Générer l'URL de l'overlay"</strong></li>
+          <ol class="list-decimal list-inside space-y-3 text-secondary">
+            <li>Cliquez sur <strong class="text-primary">"Générer l'URL de l'overlay"</strong></li>
             <li>Copiez l'URL générée</li>
-            <li>Dans OBS Studio, ajoutez une nouvelle source → <strong class="text-white">"Navigateur"</strong></li>
+            <li>Dans OBS Studio, ajoutez une nouvelle source → <strong class="text-primary">"Navigateur"</strong></li>
             <li>Collez l'URL dans le champ "URL"</li>
-            <li>Définissez la largeur à <strong class="text-white">1920</strong> et la hauteur à <strong class="text-white">1080</strong></li>
-            <li class="text-yellow-400">⚠️ <strong>Important:</strong> Cochez "Arrière-plan transparent"</li>
+            <li>Définissez la largeur à <strong class="text-primary">1920</strong> et la hauteur à <strong class="text-primary">1080</strong></li>
+            <li class="text-warning-500">⚠️ <strong>Important:</strong> Cochez "Arrière-plan transparent"</li>
             <li>Cliquez sur "OK"</li>
-            <li class="text-green-400">✨ L'overlay apparaîtra automatiquement quand le MJ lancera un sondage!</li>
+            <li class="text-success-500">✨ L'overlay apparaîtra automatiquement quand le MJ lancera un sondage!</li>
           </ol>
 
           <template #footer>

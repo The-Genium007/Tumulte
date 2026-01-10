@@ -8,12 +8,12 @@
             <template #header>
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                  <div class="bg-purple-500/10 p-3 rounded-xl">
-                    <UIcon name="i-lucide-folder-kanban" class="size-6 text-purple-500" />
+                  <div class="bg-brand-light p-3 rounded-xl">
+                    <UIcon name="i-lucide-folder-kanban" class="size-6 text-brand-500" />
                   </div>
                   <div>
-                    <h2 class="text-xl font-semibold text-white">Campagnes actives</h2>
-                    <p class="text-sm text-gray-400">Sélectionnez une campagne pour gérer vos sondages</p>
+                    <h2 class="text-xl font-semibold text-primary">Campagnes actives</h2>
+                    <p class="text-sm text-muted">Sélectionnez une campagne pour gérer vos sondages</p>
                   </div>
                 </div>
                 <UButton
@@ -33,8 +33,8 @@
                 class="flex items-center justify-between p-4 rounded-lg cursor-pointer transition-all"
                 :class="
                   selectedCampaignId === campaign.id
-                    ? 'bg-purple-500/20 border border-purple-500/50'
-                    : 'bg-gray-800/30 hover:bg-gray-800/50 border border-transparent'
+                    ? 'bg-brand-medium border border-brand-light'
+                    : 'bg-neutral-100 hover:bg-neutral-200 border border-transparent'
                 "
                 @click="selectCampaign(campaign.id)"
               >
@@ -43,13 +43,13 @@
                     class="w-2 h-2 rounded-full"
                     :class="
                       selectedCampaignId === campaign.id
-                        ? 'bg-purple-500'
-                        : 'bg-gray-600'
+                        ? 'bg-brand-500'
+                        : 'bg-neutral-400'
                     "
                   ></div>
                   <div>
-                    <h3 class="font-semibold text-white">{{ campaign.name }}</h3>
-                    <p class="text-sm text-gray-400">
+                    <h3 class="font-semibold text-primary">{{ campaign.name }}</h3>
+                    <p class="text-sm text-muted">
                       {{ campaign.activeMemberCount || 0 }} streamer(s)
                     </p>
                   </div>
@@ -71,8 +71,8 @@
               <div class="flex items-center gap-3">
                 <UIcon name="i-lucide-users" class="size-6 text-primary-500" />
                 <div>
-                  <h2 class="text-xl font-semibold text-white">Streamers connectés</h2>
-                  <p v-if="selectedCampaignId" class="text-xs text-gray-400">
+                  <h2 class="text-xl font-semibold text-primary">Streamers connectés</h2>
+                  <p v-if="selectedCampaignId" class="text-xs text-muted">
                     {{ selectedCampaignStreamers.length }} membre(s)
                   </p>
                 </div>
@@ -88,7 +88,7 @@
                 name="i-lucide-loader"
                 class="size-10 text-primary-500 animate-spin mb-4"
               />
-              <p class="text-gray-400 text-sm">Chargement...</p>
+              <p class="text-muted text-sm">Chargement...</p>
             </div>
 
             <!-- No Campaign Selected -->
@@ -96,10 +96,10 @@
               v-else-if="!selectedCampaignId"
               class="text-center py-12"
             >
-              <div class="bg-purple-500/10 p-4 rounded-2xl mb-4 inline-block">
-                <UIcon name="i-lucide-arrow-left" class="size-12 text-purple-500" />
+              <div class="bg-brand-light p-4 rounded-2xl mb-4 inline-block">
+                <UIcon name="i-lucide-arrow-left" class="size-12 text-brand-500" />
               </div>
-              <p class="text-gray-400 text-sm">
+              <p class="text-muted text-sm">
                 Sélectionnez une campagne pour voir les streamers
               </p>
             </div>
@@ -109,10 +109,10 @@
               v-else-if="selectedCampaignStreamers.length === 0"
               class="text-center py-12"
             >
-              <div class="bg-purple-500/10 p-4 rounded-2xl mb-4 inline-block">
-                <UIcon name="i-lucide-user-plus" class="size-12 text-purple-500" />
+              <div class="bg-brand-light p-4 rounded-2xl mb-4 inline-block">
+                <UIcon name="i-lucide-user-plus" class="size-12 text-brand-500" />
               </div>
-              <p class="text-gray-400 text-sm">Aucun streamer dans cette campagne</p>
+              <p class="text-muted text-sm">Aucun streamer dans cette campagne</p>
             </div>
 
             <!-- Streamers List -->
@@ -120,7 +120,7 @@
               <div
                 v-for="streamer in selectedCampaignStreamers"
                 :key="streamer.id"
-                class="flex items-center justify-between p-3 bg-gray-800/30 rounded-lg"
+                class="flex items-center justify-between p-3 bg-neutral-100 rounded-lg"
               >
                 <div class="flex items-center gap-2">
                   <div class="relative">
@@ -132,14 +132,14 @@
                     <LiveBadge :live-status="liveStatus[streamer.twitchUserId]" />
                   </div>
                   <div>
-                    <p class="font-semibold text-white text-sm">
+                    <p class="font-semibold text-primary text-sm">
                       {{ streamer.twitchDisplayName }}
                     </p>
                     <a
                       :href="`https://www.twitch.tv/${streamer.twitchLogin}`"
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="text-xs text-gray-400 hover:text-purple-400 transition-colors"
+                      class="text-xs text-muted hover:text-brand-500 transition-colors"
                     >
                       @{{ streamer.twitchLogin }}
                     </a>
@@ -212,13 +212,13 @@
         <!-- No Campaign Message -->
         <UCard v-else-if="campaignsLoaded && campaigns.length === 0">
           <div class="text-center py-12">
-            <div class="bg-yellow-500/10 p-6 rounded-2xl mb-6 inline-block">
+            <div class="bg-yellow-light p-6 rounded-2xl mb-6 inline-block">
               <UIcon name="i-lucide-alert-circle" class="size-16 text-yellow-500" />
             </div>
-            <h2 class="text-2xl font-bold text-white mb-2">
+            <h2 class="text-2xl font-bold text-primary mb-2">
               Aucune campagne disponible
             </h2>
-            <p class="text-gray-400 mb-6 max-w-md mx-auto">
+            <p class="text-muted mb-6 max-w-md mx-auto">
               Créez une campagne pour commencer à gérer vos sondages multi-streams
             </p>
             <UButton
@@ -254,7 +254,7 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <UIcon name="i-lucide-list-checks" class="size-6 text-primary-500" />
-                <h2 class="text-xl font-semibold text-white">Sessions de sondages</h2>
+                <h2 class="text-xl font-semibold text-primary">Sessions de sondages</h2>
               </div>
               <UButton
                 color="primary"
@@ -270,10 +270,10 @@
             v-if="!selectedCampaignId"
             class="text-center py-16"
           >
-            <div class="bg-purple-500/10 p-6 rounded-2xl mb-4 inline-block">
-              <UIcon name="i-lucide-arrow-left" class="size-16 text-purple-500" />
+            <div class="bg-brand-light p-6 rounded-2xl mb-4 inline-block">
+              <UIcon name="i-lucide-arrow-left" class="size-16 text-brand-500" />
             </div>
-            <p class="text-gray-400">Sélectionnez une campagne pour gérer vos sessions</p>
+            <p class="text-muted">Sélectionnez une campagne pour gérer vos sessions</p>
           </div>
 
           <!-- Loading -->
@@ -285,7 +285,7 @@
               name="i-lucide-loader"
               class="size-12 text-primary-500 animate-spin mb-4"
             />
-            <p class="text-gray-400">Chargement des sessions...</p>
+            <p class="text-muted">Chargement des sessions...</p>
           </div>
 
           <!-- Empty State -->
@@ -293,11 +293,11 @@
             v-else-if="sessions.length === 0"
             class="text-center py-16"
           >
-            <div class="bg-primary-500/10 p-6 rounded-2xl mb-6 inline-block">
+            <div class="bg-primary-light p-6 rounded-2xl mb-6 inline-block">
               <UIcon name="i-lucide-list-plus" class="size-16 text-primary-500" />
             </div>
-            <h3 class="text-xl font-bold text-white mb-2">Aucune session créée</h3>
-            <p class="text-gray-400 mb-6">
+            <h3 class="text-xl font-bold text-primary mb-2">Aucune session créée</h3>
+            <p class="text-muted mb-6">
               Créez votre première session pour commencer
             </p>
             <UButton
@@ -313,15 +313,15 @@
             <div
               v-for="session in sessions"
               :key="session.id"
-              class="flex items-center justify-between p-4 rounded-lg bg-gray-800/30 hover:bg-gray-800/50 transition-colors"
+              class="flex items-center justify-between p-4 rounded-lg bg-neutral-100 hover:bg-neutral-200 transition-colors"
             >
               <div class="flex items-center gap-4">
-                <div class="bg-purple-500/10 p-3 rounded-lg">
-                  <UIcon name="i-lucide-list-checks" class="size-6 text-purple-500" />
+                <div class="bg-brand-light p-3 rounded-lg">
+                  <UIcon name="i-lucide-list-checks" class="size-6 text-brand-500" />
                 </div>
                 <div>
-                  <h3 class="font-semibold text-white">{{ session.name }}</h3>
-                  <p class="text-sm text-gray-400">
+                  <h3 class="font-semibold text-primary">{{ session.name }}</h3>
+                  <p class="text-sm text-muted">
                     {{ session.pollsCount }} sondage(s) · {{ session.defaultDurationSeconds }}s par défaut
                   </p>
                 </div>
@@ -355,13 +355,13 @@
       <!-- Create Session Modal -->
       <UModal v-model:open="showCreateSessionModal">
         <template #header>
-          <h3 class="text-xl font-bold text-white">Créer une session</h3>
+          <h3 class="text-xl font-bold text-primary">Créer une session</h3>
         </template>
 
         <template #body>
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Nom de la session</label>
+              <label class="block text-sm font-medium text-secondary mb-2">Nom de la session</label>
               <UInput
                 v-model="newSession.name"
                 type="text"
@@ -371,7 +371,7 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">
+              <label class="block text-sm font-medium text-secondary mb-2">
                 Durée par défaut des sondages (secondes)
               </label>
               <UInput
@@ -381,7 +381,7 @@
                 :max="1800"
                 size="lg"
               />
-              <p class="text-xs text-gray-400 mt-2">
+              <p class="text-xs text-muted mt-2">
                 {{ Math.floor(newSession.defaultDurationSeconds / 60) }}m
                 {{ newSession.defaultDurationSeconds % 60 }}s
               </p>
@@ -406,21 +406,21 @@
       <!-- Delete Session Confirmation Modal -->
       <UModal v-model:open="showDeleteSessionConfirm">
         <template #header>
-          <h3 class="text-xl font-bold text-white">Confirmer la suppression</h3>
+          <h3 class="text-xl font-bold text-primary">Confirmer la suppression</h3>
         </template>
 
         <template #body>
           <div class="space-y-4">
-            <div class="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
-              <UIcon name="i-lucide-alert-triangle" class="size-8 text-red-500" />
+            <div class="flex items-center gap-3 p-4 bg-error-light border border-error-light rounded-lg">
+              <UIcon name="i-lucide-alert-triangle" class="size-8 text-error-500" />
               <div>
-                <p class="text-white font-semibold">Attention !</p>
-                <p class="text-gray-300 text-sm">
+                <p class="text-primary font-semibold">Attention !</p>
+                <p class="text-secondary text-sm">
                   Êtes-vous sûr de vouloir supprimer la session "{{ currentSession?.name }}" ?
                 </p>
               </div>
             </div>
-            <p class="text-gray-400 text-sm">
+            <p class="text-muted text-sm">
               Tous les sondages associés à cette session seront également supprimés. Cette action est irréversible.
             </p>
           </div>
@@ -448,21 +448,21 @@
       <!-- Close Active Session Confirmation Modal -->
       <UModal v-model:open="showCloseSessionConfirm">
         <template #header>
-          <h3 class="text-xl font-bold text-white">Fermer la session active</h3>
+          <h3 class="text-xl font-bold text-primary">Fermer la session active</h3>
         </template>
 
         <template #body>
           <div class="space-y-4">
-            <div class="flex items-center gap-3 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
-              <UIcon name="i-lucide-alert-triangle" class="size-8 text-yellow-500" />
+            <div class="flex items-center gap-3 p-4 bg-warning-light border border-warning-light rounded-lg">
+              <UIcon name="i-lucide-alert-triangle" class="size-8 text-warning-500" />
               <div>
-                <p class="text-white font-semibold">Attention !</p>
-                <p class="text-gray-300 text-sm">
+                <p class="text-primary font-semibold">Attention !</p>
+                <p class="text-secondary text-sm">
                   Êtes-vous sûr de vouloir fermer la session de sondage en cours ?
                 </p>
               </div>
             </div>
-            <p class="text-gray-400 text-sm">
+            <p class="text-muted text-sm">
               La progression actuelle (sondages lancés, résultats) sera perdue. Vous pourrez relancer la session plus tard.
             </p>
           </div>
@@ -512,32 +512,32 @@
               <UCard v-if="showHealthCheckError" class="max-w-lg mx-4">
                 <template #header>
                   <div class="flex items-center gap-3">
-                    <div class="p-2 rounded-lg bg-error-500/10">
+                    <div class="p-2 rounded-lg bg-error-light">
                       <UIcon name="i-lucide-alert-triangle" class="size-6 text-error-500" />
                     </div>
                     <div>
-                      <h3 class="text-lg font-semibold text-white">Tokens expirés</h3>
-                      <p class="text-sm text-gray-400 mt-0.5">Reconnexion requise</p>
+                      <h3 class="text-lg font-semibold text-primary">Tokens expirés</h3>
+                      <p class="text-sm text-muted mt-0.5">Reconnexion requise</p>
                     </div>
                   </div>
                 </template>
 
                 <div class="space-y-4">
-                  <div class="p-4 rounded-lg bg-error-500/10 border border-error-500/30">
-                    <p class="text-sm text-gray-300 mb-2">
+                  <div class="p-4 rounded-lg bg-error-light border border-error-light">
+                    <p class="text-sm text-secondary mb-2">
                       Les streamers suivants doivent se reconnecter pour rafraîchir leur token Twitch :
                     </p>
-                    <ul class="list-disc list-inside text-sm text-white space-y-1 ml-2">
+                    <ul class="list-disc list-inside text-sm text-primary space-y-1 ml-2">
                       <li v-for="streamerName in expiredStreamersNames" :key="streamerName">
                         {{ streamerName }}
                       </li>
                     </ul>
                   </div>
 
-                  <div class="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                  <div class="p-3 rounded-lg bg-info-light border border-info-light">
                     <div class="flex items-start gap-2">
-                      <UIcon name="i-lucide-info" class="size-4 text-blue-400 mt-0.5 shrink-0" />
-                      <p class="text-xs text-gray-300">
+                      <UIcon name="i-lucide-info" class="size-4 text-info-500 mt-0.5 shrink-0" />
+                      <p class="text-xs text-secondary">
                         Les streamers concernés doivent se déconnecter puis se reconnecter à Tumulte pour renouveler leur autorisation Twitch.
                       </p>
                     </div>

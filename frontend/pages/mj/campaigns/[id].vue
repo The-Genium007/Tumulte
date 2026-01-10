@@ -14,7 +14,7 @@
 
           <div>
             <div class="flex items-center gap-3 mb-2">
-              <h1 class="text-3xl font-bold text-white">
+              <h1 class="text-3xl font-bold text-primary">
                 {{ campaign?.name || 'Chargement...' }}
               </h1>
               <UButton
@@ -26,10 +26,10 @@
                 @click="handleDeleteCampaign"
               />
             </div>
-            <p v-if="campaign?.description" class="text-gray-400">
+            <p v-if="campaign?.description" class="text-muted">
               {{ campaign.description }}
             </p>
-            <p v-if="campaign" class="text-sm text-gray-500 mt-1">
+            <p v-if="campaign" class="text-sm text-muted mt-1">
               Créée le {{ formatDate(campaign.createdAt) }}
             </p>
           </div>
@@ -39,60 +39,60 @@
         <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <UCard>
             <div class="flex items-center gap-4">
-              <div class="bg-primary-500/10 p-3 rounded-xl">
+              <div class="bg-primary-light p-3 rounded-xl">
                 <UIcon name="i-lucide-users" class="size-8 text-primary-500" />
               </div>
               <div>
-                <p class="text-sm text-gray-400">Total Membres</p>
-                <p class="text-2xl font-bold text-white">{{ members.length }}</p>
+                <p class="text-sm text-muted">Total Membres</p>
+                <p class="text-2xl font-bold text-primary">{{ members.length }}</p>
               </div>
             </div>
           </UCard>
 
-          <UCard class="cursor-pointer hover:bg-gray-800/50 transition-colors" @click="fetchLiveStatus">
+          <UCard class="cursor-pointer hover:bg-neutral-100 transition-colors" @click="fetchLiveStatus">
             <div class="flex items-center gap-4">
-              <div class="bg-red-500/10 p-3 rounded-xl">
-                <UIcon name="i-lucide-radio" class="size-8 text-red-500" />
+              <div class="bg-error-light p-3 rounded-xl">
+                <UIcon name="i-lucide-radio" class="size-8 text-error-500" />
               </div>
               <div>
-                <p class="text-sm text-gray-400">En Live <span class="text-xs">(clic pour refresh)</span></p>
-                <p class="text-2xl font-bold text-white">{{ liveMembersCount }}</p>
-              </div>
-            </div>
-          </UCard>
-
-          <UCard>
-            <div class="flex items-center gap-4">
-              <div class="bg-green-500/10 p-3 rounded-xl">
-                <UIcon name="i-lucide-user-check" class="size-8 text-green-500" />
-              </div>
-              <div>
-                <p class="text-sm text-gray-400">Actifs</p>
-                <p class="text-2xl font-bold text-white">{{ activeMembersCount }}</p>
+                <p class="text-sm text-muted">En Live <span class="text-xs">(clic pour refresh)</span></p>
+                <p class="text-2xl font-bold text-primary">{{ liveMembersCount }}</p>
               </div>
             </div>
           </UCard>
 
           <UCard>
             <div class="flex items-center gap-4">
-              <div class="bg-blue-500/10 p-3 rounded-xl">
-                <UIcon name="i-lucide-shield-check" class="size-8 text-blue-500" />
+              <div class="bg-success-light p-3 rounded-xl">
+                <UIcon name="i-lucide-user-check" class="size-8 text-success-500" />
               </div>
               <div>
-                <p class="text-sm text-gray-400">Autorisés</p>
-                <p class="text-2xl font-bold text-white">{{ authorizedMembersCount }}</p>
+                <p class="text-sm text-muted">Actifs</p>
+                <p class="text-2xl font-bold text-primary">{{ activeMembersCount }}</p>
               </div>
             </div>
           </UCard>
 
           <UCard>
             <div class="flex items-center gap-4">
-              <div class="bg-amber-500/10 p-3 rounded-xl">
-                <UIcon name="i-lucide-user-plus" class="size-8 text-amber-500" />
+              <div class="bg-info-light p-3 rounded-xl">
+                <UIcon name="i-lucide-shield-check" class="size-8 text-info-500" />
               </div>
               <div>
-                <p class="text-sm text-gray-400">En Attente</p>
-                <p class="text-2xl font-bold text-white">{{ pendingMembersCount }}</p>
+                <p class="text-sm text-muted">Autorisés</p>
+                <p class="text-2xl font-bold text-primary">{{ authorizedMembersCount }}</p>
+              </div>
+            </div>
+          </UCard>
+
+          <UCard>
+            <div class="flex items-center gap-4">
+              <div class="bg-warning-light p-3 rounded-xl">
+                <UIcon name="i-lucide-user-plus" class="size-8 text-warning-500" />
+              </div>
+              <div>
+                <p class="text-sm text-muted">En Attente</p>
+                <p class="text-2xl font-bold text-primary">{{ pendingMembersCount }}</p>
               </div>
             </div>
           </UCard>
@@ -102,7 +102,7 @@
         <UCard>
           <template #header>
             <div class="flex items-center justify-between">
-              <h2 class="text-xl font-bold text-white">Membres de la campagne</h2>
+              <h2 class="text-xl font-bold text-primary">Membres de la campagne</h2>
               <UButton
                 icon="i-lucide-user-plus"
                 label="Inviter un streamer"
@@ -117,9 +117,9 @@
           </div>
 
           <div v-else-if="members.length === 0" class="text-center py-12">
-            <UIcon name="i-lucide-users" class="size-16 mx-auto mb-4 text-gray-600" />
-            <h3 class="text-xl font-semibold text-white mb-2">Aucun membre</h3>
-            <p class="text-gray-400 mb-6">
+            <UIcon name="i-lucide-users" class="size-16 mx-auto mb-4 text-muted" />
+            <h3 class="text-xl font-semibold text-primary mb-2">Aucun membre</h3>
+            <p class="text-muted mb-6">
               Commencez par inviter des streamers à rejoindre cette campagne
             </p>
             <UButton
@@ -134,7 +134,7 @@
             <div
               v-for="member in sortedMembers"
               :key="member.id"
-              class="flex items-center justify-between p-4 bg-gray-800/30 rounded-lg hover:bg-gray-700/30 transition-colors"
+              class="flex items-center justify-between p-4 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors"
             >
               <div class="flex items-center gap-4">
                 <!-- Avatar with Live Badge -->
@@ -144,19 +144,19 @@
                     :src="member.streamer.profileImageUrl"
                     :alt="member.streamer.twitchDisplayName"
                     class="size-12 rounded-full ring-2"
-                    :class="liveStatus[member.streamer.twitchUserId]?.is_live ? 'ring-red-500' : 'ring-purple-500/20'"
+                    :class="liveStatus[member.streamer.twitchUserId]?.is_live ? 'ring-error-500' : 'ring-brand-light'"
                   />
                   <div
                     v-else
-                    class="size-12 rounded-full ring-2 ring-purple-500/20 bg-purple-500/20 flex items-center justify-center"
+                    class="size-12 rounded-full ring-2 ring-brand-light bg-brand-light flex items-center justify-center"
                   >
-                    <UIcon name="i-lucide-user" class="size-6 text-purple-500" />
+                    <UIcon name="i-lucide-user" class="size-6 text-brand-500" />
                   </div>
                   <LiveBadge :live-status="liveStatus[member.streamer.twitchUserId]" />
                 </div>
                 <div>
                   <div class="flex items-center gap-2">
-                    <p class="font-semibold text-white">
+                    <p class="font-semibold text-primary">
                       {{ member.streamer.twitchDisplayName }}
                     </p>
                     <UBadge
@@ -193,7 +193,7 @@
                   <!-- Live info -->
                   <p
                     v-if="liveStatus[member.streamer.twitchUserId]?.is_live"
-                    class="text-xs text-red-400 mt-1"
+                    class="text-xs text-error-500 mt-1"
                   >
                     🔴 En live{{ liveStatus[member.streamer.twitchUserId]?.game_name ? ` sur ${liveStatus[member.streamer.twitchUserId].game_name}` : '' }}
                     {{ liveStatus[member.streamer.twitchUserId]?.viewer_count !== undefined ? `(${liveStatus[member.streamer.twitchUserId].viewer_count} viewers)` : '' }}
@@ -231,21 +231,21 @@
     <UModal v-model:open="showDeleteModal">
       <template #header>
         <div class="flex items-center gap-3">
-          <div class="bg-error-500/10 p-2 rounded-lg">
+          <div class="bg-error-light p-2 rounded-lg">
             <UIcon name="i-lucide-alert-triangle" class="size-6 text-error-500" />
           </div>
-          <h3 class="text-xl font-bold text-white">Supprimer la campagne</h3>
+          <h3 class="text-xl font-bold text-primary">Supprimer la campagne</h3>
         </div>
       </template>
 
       <template #body>
         <div class="space-y-4">
-          <p class="text-gray-300">
+          <p class="text-secondary">
             Êtes-vous sûr de vouloir supprimer la campagne
-            <strong class="text-white">{{ campaign?.name }}</strong> ?
+            <strong class="text-primary">{{ campaign?.name }}</strong> ?
           </p>
-          <div class="bg-error-500/10 border border-error-500/20 rounded-lg p-4">
-            <p class="text-sm text-error-300">
+          <div class="bg-error-light border border-error-light rounded-lg p-4">
+            <p class="text-sm text-error-500">
               ⚠️ Cette action est irréversible. Tous les templates, sondages et membres seront supprimés définitivement.
             </p>
           </div>
@@ -274,21 +274,21 @@
     <UModal v-model:open="showRemoveMemberModal">
       <template #header>
         <div class="flex items-center gap-3">
-          <div class="bg-error-500/10 p-2 rounded-lg">
+          <div class="bg-error-light p-2 rounded-lg">
             <UIcon name="i-lucide-user-x" class="size-6 text-error-500" />
           </div>
-          <h3 class="text-xl font-bold text-white">Révoquer l'accès</h3>
+          <h3 class="text-xl font-bold text-primary">Révoquer l'accès</h3>
         </div>
       </template>
 
       <template #body>
         <div class="space-y-4">
-          <p class="text-gray-300">
+          <p class="text-secondary">
             Êtes-vous sûr de vouloir révoquer l'accès de
-            <strong class="text-white">{{ memberToRemove?.name }}</strong> ?
+            <strong class="text-primary">{{ memberToRemove?.name }}</strong> ?
           </p>
-          <div class="bg-error-500/10 border border-error-500/20 rounded-lg p-4">
-            <p class="text-sm text-error-300">
+          <div class="bg-error-light border border-error-light rounded-lg p-4">
+            <p class="text-sm text-error-500">
               ⚠️ Cette action retirera immédiatement ce membre de la campagne et de tous les sondages en cours.
             </p>
           </div>
@@ -316,13 +316,13 @@
     <!-- Modal d'invitation -->
     <UModal v-model:open="showInviteModal">
       <template #header>
-        <h3 class="text-xl font-bold text-white">Inviter un streamer</h3>
+        <h3 class="text-xl font-bold text-primary">Inviter un streamer</h3>
       </template>
 
       <template #body>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">
+            <label class="block text-sm font-medium text-secondary mb-2">
               Rechercher un streamer
             </label>
             <UInput
@@ -331,7 +331,7 @@
               placeholder="Nom ou login Twitch..."
               size="lg"
             />
-            <p class="text-xs text-gray-400 mt-1">Tapez au moins 2 caractères</p>
+            <p class="text-xs text-muted mt-1">Tapez au moins 2 caractères</p>
           </div>
 
           <!-- Loading -->
@@ -344,24 +344,24 @@
             <div
               v-for="streamer in filteredSearchResults"
               :key="streamer.id"
-              class="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg hover:bg-gray-700/50 transition-colors"
+              class="flex items-center justify-between p-3 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors"
             >
               <div class="flex items-center gap-3">
                 <img
                   v-if="streamer.profileImageUrl"
                   :src="streamer.profileImageUrl"
                   :alt="streamer.displayName"
-                  class="size-10 rounded-full ring-2 ring-purple-500/20"
+                  class="size-10 rounded-full ring-2 ring-brand-light"
                 />
                 <div
                   v-else
-                  class="size-10 rounded-full ring-2 ring-purple-500/20 bg-purple-500/20 flex items-center justify-center"
+                  class="size-10 rounded-full ring-2 ring-brand-light bg-brand-light flex items-center justify-center"
                 >
-                  <UIcon name="i-lucide-user" class="size-5 text-purple-500" />
+                  <UIcon name="i-lucide-user" class="size-5 text-brand-500" />
                 </div>
                 <div>
-                  <p class="font-semibold text-white">{{ streamer.displayName }}</p>
-                  <p class="text-sm text-gray-400">@{{ streamer.login }}</p>
+                  <p class="font-semibold text-primary">{{ streamer.displayName }}</p>
+                  <p class="text-sm text-muted">@{{ streamer.login }}</p>
                 </div>
               </div>
               <UButton
@@ -376,16 +376,16 @@
 
           <!-- No Results -->
           <div v-else-if="searchQuery.length >= 2" class="text-center py-8">
-            <UIcon name="i-lucide-search-x" class="size-12 mx-auto mb-3 text-gray-500" />
-            <p class="text-gray-400">
+            <UIcon name="i-lucide-search-x" class="size-12 mx-auto mb-3 text-muted" />
+            <p class="text-muted">
               {{ searchResults.length > 0 ? 'Tous les streamers trouvés sont déjà invités' : 'Aucun streamer trouvé' }}
             </p>
           </div>
 
           <!-- Initial State -->
           <div v-else class="text-center py-8">
-            <UIcon name="i-lucide-search" class="size-12 mx-auto mb-3 text-gray-600" />
-            <p class="text-sm text-gray-500">Tapez au moins 2 caractères pour rechercher</p>
+            <UIcon name="i-lucide-search" class="size-12 mx-auto mb-3 text-muted" />
+            <p class="text-sm text-muted">Tapez au moins 2 caractères pour rechercher</p>
           </div>
         </div>
       </template>

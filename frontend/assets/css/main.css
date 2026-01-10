@@ -1,7 +1,214 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
-/* Masquer les modals des gestionnaires de mots de passe */
+/* ============================================================================
+   TUMULTE - DESIGN TOKENS
+   ============================================================================
+   Variables CSS essentielles. Les autres valeurs (spacing, radius, shadows,
+   z-index, etc.) sont gérées par Tailwind CSS v4.
+   ============================================================================ */
+
+@theme {
+  /* ==========================================================================
+     COULEURS BRAND
+     ========================================================================== */
+  --color-brand-500: #a855f7;
+  --color-brand-600: #9333ea;
+
+  /* ==========================================================================
+     COULEURS NEUTRES
+     ========================================================================== */
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+
+  /* ==========================================================================
+     COULEURS SÉMANTIQUES
+     ========================================================================== */
+  --color-error-300: #fca5a5;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-success-500: #22c55e;
+  --color-live: #dc2626;
+
+  /* ==========================================================================
+     DARK UI (Studio / Overlay Editor)
+     ========================================================================== */
+  --color-dark-bg-base: #0f0f1a;
+  --color-dark-bg-surface: #1a1a2e;
+  --color-dark-bg-elevated: #2a2a3e;
+  --color-dark-bg-hover: #3a3a4e;
+  --color-dark-bg-deepest: #0a0a12;
+  --color-dark-border: #2a2a3e;
+  --color-dark-text-primary: #ffffff;
+  --color-dark-text-secondary: #cccccc;
+  --color-dark-text-muted: #888888;
+  --color-dark-text-subtle: #666666;
+
+  /* ==========================================================================
+     OVERLAY / POLL CARD
+     ========================================================================== */
+  --color-overlay-bg-dark: rgba(0, 0, 0, 0.95);
+  --color-overlay-bg-dark-alt: rgba(17, 17, 17, 0.9);
+  --color-overlay-shadow-brand: rgba(147, 51, 234, 0.4);
+  --color-overlay-shadow-brand-soft: rgba(147, 51, 234, 0.2);
+  --color-overlay-border-brand: rgba(147, 51, 234, 0.3);
+  --color-overlay-border-brand-soft: rgba(147, 51, 234, 0.15);
+  --color-overlay-highlight: rgba(255, 255, 255, 0.1);
+  --color-overlay-highlight-strong: rgba(255, 255, 255, 0.2);
+  --color-overlay-highlight-soft: rgba(255, 255, 255, 0.3);
+  --color-overlay-text-light: #e0d0ff;
+  --color-overlay-backdrop: rgba(0, 0, 0, 0.5);
+
+  /* ==========================================================================
+     GIZMO / TRANSFORM HANDLES
+     ========================================================================== */
+  --color-gizmo-border: #9333ea;
+  --color-gizmo-handle: #f472b6;
+  --color-gizmo-handle-glow: #f472b6;
+
+  /* ==========================================================================
+     GRADIENT BRAND
+     ========================================================================== */
+  --color-gradient-brand-start: #9333ea;
+  --color-gradient-brand-middle: #c026d3;
+  --color-gradient-brand-end: #ec4899;
+
+  /* ==========================================================================
+     INTERFACE - BACKGROUNDS
+     ========================================================================== */
+  --color-bg-page: #F2E4D4;
+  --color-bg-subtle: #F2E4D4;
+  --color-bg-muted: #FFFFFF;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-inverse: #0f172a;
+  --color-bg-brand-light: #f5f3ff;
+  --color-bg-primary-light: #f5f3ff;
+  --color-bg-success-light: #f0fdf4;
+  --color-bg-error-light: #fef2f2;
+  --color-bg-warning-light: #fffbeb;
+  --color-bg-info-light: #eff6ff;
+
+  /* ==========================================================================
+     INTERFACE - TEXTES
+     ========================================================================== */
+  --color-text-primary: #0E0D04;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  --color-text-disabled: #94a3b8;
+  --color-text-inverse: #ffffff;
+
+  /* ==========================================================================
+     INTERFACE - BORDURES
+     ========================================================================== */
+  --color-border-default: #e2e8f0;
+  --color-border-muted: #f1f5f9;
+  --color-border-strong: #cbd5e1;
+  --color-border-success-light: #bbf7d0;
+  --color-border-error-light: #fecaca;
+
+  /* ==========================================================================
+     POLICES
+     ========================================================================== */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ============================================================================
+   THÈME CLAIR PERMANENT
+   ============================================================================ */
+
+:root {
+  color-scheme: light;
+}
+
+/* Forcer le light mode même si .dark est appliqué */
+html.dark {
+  color-scheme: light;
+}
+
+.dark {
+  --ui-text-dimmed: var(--ui-color-neutral-400);
+  --ui-text-muted: var(--ui-color-neutral-500);
+  --ui-text-toned: var(--ui-color-neutral-600);
+  --ui-text: var(--ui-color-neutral-700);
+  --ui-text-highlighted: var(--ui-color-neutral-900);
+  --ui-text-inverted: var(--color-white);
+  --ui-bg: var(--color-white);
+  --ui-bg-muted: var(--ui-color-neutral-50);
+  --ui-bg-elevated: var(--ui-color-neutral-100);
+  --ui-bg-accented: var(--ui-color-neutral-200);
+  --ui-bg-inverted: var(--ui-color-neutral-900);
+  --ui-border: var(--ui-color-neutral-200);
+  --ui-border-muted: var(--ui-color-neutral-200);
+  --ui-border-accented: var(--ui-color-neutral-300);
+  --ui-border-inverted: var(--ui-color-neutral-900);
+}
+
+/* ============================================================================
+   STYLES DE BASE
+   ============================================================================ */
+
+html {
+  background-color: var(--color-bg-page);
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-page);
+}
+
+/* ============================================================================
+   CLASSES UTILITAIRES
+   ============================================================================ */
+
+/* Backgrounds */
+.bg-page { background-color: var(--color-bg-page); }
+.bg-subtle { background-color: var(--color-bg-subtle); }
+.bg-muted { background-color: var(--color-bg-muted); }
+.bg-elevated { background-color: var(--color-bg-elevated); }
+.bg-inverse { background-color: var(--color-bg-inverse); }
+.bg-brand-light { background-color: var(--color-bg-brand-light); }
+.bg-primary-light { background-color: var(--color-bg-primary-light); }
+.bg-success-light { background-color: var(--color-bg-success-light); }
+.bg-error-light { background-color: var(--color-bg-error-light); }
+.bg-warning-light { background-color: var(--color-bg-warning-light); }
+.bg-info-light { background-color: var(--color-bg-info-light); }
+.bg-live { background-color: var(--color-live); }
+.bg-disabled { background-color: var(--color-neutral-100); }
+
+/* Textes */
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-muted { color: var(--color-text-muted); }
+.text-disabled { color: var(--color-text-disabled); }
+.text-inverse { color: var(--color-text-inverse); }
+
+/* Bordures */
+.border-default { border-color: var(--color-border-default); }
+.border-muted { border-color: var(--color-border-muted); }
+.border-strong { border-color: var(--color-border-strong); }
+.border-success-light { border-color: var(--color-border-success-light); }
+.border-error-light { border-color: var(--color-border-error-light); }
+
+/* Dark UI (Studio) */
+.dark-bg-base { background-color: var(--color-dark-bg-base); }
+.dark-bg-surface { background-color: var(--color-dark-bg-surface); }
+.dark-bg-elevated { background-color: var(--color-dark-bg-elevated); }
+.dark-bg-hover { background-color: var(--color-dark-bg-hover); }
+.dark-bg-deepest { background-color: var(--color-dark-bg-deepest); }
+.dark-border { border-color: var(--color-dark-border); }
+.dark-text-primary { color: var(--color-dark-text-primary); }
+.dark-text-secondary { color: var(--color-dark-text-secondary); }
+.dark-text-muted { color: var(--color-dark-text-muted); }
+.dark-text-subtle { color: var(--color-dark-text-subtle); }
+
+/* ============================================================================
+   MASQUER LES MODALS DES GESTIONNAIRES DE MOTS DE PASSE
+   ============================================================================ */
+
 [id^="1password"],
 [id^="lastpass"],
 [id^="bitwarden"],

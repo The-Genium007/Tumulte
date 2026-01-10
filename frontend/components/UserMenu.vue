@@ -3,7 +3,7 @@
     <!-- Avatar utilisateur avec badge de notification -->
     <button
       @click="isOpen = !isOpen"
-      class="relative flex items-center gap-2 p-1 rounded-lg hover:bg-gray-800/50 transition-colors"
+      class="relative flex items-center gap-2 p-1 rounded-lg hover:bg-neutral-100 transition-colors"
       aria-label="Menu utilisateur"
     >
       <div class="relative">
@@ -37,11 +37,11 @@
     >
       <div
         v-if="isOpen"
-        class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-gray-800 shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
+        class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-elevated border border-default shadow-lg focus:outline-none z-50"
       >
         <div class="p-1">
           <!-- Header avec infos utilisateur -->
-          <div class="px-4 py-3 border-b border-gray-700">
+          <div class="px-4 py-3 border-b border-default">
             <div class="flex items-center gap-3">
               <TwitchAvatar
                 :image-url="user?.streamer?.profileImageUrl"
@@ -49,7 +49,7 @@
                 size="lg"
               />
               <div class="flex flex-col">
-                <span class="text-sm font-semibold text-white">
+                <span class="text-sm font-semibold text-primary">
                   {{ user?.streamer?.twitchDisplayName }}
                 </span>
               </div>
@@ -62,7 +62,7 @@
             <NuxtLink
               to="/streamer"
               @click="isOpen = false"
-              class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700/50 rounded-lg transition-colors"
+              class="flex items-center gap-3 px-4 py-2 text-sm text-secondary hover:bg-neutral-100 rounded-lg transition-colors"
             >
               <UIcon name="i-lucide-home" class="size-4" />
               <span>Accueil</span>
@@ -72,7 +72,7 @@
             <NuxtLink
               to="/streamer/campaigns"
               @click="isOpen = false"
-              class="flex items-center justify-between px-4 py-2 text-sm text-gray-300 hover:bg-gray-700/50 rounded-lg transition-colors"
+              class="flex items-center justify-between px-4 py-2 text-sm text-secondary hover:bg-neutral-100 rounded-lg transition-colors"
             >
               <div class="flex items-center gap-3">
                 <UIcon name="i-lucide-folder-kanban" class="size-4" />
@@ -89,13 +89,13 @@
             </NuxtLink>
 
             <!-- Divider -->
-            <div class="my-1 border-t border-gray-700"></div>
+            <div class="my-1 border-t border-default"></div>
 
             <!-- Tableau de bord MJ -->
             <NuxtLink
               to="/mj"
               @click="isOpen = false"
-              class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700/50 rounded-lg transition-colors"
+              class="flex items-center gap-3 px-4 py-2 text-sm text-secondary hover:bg-neutral-100 rounded-lg transition-colors"
             >
               <UIcon name="i-lucide-crown" class="size-4" />
               <span>Tableau de bord MJ</span>
@@ -105,19 +105,19 @@
             <NuxtLink
               to="/settings"
               @click="isOpen = false"
-              class="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:bg-gray-700/50 rounded-lg transition-colors"
+              class="flex items-center gap-3 px-4 py-2 text-sm text-secondary hover:bg-neutral-100 rounded-lg transition-colors"
             >
               <UIcon name="i-lucide-settings" class="size-4" />
               <span>Réglages</span>
             </NuxtLink>
 
             <!-- Divider -->
-            <div class="my-1 border-t border-gray-700"></div>
+            <div class="my-1 border-t border-default"></div>
 
             <!-- Déconnexion -->
             <button
               @click="handleLogout"
-              class="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+              class="w-full flex items-center gap-3 px-4 py-2 text-sm text-error-500 hover:bg-error-light rounded-lg transition-colors"
             >
               <UIcon name="i-lucide-log-out" class="size-4" />
               <span>Déconnexion</span>

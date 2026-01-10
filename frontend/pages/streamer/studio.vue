@@ -60,7 +60,7 @@
 
               <div class="config-dropdown-content">
                 <div v-if="loading" class="config-dropdown-empty">
-                  <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-gray-400" />
+                  <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
                 </div>
 
                 <div v-else-if="api.configs.value.length === 0" class="config-dropdown-empty">
@@ -190,7 +190,7 @@
         <div class="sidebar-section">
           <h3 class="sidebar-title">Calques</h3>
           <div v-if="elements.length === 0" class="empty-layers">
-            <p class="text-gray-500 text-sm">Aucun élément</p>
+            <p class="text-muted text-sm">Aucun élément</p>
           </div>
           <div v-else class="layers-list">
             <div
@@ -699,7 +699,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #0f0f1a;
+  background: var(--color-dark-bg-base);
   overflow: hidden;
 }
 
@@ -709,8 +709,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  background: #1a1a2e;
-  border-bottom: 1px solid #2a2a3e;
+  background: var(--color-dark-bg-surface);
+  border-bottom: 1px solid var(--color-dark-border);
 }
 
 .toolbar-left,
@@ -728,19 +728,19 @@ onUnmounted(() => {
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  color: #888;
+  color: var(--color-dark-text-muted);
   transition: all 0.2s;
 }
 
 .back-link:hover {
-  background: #2a2a3e;
-  color: white;
+  background: var(--color-dark-bg-elevated);
+  color: var(--color-dark-text-primary);
 }
 
 .toolbar-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: white;
+  color: var(--color-dark-text-primary);
 }
 
 .undo-redo-buttons {
@@ -748,7 +748,7 @@ onUnmounted(() => {
   gap: 2px;
   margin-left: 0.5rem;
   padding-left: 0.75rem;
-  border-left: 1px solid #2a2a3e;
+  border-left: 1px solid var(--color-dark-border);
 }
 
 /* Main */
@@ -763,15 +763,15 @@ onUnmounted(() => {
 /* Sidebars */
 .studio-sidebar,
 .studio-inspector {
-  background: #1a1a2e;
-  border-right: 1px solid #2a2a3e;
+  background: var(--color-dark-bg-surface);
+  border-right: 1px solid var(--color-dark-border);
   overflow-y: auto;
 }
 
 .studio-inspector {
   position: relative;
   border-right: none;
-  border-left: 1px solid #2a2a3e;
+  border-left: 1px solid var(--color-dark-border);
   width: 280px;
   transition: width 0.3s ease;
   overflow: hidden;
@@ -795,14 +795,14 @@ onUnmounted(() => {
   transform: translateY(-50%);
   width: 24px;
   height: 48px;
-  background: #1a1a2e;
-  border: 1px solid #2a2a3e;
+  background: var(--color-dark-bg-surface);
+  border: 1px solid var(--color-dark-border);
   border-right: none;
   border-radius: 6px 0 0 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #888;
+  color: var(--color-dark-text-muted);
   cursor: pointer;
   transition: right 0.3s ease, background 0.2s, color 0.2s;
   z-index: 20;
@@ -813,13 +813,13 @@ onUnmounted(() => {
 }
 
 .inspector-toggle:hover {
-  background: #2a2a3e;
-  color: white;
+  background: var(--color-dark-bg-elevated);
+  color: var(--color-dark-text-primary);
 }
 
 .sidebar-section {
   padding: 1rem;
-  border-bottom: 1px solid #2a2a3e;
+  border-bottom: 1px solid var(--color-dark-border);
 }
 
 .sidebar-title {
@@ -827,7 +827,7 @@ onUnmounted(() => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #888;
+  color: var(--color-dark-text-muted);
   margin-bottom: 0.75rem;
 }
 
@@ -844,19 +844,19 @@ onUnmounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem;
-  background: #0f0f1a;
-  border: 1px solid #2a2a3e;
+  background: var(--color-dark-bg-base);
+  border: 1px solid var(--color-dark-border);
   border-radius: 8px;
-  color: #888;
+  color: var(--color-dark-text-muted);
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .element-item:hover {
-  background: #2a2a3e;
-  border-color: #9333ea;
-  color: white;
+  background: var(--color-dark-bg-elevated);
+  border-color: var(--color-gizmo-border);
+  color: var(--color-dark-text-primary);
 }
 
 /* Layers */
@@ -878,18 +878,18 @@ onUnmounted(() => {
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   cursor: pointer;
-  color: #888;
+  color: var(--color-dark-text-muted);
   transition: all 0.2s;
 }
 
 .layer-item:hover {
-  background: #2a2a3e;
-  color: white;
+  background: var(--color-dark-bg-elevated);
+  color: var(--color-dark-text-primary);
 }
 
 .layer-item.selected {
-  background: rgba(147, 51, 234, 0.2);
-  color: white;
+  background: var(--color-overlay-shadow-brand-soft);
+  color: var(--color-dark-text-primary);
 }
 
 .layer-name {
@@ -918,18 +918,18 @@ onUnmounted(() => {
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  color: #888;
+  color: var(--color-dark-text-muted);
   transition: all 0.2s;
 }
 
 .layer-action:hover {
-  background: #3a3a4e;
-  color: white;
+  background: var(--color-dark-bg-hover);
+  color: var(--color-dark-text-primary);
 }
 
 /* Canvas */
 .studio-canvas {
-  background: #0a0a12;
+  background: var(--color-dark-bg-deepest);
   padding: 1.5rem;
   min-width: 0; /* Permet au flex de réduire si nécessaire */
 }
@@ -947,7 +947,7 @@ onUnmounted(() => {
   height: 100%;
   padding: 2rem;
   text-align: center;
-  color: #666;
+  color: var(--color-dark-text-subtle);
   gap: 1rem;
 }
 
@@ -958,7 +958,7 @@ onUnmounted(() => {
 .inspector-field label {
   display: block;
   font-size: 0.75rem;
-  color: #888;
+  color: var(--color-dark-text-muted);
   margin-bottom: 0.25rem;
 }
 
@@ -969,7 +969,7 @@ onUnmounted(() => {
 .inspector-group > label {
   display: block;
   font-size: 0.75rem;
-  color: #888;
+  color: var(--color-dark-text-muted);
   margin-bottom: 0.5rem;
 }
 
@@ -987,7 +987,7 @@ onUnmounted(() => {
 
 .vector-input span {
   font-size: 0.75rem;
-  color: #666;
+  color: var(--color-dark-text-subtle);
   width: 16px;
 }
 
@@ -997,7 +997,7 @@ onUnmounted(() => {
   gap: 0.5rem;
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 1px solid #2a2a3e;
+  border-top: 1px solid var(--color-dark-border);
 }
 
 /* Config list items */
@@ -1017,8 +1017,8 @@ onUnmounted(() => {
 }
 
 .config-item.active {
-  background: rgba(147, 51, 234, 0.15);
-  border: 1px solid rgba(147, 51, 234, 0.3);
+  background: var(--color-overlay-border-brand-soft);
+  border: 1px solid var(--color-overlay-border-brand);
 }
 
 .config-info {
@@ -1060,14 +1060,14 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem;
-  border-bottom: 1px solid #2a2a3e;
+  border-bottom: 1px solid var(--color-dark-border);
   margin-bottom: 0.5rem;
 }
 
 .config-dropdown-title {
   font-size: 0.875rem;
   font-weight: 600;
-  color: white;
+  color: var(--color-dark-text-primary);
 }
 
 .config-dropdown-content {
@@ -1082,7 +1082,7 @@ onUnmounted(() => {
   justify-content: center;
   padding: 1.5rem;
   text-align: center;
-  color: #666;
+  color: var(--color-dark-text-subtle);
   gap: 0.5rem;
   font-size: 0.875rem;
 }

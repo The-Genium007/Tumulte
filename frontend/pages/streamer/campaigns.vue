@@ -6,17 +6,17 @@
         <UCard v-if="loading">
           <div class="text-center py-12">
             <UIcon name="i-lucide-loader" class="size-12 text-primary-500 animate-spin mx-auto" />
-            <p class="text-gray-400 mt-4">Chargement...</p>
+            <p class="text-muted mt-4">Chargement...</p>
           </div>
         </UCard>
 
         <UCard v-else-if="invitations.length > 0">
           <template #header>
             <div class="flex items-center gap-3">
-              <div class="bg-yellow-500/10 p-2 rounded-lg">
-                <UIcon name="i-lucide-mail" class="size-6 text-yellow-500" />
+              <div class="bg-warning-light p-2 rounded-lg">
+                <UIcon name="i-lucide-mail" class="size-6 text-warning-500" />
               </div>
-              <h2 class="text-xl font-semibold text-white">Invitations en attente</h2>
+              <h2 class="text-xl font-semibold text-primary">Invitations en attente</h2>
               <UBadge color="warning" variant="soft">{{ invitations.length }}</UBadge>
               <UBadge
                 v-if="isDev && invitations[0]?.id.startsWith('mock-')"
@@ -34,24 +34,24 @@
               v-for="invitation in invitations"
               :key="invitation.id"
               variant="outline"
-              class="bg-gray-800/30"
+              class="bg-neutral-100"
             >
               <div class="flex justify-between items-start gap-4">
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-2">
-                    <div class="bg-purple-500/10 p-2 rounded-lg">
-                      <UIcon name="i-lucide-folder-kanban" class="size-5 text-purple-400" />
+                    <div class="bg-brand-light p-2 rounded-lg">
+                      <UIcon name="i-lucide-folder-kanban" class="size-5 text-brand-500" />
                     </div>
-                    <h3 class="font-semibold text-lg text-white">{{ invitation.campaign.name }}</h3>
+                    <h3 class="font-semibold text-lg text-primary">{{ invitation.campaign.name }}</h3>
                   </div>
-                  <p v-if="invitation.campaign.description" class="text-gray-400 text-sm mb-3">
+                  <p v-if="invitation.campaign.description" class="text-muted text-sm mb-3">
                     {{ invitation.campaign.description }}
                   </p>
-                  <div class="flex items-center gap-2 text-sm text-gray-500">
+                  <div class="flex items-center gap-2 text-sm text-muted">
                     <UIcon name="i-lucide-user" class="size-4" />
-                    <span>Invité par <strong class="text-gray-300">{{ invitation.campaign.ownerName }}</strong></span>
+                    <span>Invité par <strong class="text-secondary">{{ invitation.campaign.ownerName }}</strong></span>
                   </div>
-                  <div class="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                  <div class="flex items-center gap-2 text-xs text-muted mt-1">
                     <UIcon name="i-lucide-calendar" class="size-3" />
                     <span>{{ formatDate(invitation.invitedAt) }}</span>
                   </div>
@@ -82,10 +82,10 @@
         <UCard>
           <template #header>
             <div class="flex items-center gap-3">
-              <div class="bg-blue-500/10 p-2 rounded-lg">
-                <UIcon name="i-lucide-shield" class="size-6 text-blue-500" />
+              <div class="bg-info-light p-2 rounded-lg">
+                <UIcon name="i-lucide-shield" class="size-6 text-info-500" />
               </div>
-              <h2 class="text-xl font-semibold text-white">Autorisations de sondages</h2>
+              <h2 class="text-xl font-semibold text-primary">Autorisations de sondages</h2>
               <UBadge v-if="authorizationStatuses.length > 0" color="info" variant="soft">
                 {{ authorizationStatuses.length }}
               </UBadge>
@@ -97,11 +97,11 @@
           </div>
 
           <div v-else-if="authorizationStatuses.length === 0" class="text-center py-12">
-            <div class="bg-gray-800/50 p-4 rounded-2xl mb-4 inline-block">
-              <UIcon name="i-lucide-shield-off" class="size-12 text-gray-600" />
+            <div class="bg-neutral-100 p-4 rounded-2xl mb-4 inline-block">
+              <UIcon name="i-lucide-shield-off" class="size-12 text-neutral-400" />
             </div>
-            <p class="text-gray-400 mb-2">Aucune campagne active</p>
-            <p class="text-sm text-gray-500">
+            <p class="text-muted mb-2">Aucune campagne active</p>
+            <p class="text-sm text-muted">
               Acceptez une invitation pour gérer vos autorisations de sondages
             </p>
           </div>
@@ -111,12 +111,12 @@
               v-for="status in authorizationStatuses"
               :key="status.campaignId"
               variant="outline"
-              :class="status.isAuthorized ? 'border-2 border-green-500/50' : ''"
+              :class="status.isAuthorized ? 'border-2 border-success-light' : ''"
             >
               <template #header>
                 <div class="flex justify-between items-center">
                   <div>
-                    <h3 class="text-lg font-semibold text-white">{{ status.campaignName }}</h3>
+                    <h3 class="text-lg font-semibold text-primary">{{ status.campaignName }}</h3>
                   </div>
                   <UBadge
                     :color="status.isAuthorized ? 'success' : 'neutral'"
@@ -143,10 +143,10 @@
         <UCard>
           <template #header>
             <div class="flex items-center gap-3">
-              <div class="bg-green-500/10 p-2 rounded-lg">
-                <UIcon name="i-lucide-folder-check" class="size-6 text-green-500" />
+              <div class="bg-success-light p-2 rounded-lg">
+                <UIcon name="i-lucide-folder-check" class="size-6 text-success-500" />
               </div>
-              <h2 class="text-xl font-semibold text-white">Campagnes actives</h2>
+              <h2 class="text-xl font-semibold text-primary">Campagnes actives</h2>
               <UBadge v-if="activeCampaigns.length > 0" color="success" variant="soft">
                 {{ activeCampaigns.length }}
               </UBadge>
@@ -158,11 +158,11 @@
           </div>
 
           <div v-else-if="activeCampaigns.length === 0" class="text-center py-12">
-            <div class="bg-gray-800/50 p-4 rounded-2xl mb-4 inline-block">
-              <UIcon name="i-lucide-folder-x" class="size-12 text-gray-600" />
+            <div class="bg-neutral-100 p-4 rounded-2xl mb-4 inline-block">
+              <UIcon name="i-lucide-folder-x" class="size-12 text-neutral-400" />
             </div>
-            <p class="text-gray-400 mb-2">Aucune campagne active</p>
-            <p class="text-sm text-gray-500">
+            <p class="text-muted mb-2">Aucune campagne active</p>
+            <p class="text-sm text-muted">
               Vous apparaîtrez ici une fois que vous aurez accepté une invitation
             </p>
           </div>
@@ -172,26 +172,26 @@
               v-for="campaign in activeCampaigns"
               :key="campaign.id"
               variant="outline"
-              class="bg-gray-800/30"
+              class="bg-neutral-100"
             >
               <div class="flex justify-between items-start gap-4">
                 <div class="flex-1">
                   <div class="flex items-center gap-2 mb-2">
-                    <div class="bg-green-500/10 p-2 rounded-lg">
-                      <UIcon name="i-lucide-folder-check" class="size-5 text-green-400" />
+                    <div class="bg-success-light p-2 rounded-lg">
+                      <UIcon name="i-lucide-folder-check" class="size-5 text-success-500" />
                     </div>
-                    <h3 class="font-semibold text-lg text-white">{{ campaign.name }}</h3>
+                    <h3 class="font-semibold text-lg text-primary">{{ campaign.name }}</h3>
                     <UBadge color="success" variant="soft" size="xs">Actif</UBadge>
                   </div>
-                  <p v-if="campaign.description" class="text-gray-400 text-sm mb-3">
+                  <p v-if="campaign.description" class="text-muted text-sm mb-3">
                     {{ campaign.description }}
                   </p>
                   <div class="space-y-1">
-                    <div class="flex items-center gap-2 text-sm text-gray-500">
+                    <div class="flex items-center gap-2 text-sm text-muted">
                       <UIcon name="i-lucide-crown" class="size-4" />
-                      <span>Maître du jeu : <strong class="text-gray-300">{{ campaign.ownerName }}</strong></span>
+                      <span>Maître du jeu : <strong class="text-secondary">{{ campaign.ownerName }}</strong></span>
                     </div>
-                    <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <div class="flex items-center gap-2 text-xs text-muted">
                       <UIcon name="i-lucide-calendar-check" class="size-3" />
                       <span>Rejoint le {{ formatDate(campaign.joinedAt) }}</span>
                     </div>

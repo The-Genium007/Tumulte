@@ -2,14 +2,14 @@
   <UModal v-model:open="store.isModalOpen" :prevent-close="isRetrying">
     <template #header>
       <div class="flex items-center gap-3">
-        <div class="bg-warning-500/10 p-2 rounded-lg">
+        <div class="bg-warning-light p-2 rounded-lg">
           <UIcon name="i-lucide-users" class="size-6 text-warning-500" />
         </div>
         <div>
-          <h3 class="text-xl font-semibold text-white">
+          <h3 class="text-xl font-semibold text-primary">
             En attente des streamers
           </h3>
-          <p class="text-sm text-gray-400">
+          <p class="text-sm text-muted">
             {{ store.readyCount }} / {{ store.totalCount }} prêts
           </p>
         </div>
@@ -39,7 +39,7 @@
           <!-- Séparateur si on a des prêts et non prêts -->
           <div
             v-if="store.unreadyStreamers.length > 0 && store.readyStreamers.length > 0"
-            class="border-t border-gray-700 my-3"
+            class="border-t border-default my-3"
           />
 
           <!-- Streamers prêts ensuite -->

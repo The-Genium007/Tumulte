@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@adonisjs/transmit-client": "^1.0.0",
+    "@nuxt/fonts": "^0.12.1",
     "@nuxt/ui": "^3.0.0",
     "@pinia/nuxt": "^0.7.0",
     "@tresjs/cientos": "^5.2.1",

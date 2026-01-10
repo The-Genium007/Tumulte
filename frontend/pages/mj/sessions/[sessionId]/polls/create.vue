@@ -12,8 +12,8 @@
         />
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-2xl font-bold text-white">Ajouter un sondage</h1>
-            <p class="text-gray-400 mt-1">
+            <h1 class="text-2xl font-bold text-primary">Ajouter un sondage</h1>
+            <p class="text-muted mt-1">
               Session: {{ sessionName }}
             </p>
           </div>
@@ -34,13 +34,13 @@
           <template #header>
             <div class="flex items-center gap-3">
               <UIcon name="i-lucide-file-plus" class="size-6 text-primary-500" />
-              <h2 class="text-xl font-semibold text-white">Créer un nouveau sondage</h2>
+              <h2 class="text-xl font-semibold text-primary">Créer un nouveau sondage</h2>
             </div>
           </template>
         <div class="space-y-6">
           <!-- Question -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Question</label>
+            <label class="block text-sm font-medium text-secondary mb-2">Question</label>
             <div class="flex gap-2">
               <UInput
                 v-model="newPoll.question"
@@ -50,14 +50,14 @@
                 class="flex-1"
               />
             </div>
-            <p class="text-xs text-gray-400 mt-1">
+            <p class="text-xs text-muted mt-1">
               {{ newPoll.question.length }}/45 caractères
             </p>
           </div>
 
           <!-- Type de sondage -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Type de sondage</label>
+            <label class="block text-sm font-medium text-secondary mb-2">Type de sondage</label>
             <div class="flex gap-2">
               <UButton
                 :color="newPoll.type === 'UNIQUE' ? 'primary' : 'neutral'"
@@ -72,7 +72,7 @@
                 @click="handlePollTypeChange('STANDARD')"
               />
             </div>
-            <p class="text-xs text-gray-400 mt-2">
+            <p class="text-xs text-muted mt-2">
               <span v-if="newPoll.type === 'UNIQUE'">Vote unique : Les viewers ne peuvent voter qu'une seule fois</span>
               <span v-else>Vote multiple : Les viewers peuvent voter plusieurs fois</span>
             </p>
@@ -80,7 +80,7 @@
 
           <!-- Réponses -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Réponses (2-5 max)</label>
+            <label class="block text-sm font-medium text-secondary mb-2">Réponses (2-5 max)</label>
             <div class="space-y-2">
               <div v-for="(option, idx) in newPollOptions" :key="idx" class="flex gap-2">
                 <UInput v-model="newPollOptions[idx]" placeholder="Réponse" size="lg" class="flex-1" />
@@ -115,7 +115,7 @@
             leave-from-class="opacity-100 translate-y-0"
             leave-to-class="opacity-0 -translate-y-2"
           >
-            <div v-if="newPoll.type === 'STANDARD'" class="p-4 rounded-lg bg-primary-500/10 border border-primary-500/30 space-y-3">
+            <div v-if="newPoll.type === 'STANDARD'" class="p-4 rounded-lg bg-primary-light border border-primary-light space-y-3">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <UIcon name="i-lucide-coins" class="size-5 text-primary-400" />
@@ -130,17 +130,17 @@
                     size="sm"
                     class="w-24"
                   />
-                  <span class="text-xs text-gray-400">pts</span>
+                  <span class="text-xs text-muted">pts</span>
                 </div>
               </div>
-              <p class="text-xs text-gray-400">
+              <p class="text-xs text-muted">
                 Le premier vote est gratuit, les suivants coûtent {{ newPoll.channelPointsAmount || 50 }} points
               </p>
-              <div class="bg-gray-800/50 p-3 rounded border border-gray-700">
+              <div class="bg-info-light p-3 rounded border border-info-light">
                 <div class="flex items-start gap-2">
-                  <UIcon name="i-lucide-info" class="size-4 text-blue-400 mt-0.5 shrink-0" />
-                  <p class="text-xs text-gray-400">
-                    <span class="font-semibold text-blue-400">Note :</span>
+                  <UIcon name="i-lucide-info" class="size-4 text-info-500 mt-0.5 shrink-0" />
+                  <p class="text-xs text-muted">
+                    <span class="font-semibold text-info-500">Note :</span>
                     Les points de chaîne fonctionnent uniquement pour les streamers affiliés/partenaires.
                     Pour les streamers non-affiliés (vote par chat IRC), cette option sera ignorée.
                   </p>
@@ -150,7 +150,7 @@
           </Transition>
 
           <!-- Actions -->
-          <div class="flex gap-3 pt-4 border-t border-gray-700">
+          <div class="flex gap-3 pt-4 border-t border-default">
             <UButton
               color="neutral"
               variant="soft"
@@ -176,7 +176,7 @@
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <UIcon name="i-lucide-list-checks" class="size-6 text-primary-500" />
-                <h2 class="text-lg font-semibold text-white">Sondages</h2>
+                <h2 class="text-lg font-semibold text-primary">Sondages</h2>
                 <UBadge color="primary" variant="soft">{{ pollsStore.polls.length }}</UBadge>
               </div>
             </div>
@@ -184,11 +184,11 @@
 
           <!-- Empty state -->
           <div v-if="pollsStore.polls.length === 0" class="text-center py-12">
-            <div class="bg-gray-800/50 p-4 rounded-2xl mb-4 inline-block">
-              <UIcon name="i-lucide-inbox" class="size-12 text-gray-600" />
+            <div class="bg-neutral-100/50 p-4 rounded-2xl mb-4 inline-block">
+              <UIcon name="i-lucide-inbox" class="size-12 text-muted" />
             </div>
-            <p class="text-gray-400 text-sm">Aucun sondage créé</p>
-            <p class="text-gray-500 text-xs mt-1">Les sondages apparaîtront ici</p>
+            <p class="text-muted text-sm">Aucun sondage créé</p>
+            <p class="text-muted text-xs mt-1">Les sondages apparaîtront ici</p>
           </div>
 
           <!-- Liste des sondages -->
@@ -196,16 +196,16 @@
             <div
               v-for="(poll, index) in pollsStore.polls"
               :key="poll.id"
-              class="p-3 rounded-lg bg-gray-800/30 border border-gray-700 hover:bg-gray-800/50 transition-colors"
+              class="p-3 rounded-lg bg-neutral-100/30 border border-default hover:bg-neutral-100/50 transition-colors"
             >
               <div class="flex items-center gap-3">
-                <div class="flex items-center justify-center w-6 h-6 rounded-full bg-primary-500/10 text-primary-500 font-semibold text-xs shrink-0">
+                <div class="flex items-center justify-center w-6 h-6 rounded-full bg-primary-light text-primary-500 font-semibold text-xs shrink-0">
                   {{ index + 1 }}
                 </div>
                 <div class="flex-1 min-w-0 space-y-1.5">
                   <div class="flex items-center gap-2">
                     <UIcon name="i-lucide-message-square" class="size-4 text-primary-500 shrink-0" />
-                    <h3 class="font-semibold text-white text-sm truncate">{{ capitalizeFirst(poll.question) }}</h3>
+                    <h3 class="font-semibold text-primary text-sm truncate">{{ capitalizeFirst(poll.question) }}</h3>
                   </div>
                   <div class="flex items-center gap-2 ml-6">
                     <UBadge
@@ -218,11 +218,11 @@
                   </div>
                   <div class="ml-6">
                     <div class="flex items-center gap-2 mb-1">
-                      <UIcon name="i-lucide-list" class="size-3 text-gray-500 shrink-0" />
-                      <span class="text-xs font-medium text-gray-400">Réponses</span>
+                      <UIcon name="i-lucide-list" class="size-3 text-muted shrink-0" />
+                      <span class="text-xs font-medium text-muted">Réponses</span>
                     </div>
                     <ul class="space-y-0.5 ml-5">
-                      <li v-for="(option, idx) in poll.options" :key="idx" class="text-xs text-gray-300">
+                      <li v-for="(option, idx) in poll.options" :key="idx" class="text-xs text-secondary">
                         • {{ capitalizeFirst(option) }}
                       </li>
                     </ul>
@@ -269,22 +269,22 @@
             <UCard v-if="showDeletePollModal" class="max-w-lg mx-4">
               <template #header>
                 <div class="flex items-center gap-3">
-                  <div class="p-2 rounded-lg bg-error-500/10">
+                  <div class="p-2 rounded-lg bg-error-light">
                     <UIcon name="i-lucide-alert-triangle" class="size-6 text-error-500" />
                   </div>
                   <div>
-                    <h3 class="text-lg font-semibold text-white">Supprimer le sondage</h3>
-                    <p class="text-sm text-gray-400 mt-0.5">Cette action est irréversible</p>
+                    <h3 class="text-lg font-semibold text-primary">Supprimer le sondage</h3>
+                    <p class="text-sm text-muted mt-0.5">Cette action est irréversible</p>
                   </div>
                 </div>
               </template>
 
               <div class="space-y-4">
-                <div class="p-4 rounded-lg bg-error-500/10 border border-error-500/30">
-                  <p class="text-sm text-gray-300">
+                <div class="p-4 rounded-lg bg-error-light border border-error-light">
+                  <p class="text-sm text-secondary">
                     Vous êtes sur le point de supprimer le sondage :
                   </p>
-                  <p class="font-semibold text-white mt-2">
+                  <p class="font-semibold text-primary mt-2">
                     "{{ pollToDelete?.question }}"
                   </p>
                 </div>
@@ -339,36 +339,36 @@
             <UCard v-if="showDeleteModal" class="max-w-lg mx-4">
               <template #header>
                 <div class="flex items-center gap-3">
-                  <div class="p-2 rounded-lg bg-error-500/10">
+                  <div class="p-2 rounded-lg bg-error-light">
                     <UIcon name="i-lucide-alert-triangle" class="size-6 text-error-500" />
                   </div>
                   <div>
-                    <h3 class="text-lg font-semibold text-white">Supprimer la session</h3>
-                    <p class="text-sm text-gray-400 mt-0.5">Cette action est irréversible</p>
+                    <h3 class="text-lg font-semibold text-primary">Supprimer la session</h3>
+                    <p class="text-sm text-muted mt-0.5">Cette action est irréversible</p>
                   </div>
                 </div>
               </template>
 
               <div class="space-y-4">
-                <div class="p-4 rounded-lg bg-error-500/10 border border-error-500/30">
-                  <p class="text-sm text-gray-300">
+                <div class="p-4 rounded-lg bg-error-light border border-error-light">
+                  <p class="text-sm text-secondary">
                     Vous êtes sur le point de supprimer la session
-                    <span class="font-semibold text-white">{{ sessionName }}</span>.
+                    <span class="font-semibold text-primary">{{ sessionName }}</span>.
                   </p>
-                  <p class="text-sm text-gray-400 mt-2">
+                  <p class="text-sm text-muted mt-2">
                     Cette action supprimera définitivement :
                   </p>
-                  <ul class="list-disc list-inside text-sm text-gray-400 mt-2 space-y-1 ml-2">
+                  <ul class="list-disc list-inside text-sm text-muted mt-2 space-y-1 ml-2">
                     <li>La session et tous ses paramètres</li>
                     <li>Les {{ pollsStore.polls.length }} sondage(s) associé(s)</li>
                     <li>Toutes les données liées à cette session</li>
                   </ul>
                 </div>
 
-                <div class="p-3 rounded-lg bg-gray-800/50 border border-gray-700">
+                <div class="p-3 rounded-lg bg-neutral-100/50 border border-default">
                   <div class="flex items-start gap-2">
-                    <UIcon name="i-lucide-info" class="size-4 text-blue-400 mt-0.5 shrink-0" />
-                    <p class="text-xs text-gray-400">
+                    <UIcon name="i-lucide-info" class="size-4 text-info-500 mt-0.5 shrink-0" />
+                    <p class="text-xs text-muted">
                       Les sondages déjà lancés ne seront pas affectés, seule la session sera supprimée.
                     </p>
                   </div>

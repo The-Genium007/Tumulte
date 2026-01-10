@@ -27,23 +27,23 @@
     <div v-else class="space-y-4">
       <div class="flex items-center justify-between p-4 rounded-lg" :class="cardClass">
         <div class="flex items-center gap-3">
-          <UIcon name="i-lucide-shield-check" class="size-8 text-green-500" />
+          <UIcon name="i-lucide-shield-check" class="size-8 text-success-500" />
           <div>
-            <h3 class="text-lg font-semibold text-white">Autorisé</h3>
-            <p class="text-sm text-gray-400">Les sondages peuvent être lancés sur votre chaîne</p>
+            <h3 class="text-lg font-semibold text-primary">Autorisé</h3>
+            <p class="text-sm text-muted">Les sondages peuvent être lancés sur votre chaîne</p>
           </div>
         </div>
 
         <!-- Countdown Timer or Permanent Badge -->
-        <div v-if="isOwner" class="bg-purple-500/10 px-6 py-3 rounded-lg border border-purple-500/30">
-          <p class="text-xs text-gray-400 mb-1">Autorisation</p>
-          <p class="text-2xl font-bold text-purple-500">
+        <div v-if="isOwner" class="bg-brand-light px-6 py-3 rounded-lg border border-brand-light">
+          <p class="text-xs text-muted mb-1">Autorisation</p>
+          <p class="text-2xl font-bold text-brand-500">
             Permanent
           </p>
         </div>
-        <div v-else class="bg-blue-500/10 px-6 py-3 rounded-lg border border-blue-500/30">
-          <p class="text-xs text-gray-400 mb-1">Temps restant</p>
-          <p class="text-3xl font-bold text-blue-500 tabular-nums">
+        <div v-else class="bg-info-light px-6 py-3 rounded-lg border border-info-light">
+          <p class="text-xs text-muted mb-1">Temps restant</p>
+          <p class="text-3xl font-bold text-info-500 tabular-nums">
             {{ formatTime(displaySeconds) }}
           </p>
         </div>
@@ -84,9 +84,9 @@ let countdownInterval: ReturnType<typeof setInterval> | null = null
 
 const cardClass = computed(() => {
   if (props.isAuthorized) {
-    return 'bg-green-500/5 border border-green-500/20'
+    return 'bg-success-light border border-success-light'
   }
-  return 'bg-yellow-500/5 border border-yellow-500/20'
+  return 'bg-warning-light border border-warning-light'
 })
 
 const formatTime = (seconds: number): string => {

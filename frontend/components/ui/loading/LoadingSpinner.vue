@@ -51,9 +51,9 @@ const spinnerClasses = computed(() => {
   const classes = ['loading-spinner', 'inline-flex']
 
   const colors = {
-    primary: 'text-indigo-600',
-    secondary: 'text-gray-600',
-    white: 'text-white',
+    primary: 'text-primary-500',
+    secondary: 'text-muted',
+    white: 'text-primary',
   }
 
   classes.push(colors[props.color])

@@ -24,14 +24,14 @@
 
     <UCard
       v-if="open"
-      class="w-210 max-w-[95vw] bg-gray-950 border border-gray-800 text-white shadow-2xl"
+      class="w-210 max-w-[95vw] bg-elevated border border-default shadow-2xl"
     >
       <div class="space-y-4">
         <header class="flex items-start justify-between gap-3">
           <div>
-            <p class="text-xs uppercase tracking-wide text-gray-400">Support Discord</p>
+            <p class="text-xs uppercase tracking-wide text-muted">Support Discord</p>
             <h2 class="text-xl font-semibold">{{ modalTitle }}</h2>
-            <p class="text-sm text-gray-400 mt-1">
+            <p class="text-sm text-muted mt-1">
               {{ modalDescription }}
             </p>
             <div v-if="actionTypeLabel" class="mt-2">
@@ -53,7 +53,7 @@
 
         <div class="space-y-3">
           <div class="space-y-2">
-            <label class="text-sm font-semibold text-gray-200">
+            <label class="text-sm font-semibold text-secondary">
               Décris le problème <span class="text-error-400">*</span>
             </label>
             <UTextarea
@@ -69,35 +69,35 @@
               v-model="includeDiagnostics"
               label="Joindre automatiquement les logs et métadonnées"
             />
-            <p class="text-xs text-gray-500 pl-8">
+            <p class="text-xs text-muted pl-8">
               Logs front, erreurs JS, snapshot de store, contexte navigateur, compte connecté et traces côté backend.
             </p>
           </div>
 
-          <div class="rounded-2xl border border-gray-800/80 bg-gray-900/80 p-4 space-y-3">
+          <div class="rounded-2xl border border-default bg-muted p-4 space-y-3">
             <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-clipboard-list" class="text-primary-400 size-5" />
+              <UIcon name="i-lucide-clipboard-list" class="text-brand-500 size-5" />
               <p class="text-sm font-semibold">Ce qui sera envoyé</p>
             </div>
-            <ul class="space-y-2 text-sm text-gray-300">
+            <ul class="space-y-2 text-sm text-secondary">
               <li class="flex items-start gap-2">
-                <UIcon name="i-lucide-dot" class="text-primary-400 mt-1" />
+                <UIcon name="i-lucide-dot" class="text-brand-500 mt-1" />
                 <span>Métadonnées navigateur (URL, UA, locale, viewport, timezone) + session {{ sessionId }}</span>
               </li>
               <li class="flex items-start gap-2">
-                <UIcon name="i-lucide-dot" class="text-primary-400 mt-1" />
+                <UIcon name="i-lucide-dot" class="text-brand-500 mt-1" />
                 <span>Contexte utilisateur (id, rôle, email, streamer éventuel) + compte connecté : {{ userLabel }}</span>
               </li>
               <li class="flex items-start gap-2">
-                <UIcon name="i-lucide-dot" class="text-primary-400 mt-1" />
+                <UIcon name="i-lucide-dot" class="text-brand-500 mt-1" />
                 <span>Snapshot store (auth + contrôles de sondage) et performances récentes</span>
               </li>
               <li class="flex items-start gap-2">
-                <UIcon name="i-lucide-dot" class="text-primary-400 mt-1" />
+                <UIcon name="i-lucide-dot" class="text-brand-500 mt-1" />
                 <span>Derniers logs console et erreurs JS tamponnés (50/20 max)</span>
               </li>
               <li class="flex items-start gap-2">
-                <UIcon name="i-lucide-dot" class="text-primary-400 mt-1" />
+                <UIcon name="i-lucide-dot" class="text-brand-500 mt-1" />
                 <span>Contexte backend (IP, méthode, env, campagnes/membres liés à ton compte)</span>
               </li>
             </ul>
@@ -105,7 +105,7 @@
         </div>
 
         <div class="flex items-center justify-between">
-          <span class="text-xs text-gray-500">
+          <span class="text-xs text-muted">
             Les tokens/mots de passe ne sont jamais inclus. Vérifie le message avant envoi.
           </span>
           <div class="flex gap-2">

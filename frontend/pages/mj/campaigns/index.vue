@@ -27,16 +27,16 @@
             name="i-lucide-loader"
             class="size-12 text-primary-500 animate-spin mb-4"
           />
-          <p class="text-gray-400">Chargement des campagnes...</p>
+          <p class="text-muted">Chargement des campagnes...</p>
         </div>
 
         <!-- Empty State -->
         <div v-else-if="campaigns.length === 0" class="text-center py-16">
-          <div class="bg-primary-500/10 p-6 rounded-2xl mb-6 inline-block">
+          <div class="bg-primary-light p-6 rounded-2xl mb-6 inline-block">
             <UIcon name="i-lucide-folder-plus" class="size-16 text-primary-500" />
           </div>
-          <h2 class="text-2xl font-bold text-white mb-2">Aucune campagne créée</h2>
-          <p class="text-gray-400 mb-6 max-w-md mx-auto">
+          <h2 class="text-2xl font-bold text-primary mb-2">Aucune campagne créée</h2>
+          <p class="text-muted mb-6 max-w-md mx-auto">
             Créez votre première campagne pour commencer à gérer vos sondages
             multi-streams
           </p>
@@ -60,18 +60,18 @@
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <h3
-                    class="text-xl font-bold text-white group-hover:text-primary-400 transition-colors"
+                    class="text-xl font-bold text-primary group-hover:text-primary-400 transition-colors"
                   >
                     {{ campaign.name }}
                   </h3>
                   <p
                     v-if="campaign.description"
-                    class="text-sm text-gray-400 mt-1 line-clamp-2"
+                    class="text-sm text-muted mt-1 line-clamp-2"
                   >
                     {{ campaign.description }}
                   </p>
                 </div>
-                <div class="bg-primary-500/10 p-2 rounded-lg">
+                <div class="bg-primary-light p-2 rounded-lg">
                   <UIcon
                     name="i-lucide-folder-kanban"
                     class="size-5 text-primary-500"
@@ -82,17 +82,17 @@
 
             <!-- Stats -->
             <div class="grid grid-cols-2 gap-4 my-4">
-              <div class="text-center p-3 bg-green-500/10 rounded-lg">
-                <p class="text-2xl font-bold text-green-400">
+              <div class="text-center p-3 bg-success-light rounded-lg">
+                <p class="text-2xl font-bold text-success-500">
                   {{ campaign.activeMemberCount || 0 }}
                 </p>
-                <p class="text-xs text-gray-400 mt-1">Membres actifs</p>
+                <p class="text-xs text-muted mt-1">Membres actifs</p>
               </div>
-              <div class="text-center p-3 bg-blue-500/10 rounded-lg">
-                <p class="text-2xl font-bold text-blue-400">
+              <div class="text-center p-3 bg-info-light rounded-lg">
+                <p class="text-2xl font-bold text-info-500">
                   {{ campaign.memberCount || 0 }}
                 </p>
-                <p class="text-xs text-gray-400 mt-1">Total invités</p>
+                <p class="text-xs text-muted mt-1">Total invités</p>
               </div>
             </div>
 
@@ -124,20 +124,20 @@
       <UModal v-model:open="showDeleteModal">
         <template #header>
           <div class="flex items-center gap-3">
-            <div class="bg-error-500/10 p-2 rounded-lg">
+            <div class="bg-error-light p-2 rounded-lg">
               <UIcon name="i-lucide-alert-triangle" class="size-6 text-error-500" />
             </div>
-            <h3 class="text-xl font-bold text-white">Supprimer la campagne</h3>
+            <h3 class="text-xl font-bold text-primary">Supprimer la campagne</h3>
           </div>
         </template>
 
         <template #body>
           <div class="space-y-4">
-            <p class="text-gray-300">
+            <p class="text-secondary">
               Êtes-vous sûr de vouloir supprimer la campagne
-              <strong class="text-white">{{ campaignToDelete?.name }}</strong> ?
+              <strong class="text-primary">{{ campaignToDelete?.name }}</strong> ?
             </p>
-            <div class="bg-error-500/10 border border-error-500/20 rounded-lg p-4">
+            <div class="bg-error-light border border-error-light rounded-lg p-4">
               <p class="text-sm text-error-300">
                 ⚠️ Cette action est irréversible. Tous les templates, sondages et membres seront supprimés définitivement.
               </p>
