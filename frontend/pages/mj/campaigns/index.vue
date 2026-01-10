@@ -32,12 +32,9 @@
 
         <!-- Empty State -->
         <div v-else-if="campaigns.length === 0" class="text-center py-16">
-          <div class="bg-primary-light p-6 rounded-2xl mb-6 inline-block">
-            <UIcon name="i-lucide-folder-plus" class="size-16 text-primary-500" />
-          </div>
           <h2 class="text-2xl font-bold text-primary mb-2">Aucune campagne créée</h2>
           <p class="text-muted mb-6 max-w-md mx-auto">
-            Créez votre première campagne pour commencer à gérer vos sondages
+            Créez votre première campagne pour commencer à gérer vos évènements
             multi-streams
           </p>
           <UButton
@@ -71,12 +68,6 @@
                     {{ campaign.description }}
                   </p>
                 </div>
-                <div class="bg-primary-light p-2 rounded-lg">
-                  <UIcon
-                    name="i-lucide-folder-kanban"
-                    class="size-5 text-primary-500"
-                  />
-                </div>
               </div>
             </template>
 
@@ -108,7 +99,7 @@
                 />
                 <UButton
                   color="error"
-                  variant="soft"
+                  variant="solid"
                   size="sm"
                   icon="i-lucide-trash-2"
                   square
@@ -124,7 +115,7 @@
       <UModal v-model:open="showDeleteModal">
         <template #header>
           <div class="flex items-center gap-3">
-            <div class="bg-error-light p-2 rounded-lg">
+            <div class="pt-2">
               <UIcon name="i-lucide-alert-triangle" class="size-6 text-error-500" />
             </div>
             <h3 class="text-xl font-bold text-primary">Supprimer la campagne</h3>
@@ -137,7 +128,7 @@
               Êtes-vous sûr de vouloir supprimer la campagne
               <strong class="text-primary">{{ campaignToDelete?.name }}</strong> ?
             </p>
-            <div class="bg-error-light border border-error-light rounded-lg p-4">
+            <div class="bg-error-light border-error-light rounded-lg p-4">
               <p class="text-sm text-error-300">
                 ⚠️ Cette action est irréversible. Tous les templates, sondages et membres seront supprimés définitivement.
               </p>
@@ -149,7 +140,7 @@
           <div class="flex gap-3 justify-end">
             <UButton
               color="neutral"
-              variant="soft"
+              variant="solid"
               label="Annuler"
               @click="showDeleteModal = false"
             />

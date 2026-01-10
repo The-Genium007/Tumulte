@@ -212,21 +212,21 @@
         <!-- No Campaign Message -->
         <UCard v-else-if="campaignsLoaded && campaigns.length === 0">
           <div class="text-center py-12">
-            <div class="bg-yellow-light p-6 rounded-2xl mb-6 inline-block">
+            <div class="bg-yellow-light rounded-2xl mb-6 inline-block">
               <UIcon name="i-lucide-alert-circle" class="size-16 text-yellow-500" />
             </div>
             <h2 class="text-2xl font-bold text-primary mb-2">
               Aucune campagne disponible
             </h2>
             <p class="text-muted mb-6 max-w-md mx-auto">
-              Créez une campagne pour commencer à gérer vos sondages multi-streams
+              Créez votre premiere campagne pour commencer à configurer vos sondages
             </p>
             <UButton
               color="primary"
               size="lg"
               icon="i-lucide-plus"
               label="Créer ma première campagne"
-              @click="router.push('/mj/campaigns')"
+              @click="router.push('/mj/campaigns/create')"
             />
           </div>
         </UCard>
@@ -248,8 +248,8 @@
           @close="handleCloseOrCancel"
         />
 
-        <!-- Poll Sessions -->
-        <UCard>
+        <!-- Poll Sessions (only show if a campaign is selected) -->
+        <UCard v-if="selectedCampaignId">
           <template #header>
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
@@ -265,20 +265,9 @@
             </div>
           </template>
 
-          <!-- No Campaign Selected -->
-          <div
-            v-if="!selectedCampaignId"
-            class="text-center py-16"
-          >
-            <div class="bg-brand-light p-6 rounded-2xl mb-4 inline-block">
-              <UIcon name="i-lucide-arrow-left" class="size-16 text-brand-500" />
-            </div>
-            <p class="text-muted">Sélectionnez une campagne pour gérer vos sessions</p>
-          </div>
-
           <!-- Loading -->
           <div
-            v-else-if="sessionsLoading"
+            v-if="sessionsLoading"
             class="flex flex-col items-center justify-center py-16"
           >
             <UIcon

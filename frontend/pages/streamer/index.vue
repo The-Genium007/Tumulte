@@ -31,9 +31,6 @@
         <UCard>
           <template #header>
             <div class="flex items-center gap-3">
-              <div class="bg-info-light p-2 rounded-lg">
-                <UIcon name="i-lucide-shield" class="size-6 text-info-500" />
-              </div>
               <h2 class="text-xl font-semibold text-primary">Autorisations de sondages</h2>
               <UBadge v-if="authorizationStatuses.length > 0" color="info" variant="soft">
                 {{ authorizationStatuses.length }}
@@ -46,11 +43,9 @@
           </div>
 
           <div v-else-if="authorizationStatuses.length === 0" class="text-center py-12">
-            <div class="bg-neutral-100 p-4 rounded-2xl mb-4 inline-block">
-              <UIcon name="i-lucide-shield-off" class="size-12 text-neutral-400" />
-            </div>
-            <p class="text-muted mb-2">Aucune campagne active</p>
-            <p class="text-sm text-muted">
+              <UIcon name="i-lucide-shield-off" class="size-12 text-primary" />
+            <p class="text-primary mb-2">Aucune campagne active</p>
+            <p class="text-sm text-primary-400">
               Acceptez une invitation pour gérer vos autorisations de sondages
             </p>
           </div>
@@ -128,15 +123,14 @@
           <template #header>
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
-                <UIcon name="i-lucide-link" class="size-6 text-primary-500" />
                 <h2 class="text-xl font-semibold text-primary">URL de l'overlay OBS</h2>
               </div>
               <button
-                class="flex items-center justify-center size-8 rounded-full bg-neutral-200 hover:bg-neutral-300 transition-colors"
+                class="flex items-center justify-center size-8 rounded-full bg-primary-500 hover:bg-primary-100 transition-colors"
                 title="Comment configurer l'overlay"
                 @click="showObsInstructions = true"
               >
-                <UIcon name="i-lucide-info" class="size-5 text-secondary" />
+                <UIcon name="i-lucide-info" class="size-5 text-white hover:bg-primary-500"/>
               </button>
             </div>
           </template>
@@ -146,13 +140,13 @@
             <div v-if="overlayUrl" class="space-y-3">
               <div class="flex gap-2">
                 <div class="flex-1 relative">
-                  <div class="flex items-center gap-2 px-3.5 py-2.5 bg-neutral-100 border border-default rounded-lg text-primary font-mono text-sm overflow-x-auto">
-                    <UIcon name="i-lucide-link" class="size-4 text-muted shrink-0" />
+                  <div class="flex items-center gap-2 px-3.5 py-2.5 bg-primary-500 rounded-lg text-white font-mono text-sm overflow-x-auto">
+                    <UIcon name="i-lucide-link" class="size-4 text-white shrink-0" />
                     <span class="select-all">{{ overlayUrl }}</span>
                   </div>
                 </div>
                 <UButton
-                  color="info"
+                  color="primary"
                   size="lg"
                   icon="i-lucide-eye"
                   label="Prévisualiser"

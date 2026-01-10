@@ -10,27 +10,79 @@
 
 @theme {
   /* ==========================================================================
-     COULEURS BRAND
+     COULEURS BRAND / PRIMARY
+     Palette sombre basée sur #0f0b04
      ========================================================================== */
-  --color-brand-500: #a855f7;
-  --color-brand-600: #9333ea;
+  --color-brand-50: #f5f3f0;
+  --color-brand-100: #e8e4dd;
+  --color-brand-200: #d4cdc2;
+  --color-brand-300: #b5aa99;
+  --color-brand-400: #8a7d6a;
+  --color-brand-500: #0f0b04;
+  --color-brand-600: #0d0a03;
+  --color-brand-700: #0a0802;
+  --color-brand-800: #080601;
+  --color-brand-900: #050400;
+  --color-brand-950: #020100;
+
+  /* Alias primary → brand */
+  --color-primary-50: var(--color-brand-50);
+  --color-primary-100: var(--color-brand-100);
+  --color-primary-200: var(--color-brand-200);
+  --color-primary-300: var(--color-brand-300);
+  --color-primary-400: var(--color-brand-400);
+  --color-primary-500: var(--color-brand-500);
+  --color-primary-600: var(--color-brand-600);
+  --color-primary-700: var(--color-brand-700);
+  --color-primary-800: var(--color-brand-800);
+  --color-primary-900: var(--color-brand-900);
+  --color-primary-950: var(--color-brand-950);
 
   /* ==========================================================================
-     COULEURS NEUTRES
+     COULEURS NEUTRES (OKLCH)
      ========================================================================== */
-  --color-neutral-50: #f8fafc;
-  --color-neutral-100: #f1f5f9;
-  --color-neutral-300: #cbd5e1;
-  --color-neutral-400: #94a3b8;
+  --color-neutral-500: oklch(55% 0.02 260);
+  --color-neutral-50: oklch(from var(--color-neutral-500) 98% 0.005 h);
+  --color-neutral-100: oklch(from var(--color-neutral-500) 96% 0.01 h);
+  --color-neutral-200: oklch(from var(--color-neutral-500) 92% 0.01 h);
+  --color-neutral-300: oklch(from var(--color-neutral-500) 82% 0.02 h);
+  --color-neutral-400: oklch(from var(--color-neutral-500) 65% 0.02 h);
 
   /* ==========================================================================
-     COULEURS SÉMANTIQUES
+     COULEURS SUCCESS (OKLCH)
+     Change uniquement --color-success-500
      ========================================================================== */
-  --color-error-300: #fca5a5;
-  --color-error-500: #ef4444;
-  --color-error-600: #dc2626;
-  --color-success-500: #22c55e;
-  --color-live: #dc2626;
+  --color-success-500: oklch(72% 0.19 145);
+  --color-success-400: oklch(from var(--color-success-500) 80% 0.22 h);
+
+  /* ==========================================================================
+     COULEURS ERROR (OKLCH)
+     Change uniquement --color-error-500
+     ========================================================================== */
+  --color-error-500: oklch(63% 0.24 27);
+  --color-error-300: oklch(from var(--color-error-500) 82% 0.12 h);
+  --color-error-400: oklch(from var(--color-error-500) 70% 0.20 h);
+  --color-error-600: oklch(from var(--color-error-500) 55% 0.22 h);
+
+  /* ==========================================================================
+     COULEURS WARNING (OKLCH)
+     Change uniquement --color-warning-500
+     ========================================================================== */
+  --color-warning-500: oklch(80% 0.16 85);
+  --color-warning-400: oklch(from var(--color-warning-500) 85% 0.18 h);
+  --color-warning-600: oklch(from var(--color-warning-500) 70% 0.16 h);
+
+  /* ==========================================================================
+     COULEURS INFO (OKLCH)
+     Change uniquement --color-info-500
+     ========================================================================== */
+  --color-info-500: oklch(62% 0.21 255);
+  --color-info-400: oklch(from var(--color-info-500) 72% 0.18 h);
+
+  /* ==========================================================================
+     COULEUR LIVE
+     ========================================================================== */
+  --color-live: oklch(63% 0.24 27);
 
   /* ==========================================================================
      DARK UI (Studio / Overlay Editor)
@@ -100,18 +152,10 @@
   --color-text-inverse: #ffffff;
 
   /* ==========================================================================
-     INTERFACE - BORDURES
-     ========================================================================== */
-  --color-border-default: #e2e8f0;
-  --color-border-muted: #f1f5f9;
-  --color-border-strong: #cbd5e1;
-  --color-border-success-light: #bbf7d0;
-  --color-border-error-light: #fecaca;
-
-  /* ==========================================================================
      POLICES
      ========================================================================== */
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-heading: 'Aoboshi One', serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
@@ -160,6 +204,12 @@ body {
   background-color: var(--color-bg-page);
 }
 
+/* Titres avec police Aoboshi One en majuscules */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+}
+
 /* ============================================================================
    CLASSES UTILITAIRES
    ============================================================================ */
@@ -186,13 +236,6 @@ body {
 .text-disabled { color: var(--color-text-disabled); }
 .text-inverse { color: var(--color-text-inverse); }
 
-/* Bordures */
-.border-default { border-color: var(--color-border-default); }
-.border-muted { border-color: var(--color-border-muted); }
-.border-strong { border-color: var(--color-border-strong); }
-.border-success-light { border-color: var(--color-border-success-light); }
-.border-error-light { border-color: var(--color-border-error-light); }
-
 /* Dark UI (Studio) */
 .dark-bg-base { background-color: var(--color-dark-bg-base); }
 .dark-bg-surface { background-color: var(--color-dark-bg-surface); }
@@ -204,6 +247,18 @@ body {
 .dark-text-secondary { color: var(--color-dark-text-secondary); }
 .dark-text-muted { color: var(--color-dark-text-muted); }
 .dark-text-subtle { color: var(--color-dark-text-subtle); }
+
+/* ============================================================================
+   SUPPRESSION GLOBALE DES BORDURES NUXT UI
+   ============================================================================ */
+
+/* Supprimer toutes les bordures ring sur les composants Nuxt UI */
+[class*="ring-"] {
+  --tw-ring-offset-width: 0px !important;
+  --tw-ring-width: 0px !important;
+  --tw-ring-color: transparent !important;
+  box-shadow: none !important;
+}
 
 /* ============================================================================
    MASQUER LES MODALS DES GESTIONNAIRES DE MOTS DE PASSE

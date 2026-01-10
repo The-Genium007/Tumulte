@@ -2,100 +2,99 @@
     <div class="min-h-screen py-8 px-4">
       <div class="max-w-7xl mx-auto">
         <!-- Header avec retour et actions -->
-        <div class="mb-8">
-          <UButton
-            icon="i-lucide-arrow-left"
-            label="Retour aux campagnes"
-            variant="soft"
-            color="neutral"
-            to="/mj/campaigns"
-            class="mb-4"
-          />
-
-          <div>
-            <div class="flex items-center gap-3 mb-2">
-              <h1 class="text-3xl font-bold text-primary">
-                {{ campaign?.name || 'Chargement...' }}
-              </h1>
+        <UCard class="mb-8">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <!-- Bouton retour -->
               <UButton
-                icon="i-lucide-trash-2"
-                label="Supprimer"
-                color="error"
+                color="neutral"
                 variant="soft"
-                size="sm"
-                @click="handleDeleteCampaign"
-              />
+                size="xl"
+                square
+                class="group"
+                to="/mj/campaigns"
+              >
+                <template #leading>
+                  <UIcon name="i-lucide-arrow-left" class="size-12 transition-transform duration-200 group-hover:-translate-x-1" />
+                </template>
+              </UButton>
+
+              <!-- Titre et date -->
+              <div>
+                <h1 class="text-3xl font-bold text-primary">
+                  {{ campaign?.name || 'Chargement...' }}
+                </h1>
+                <p v-if="campaign?.description" class="text-muted">
+                  {{ campaign.description }}
+                </p>
+                <p v-if="campaign" class="text-sm text-muted mt-1">
+                  Créée le {{ formatDate(campaign.createdAt) }}
+                </p>
+              </div>
             </div>
-            <p v-if="campaign?.description" class="text-muted">
-              {{ campaign.description }}
-            </p>
-            <p v-if="campaign" class="text-sm text-muted mt-1">
-              Créée le {{ formatDate(campaign.createdAt) }}
-            </p>
+
+            <!-- Bouton supprimer à droite -->
+            <UButton
+              icon="i-lucide-trash-2"
+              label="Supprimer"
+              color="error"
+              variant="solid"
+              @click="handleDeleteCampaign"
+            />
           </div>
-        </div>
+        </UCard>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          <UCard>
-            <div class="flex items-center gap-4">
-              <div class="bg-primary-light p-3 rounded-xl">
-                <UIcon name="i-lucide-users" class="size-8 text-primary-500" />
-              </div>
-              <div>
-                <p class="text-sm text-muted">Total Membres</p>
-                <p class="text-2xl font-bold text-primary">{{ members.length }}</p>
-              </div>
+        <div class="grid grid-cols-5 gap-16 mb-8">
+          <div class="aspect-square bg-white rounded-[2rem] flex flex-col items-center justify-center text-center gap-3">
+            <div class="bg-primary-light p-3 rounded-xl">
+              <UIcon name="i-lucide-users" class="size-8 text-primary-500" />
             </div>
-          </UCard>
+            <div>
+              <p class="text-sm text-muted">Total Membres</p>
+              <p class="text-2xl font-bold text-primary">{{ members.length }}</p>
+            </div>
+          </div>
 
-          <UCard class="cursor-pointer hover:bg-neutral-100 transition-colors" @click="fetchLiveStatus">
-            <div class="flex items-center gap-4">
-              <div class="bg-error-light p-3 rounded-xl">
-                <UIcon name="i-lucide-radio" class="size-8 text-error-500" />
-              </div>
-              <div>
-                <p class="text-sm text-muted">En Live <span class="text-xs">(clic pour refresh)</span></p>
-                <p class="text-2xl font-bold text-primary">{{ liveMembersCount }}</p>
-              </div>
+          <div class="aspect-square bg-white rounded-[2rem] flex flex-col items-center justify-center text-center gap-3 cursor-pointer hover:bg-neutral-100 transition-colors" @click="fetchLiveStatus">
+            <div class="bg-error-light p-3 rounded-xl">
+              <UIcon name="i-lucide-radio" class="size-8 text-error-500" />
             </div>
-          </UCard>
+            <div>
+              <p class="text-sm text-muted">En Live</p>
+              <p class="text-2xl font-bold text-primary">{{ liveMembersCount }}</p>
+            </div>
+          </div>
 
-          <UCard>
-            <div class="flex items-center gap-4">
-              <div class="bg-success-light p-3 rounded-xl">
-                <UIcon name="i-lucide-user-check" class="size-8 text-success-500" />
-              </div>
-              <div>
-                <p class="text-sm text-muted">Actifs</p>
-                <p class="text-2xl font-bold text-primary">{{ activeMembersCount }}</p>
-              </div>
+          <div class="aspect-square bg-white rounded-[2rem] flex flex-col items-center justify-center text-center gap-3">
+            <div class="bg-success-light p-3 rounded-xl">
+              <UIcon name="i-lucide-user-check" class="size-8 text-success-500" />
             </div>
-          </UCard>
+            <div>
+              <p class="text-sm text-muted">Actifs</p>
+              <p class="text-2xl font-bold text-primary">{{ activeMembersCount }}</p>
+            </div>
+          </div>
 
-          <UCard>
-            <div class="flex items-center gap-4">
-              <div class="bg-info-light p-3 rounded-xl">
-                <UIcon name="i-lucide-shield-check" class="size-8 text-info-500" />
-              </div>
-              <div>
-                <p class="text-sm text-muted">Autorisés</p>
-                <p class="text-2xl font-bold text-primary">{{ authorizedMembersCount }}</p>
-              </div>
+          <div class="aspect-square bg-white rounded-[2rem] flex flex-col items-center justify-center text-center gap-3">
+            <div class="bg-info-light p-3 rounded-xl">
+              <UIcon name="i-lucide-shield-check" class="size-8 text-info-500" />
             </div>
-          </UCard>
+            <div>
+              <p class="text-sm text-muted">Autorisés</p>
+              <p class="text-2xl font-bold text-primary">{{ authorizedMembersCount }}</p>
+            </div>
+          </div>
 
-          <UCard>
-            <div class="flex items-center gap-4">
-              <div class="bg-warning-light p-3 rounded-xl">
-                <UIcon name="i-lucide-user-plus" class="size-8 text-warning-500" />
-              </div>
-              <div>
-                <p class="text-sm text-muted">En Attente</p>
-                <p class="text-2xl font-bold text-primary">{{ pendingMembersCount }}</p>
-              </div>
+          <div class="aspect-square bg-white rounded-[2rem] flex flex-col items-center justify-center text-center gap-3">
+            <div class="bg-warning-light p-3 rounded-xl">
+              <UIcon name="i-lucide-user-plus" class="size-8 text-warning-500" />
             </div>
-          </UCard>
+            <div>
+              <p class="text-sm text-muted">En Attente</p>
+              <p class="text-2xl font-bold text-primary">{{ pendingMembersCount }}</p>
+            </div>
+          </div>
         </div>
 
         <!-- Liste des membres -->
@@ -376,7 +375,7 @@
 
           <!-- No Results -->
           <div v-else-if="searchQuery.length >= 2" class="text-center py-8">
-            <UIcon name="i-lucide-search-x" class="size-12 mx-auto mb-3 text-muted" />
+            <UIcon name="i-lucide-search-x" class="size-12 mx-auto mb-3 text-primary-500" />
             <p class="text-muted">
               {{ searchResults.length > 0 ? 'Tous les streamers trouvés sont déjà invités' : 'Aucun streamer trouvé' }}
             </p>
@@ -394,7 +393,7 @@
         <div class="flex justify-end">
           <UButton
             color="neutral"
-            variant="soft"
+            variant="solid"
             label="Fermer"
             @click="showInviteModal = false"
           />

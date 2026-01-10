@@ -1,7 +1,7 @@
 <template>
 
     <div class="min-h-screen py-6">
-      <div class="max-w-5xl mx-auto space-y-6">
+      <div class="max-w-300 mx-auto space-y-6">
         <!-- Bouton retour -->
         <UButton
           color="neutral"
@@ -15,12 +15,8 @@
         <UCard>
           <template #header>
             <div class="flex items-center gap-3">
-              <div class="bg-info-light p-3 rounded-xl">
-                <UIcon name="i-lucide-user" class="size-6 text-info-500" />
-              </div>
               <div>
                 <h2 class="text-xl font-semibold text-primary">Informations du compte</h2>
-                <p class="text-sm text-muted">Vos informations personnelles</p>
               </div>
             </div>
           </template>
@@ -53,7 +49,7 @@
                 <UBadge
                   :label="user.streamer.isActive ? 'Actif' : 'Inactif'"
                   :color="user.streamer.isActive ? 'success' : 'error'"
-                  variant="soft"
+                  variant="solid"
                 />
               </div>
               <div>
@@ -61,7 +57,7 @@
                 <UBadge
                   label="Connecté"
                   color="success"
-                  variant="soft"
+                  variant="solid"
                 />
               </div>
             </div>
@@ -72,12 +68,8 @@
         <UCard>
           <template #header>
             <div class="flex items-center gap-3">
-              <div class="bg-success-light p-3 rounded-xl">
-                <UIcon name="i-lucide-plug" class="size-6 text-success-500" />
-              </div>
               <div>
                 <h2 class="text-xl font-semibold text-primary">Services connectés</h2>
-                <p class="text-sm text-muted">Gérez vos intégrations et services</p>
               </div>
             </div>
           </template>
@@ -95,7 +87,7 @@
                     <p class="text-sm text-muted">Streaming et chat en direct</p>
                   </div>
                 </div>
-                <UBadge label="Connecté" color="success" variant="soft" />
+                <UBadge label="Connecté" color="success" variant="solid" />
               </div>
             </div>
 
@@ -111,7 +103,7 @@
                     <p class="text-sm text-muted">Intégration parties Roll20</p>
                   </div>
                 </div>
-                <UBadge label="Bientôt" color="info" variant="soft" />
+                <UBadge label="Bientôt" color="info" variant="solid" />
               </div>
             </div>
 
@@ -126,7 +118,7 @@
                     <p class="text-sm text-muted">Synchronisation Foundry</p>
                   </div>
                 </div>
-                <UBadge label="Bientôt" color="info" variant="soft" />
+                <UBadge label="Bientôt" color="info" variant="solid" />
               </div>
             </div>
 
@@ -141,7 +133,7 @@
                     <p class="text-sm text-muted">Compte Alchimie RPG</p>
                   </div>
                 </div>
-                <UBadge label="Bientôt" color="info" variant="soft" />
+                <UBadge label="Bientôt" color="info" variant="solid" />
               </div>
             </div>
 
@@ -156,7 +148,7 @@
                     <p class="text-sm text-muted">Contrôle OBS Studio</p>
                   </div>
                 </div>
-                <UBadge label="Bientôt" color="info" variant="soft" />
+                <UBadge label="Bientôt" color="info" variant="solid" />
               </div>
             </div>
           </div>
@@ -171,18 +163,14 @@
           <UCard class="border-error-light">
           <template #header>
             <div class="flex items-center gap-3">
-              <div class="bg-error-light p-3 rounded-xl">
-                <UIcon name="i-lucide-shield-alert" class="size-6 text-error-500" />
-              </div>
               <div>
                 <h2 class="text-xl font-semibold text-primary">Révoquer l'acces Twitch</h2>
-                <p class="text-sm text-muted">Gestion de vos données personnelles</p>
               </div>
             </div>
           </template>
 
           <div class="space-y-4">
-            <div class="p-4 rounded-lg bg-error-light border border-error-light">
+            <div class="p-4 rounded-lg bg-error-light border-error-light">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <h3 class="font-semibold text-primary mb-1">Bloque mon compte </h3>
@@ -205,18 +193,14 @@
           <UCard class="border-error-light">
           <template #header>
             <div class="flex items-center gap-3">
-              <div class="bg-error-light p-3 rounded-xl">
-                <UIcon name="i-lucide-shield-alert" class="size-6 text-error-500" />
-              </div>
               <div>
                 <h2 class="text-xl font-semibold text-primary">Suppression de compte</h2>
-                <p class="text-sm text-muted">Gestion de vos données personnelles</p>
               </div>
             </div>
           </template>
 
           <div class="space-y-4">
-            <div class="p-4 rounded-lg bg-error-light border border-error-light">
+            <div class="p-4 rounded-lg bg-error-light border-error-light">
               <div class="flex items-start justify-between">
                 <div class="flex-1">
                   <h3 class="font-semibold text-primary mb-1">Supprimer mon compte et mes données</h3>
@@ -296,9 +280,6 @@
     <UModal v-model:open="showRevokeModal">
       <template #header>
         <div class="flex items-center gap-3">
-          <div class="bg-error-light p-2 rounded-lg">
-            <UIcon name="i-lucide-alert-triangle" class="size-6 text-error-500" />
-          </div>
           <h3 class="text-xl font-semibold text-primary">Confirmer la révocation</h3>
         </div>
       </template>
@@ -323,7 +304,7 @@
         <div class="flex justify-end gap-3">
           <UButton
             color="neutral"
-            variant="soft"
+            variant="outline"
             label="Annuler"
             @click="showRevokeModal = false"
           />

@@ -33,6 +33,11 @@ export default defineNuxtConfig({
         provider: "google",
         weights: [400, 500, 600, 700],
       },
+      {
+        name: "Aoboshi One",
+        provider: "google",
+        weights: [400],
+      },
     ],
   },
 

@@ -1,7 +1,9 @@
 <template>
   <div class="min-h-screen bg-subtle flex flex-col">
-    <!-- Header -->
-    <AppHeader />
+    <!-- Header flottant -->
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-6 max-w-7xl">
+      <AppHeader />
+    </div>
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col">

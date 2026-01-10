@@ -10,25 +10,26 @@
               <UIcon name="i-lucide-chart-bar" class="size-12 text-primary-500" />
             </div>
           </div>
-          <h1 class="text-3xl font-bold text-primary">Sondage Multi-Stream</h1>
+          <h1 class="text-3xl font-bold text-primary">Tumulte</h1>
           <p class="text-sm text-muted">
-            Système de sondages Twitch synchronisés
+            Système de Table-Top Twitch synchronisés
           </p>
         </div>
       </template>
 
       <div class="space-y-6">
         <p class="text-secondary text-center">
-          Connectez-vous avec votre compte Twitch pour accéder au système de
-          sondages multi-streams.
+          Connectez-vous avec votre compte Twitch pour accéder a Tumulte.
         </p>
 
         <UButton
           block
           size="xl"
-          color="primary"
+          color="neutral"
+          variant="solid"
           icon="i-simple-icons-twitch"
           trailing-icon="i-lucide-arrow-right"
+          class="bg-[#9146FF] hover:bg-[#7c3aed] text-white"
           @click="handleLogin"
         >
           Se connecter avec Twitch

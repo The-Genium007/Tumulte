@@ -1,8 +1,8 @@
 <template>
   <UAlert
     v-if="showBanner"
-    color="info"
-    variant="soft"
+    color="primary"
+    variant="solid"
     icon="i-lucide-bell"
     class="mb-4"
   >
@@ -34,8 +34,6 @@
     </template>
   </UAlert>
 
-  <!-- Modal de seconde chance si permission refusée -->
-  <NotificationsPushDeniedModal v-model:open="showDeniedModal" />
 </template>
 
 <script setup lang="ts">

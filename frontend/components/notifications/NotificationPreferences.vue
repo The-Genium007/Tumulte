@@ -2,14 +2,8 @@
   <UCard>
     <template #header>
       <div class="flex items-center gap-3">
-        <div class="bg-info-light p-3 rounded-xl">
-          <UIcon name="i-lucide-bell" class="size-6 text-info-500" />
-        </div>
         <div>
           <h2 class="text-xl font-semibold text-primary">Notifications push</h2>
-          <p class="text-sm text-muted">
-            Configurez vos préférences de notification
-          </p>
         </div>
       </div>
     </template>
