@@ -613,8 +613,7 @@ interface Poll {
   question: string;
   options: string[];
   type?: "UNIQUE" | "STANDARD";
-  channelPointsEnabled?: boolean;
-  channelPointsAmount?: number;
+  channelPointsPerVote?: number | null;
 }
 
 interface Session {
@@ -1122,9 +1121,9 @@ const sendPollInternal = async () => {
         options: currentPoll.value.options,
         durationSeconds: pollDuration.value,
         type: currentPoll.value.type || 'STANDARD',
-        // Channel points from poll configuration (set in session poll creation)
-        channelPointsEnabled: currentPoll.value.channelPointsEnabled ?? false,
-        channelPointsAmount: currentPoll.value.channelPointsAmount ?? null,
+        // Le backend déduit channelPointsEnabled depuis channelPointsAmount
+        // On envoie uniquement le montant (source de vérité)
+        channelPointsAmount: currentPoll.value.channelPointsPerVote ?? null,
       }),
     });
 
