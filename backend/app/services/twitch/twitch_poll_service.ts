@@ -81,8 +81,10 @@ class TwitchPollService {
       duration: Math.min(Math.max(durationSeconds, 15), 1800),
     }
 
-    // Ajouter les points de chaîne si activés (valeur entre 1 et 1000000)
-    if (channelPointsEnabled && channelPointsPerVote && channelPointsPerVote > 0) {
+    // Ajouter les points de chaîne si un montant positif est spécifié
+    // On se base uniquement sur channelPointsPerVote > 0 pour être robuste
+    // (channelPointsEnabled est ignoré - le montant est la source de vérité)
+    if (channelPointsPerVote && channelPointsPerVote > 0) {
       body.channel_points_voting_enabled = true
       body.channel_points_per_vote = Math.min(Math.max(channelPointsPerVote, 1), 1000000)
     }
@@ -266,8 +268,9 @@ class TwitchPollService {
         duration: sanitizedDuration,
       }
 
-      // Ajouter les points de chaîne si activés (valeur entre 1 et 1000000)
-      if (channelPointsEnabled && channelPointsPerVote && channelPointsPerVote > 0) {
+      // Ajouter les points de chaîne si un montant positif est spécifié
+      // On se base uniquement sur channelPointsPerVote > 0 pour être robuste
+      if (channelPointsPerVote && channelPointsPerVote > 0) {
         body.channel_points_voting_enabled = true
         body.channel_points_per_vote = Math.min(Math.max(channelPointsPerVote, 1), 1000000)
       }
