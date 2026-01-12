@@ -1,33 +1,33 @@
 <template>
-    <div class="min-h-screen py-8 px-4">
+    <div class="min-h-screen">
       <div class="max-w-7xl mx-auto">
         <!-- Header avec retour et actions -->
         <UCard class="mb-8">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-center gap-3 sm:gap-4">
               <!-- Bouton retour -->
               <UButton
                 color="neutral"
                 variant="soft"
-                size="xl"
+                size="lg"
                 square
-                class="group"
-                to="/mj/campaigns"
+                class="group shrink-0"
+                to="/mj"
               >
                 <template #leading>
-                  <UIcon name="i-lucide-arrow-left" class="size-12 transition-transform duration-200 group-hover:-translate-x-1" />
+                  <UIcon name="i-lucide-arrow-left" class="size-6 sm:size-8 transition-transform duration-200 group-hover:-translate-x-1" />
                 </template>
               </UButton>
 
               <!-- Titre et date -->
-              <div>
-                <h1 class="text-3xl font-bold text-primary">
+              <div class="min-w-0">
+                <h1 class="text-xl sm:text-3xl font-bold text-primary truncate">
                   {{ campaign?.name || 'Chargement...' }}
                 </h1>
-                <p v-if="campaign?.description" class="text-muted">
+                <p v-if="campaign?.description" class="text-muted text-sm sm:text-base line-clamp-1">
                   {{ campaign.description }}
                 </p>
-                <p v-if="campaign" class="text-sm text-muted mt-1">
+                <p v-if="campaign" class="text-xs sm:text-sm text-muted mt-1">
                   Créée le {{ formatDate(campaign.createdAt) }}
                 </p>
               </div>
@@ -36,18 +36,83 @@
             <!-- Bouton supprimer à droite -->
             <UButton
               icon="i-lucide-trash-2"
-              label="Supprimer"
               color="error"
               variant="solid"
+              class="w-full sm:w-auto"
               @click="handleDeleteCampaign"
-            />
+            >
+              <span class="sm:hidden">Supprimer la campagne</span>
+              <span class="hidden sm:inline">Supprimer</span>
+            </UButton>
           </div>
         </UCard>
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-5 gap-16 mb-8">
-          <div class="aspect-square bg-white rounded-[2rem] flex flex-col items-center justify-center text-center gap-3">
-            <div class="bg-primary-light p-3 rounded-xl">
+        <!-- Stats Cards - Mobile/Tablet: single card with list -->
+        <div class="lg:hidden mb-8">
+          <UCard>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <!-- Total Membres -->
+              <div class="flex items-center gap-3">
+                <div class="bg-primary-light size-10 rounded-lg flex items-center justify-center shrink-0">
+                  <UIcon name="i-lucide-users" class="size-5 text-primary-500" />
+                </div>
+                <div>
+                  <p class="text-xs text-muted">Total</p>
+                  <p class="text-lg font-bold text-primary">{{ members.length }}</p>
+                </div>
+              </div>
+
+              <!-- En Live -->
+              <div class="flex items-center gap-3">
+                <div class="bg-error-light size-10 rounded-lg flex items-center justify-center shrink-0">
+                  <UIcon name="i-lucide-radio" class="size-5 text-error-500" />
+                </div>
+                <div>
+                  <p class="text-xs text-muted">En Live</p>
+                  <p class="text-lg font-bold text-primary">{{ liveMembersCount }}</p>
+                </div>
+              </div>
+
+              <!-- Actifs -->
+              <div class="flex items-center gap-3">
+                <div class="bg-success-light size-10 rounded-lg flex items-center justify-center shrink-0">
+                  <UIcon name="i-lucide-user-check" class="size-5 text-success-500" />
+                </div>
+                <div>
+                  <p class="text-xs text-muted">Actifs</p>
+                  <p class="text-lg font-bold text-primary">{{ activeMembersCount }}</p>
+                </div>
+              </div>
+
+              <!-- Autorisés -->
+              <div class="flex items-center gap-3">
+                <div class="bg-info-light size-10 rounded-lg flex items-center justify-center shrink-0">
+                  <UIcon name="i-lucide-shield-check" class="size-5 text-info-500" />
+                </div>
+                <div>
+                  <p class="text-xs text-muted">Autorisés</p>
+                  <p class="text-lg font-bold text-primary">{{ authorizedMembersCount }}</p>
+                </div>
+              </div>
+
+              <!-- En Attente -->
+              <div class="flex items-center gap-3">
+                <div class="bg-warning-light size-10 rounded-lg flex items-center justify-center shrink-0">
+                  <UIcon name="i-lucide-user-plus" class="size-5 text-warning-500" />
+                </div>
+                <div>
+                  <p class="text-xs text-muted">En Attente</p>
+                  <p class="text-lg font-bold text-primary">{{ pendingMembersCount }}</p>
+                </div>
+              </div>
+            </div>
+          </UCard>
+        </div>
+
+        <!-- Stats Cards - Desktop: grid of 5 square cards -->
+        <div class="hidden lg:grid grid-cols-5 gap-16 mb-8">
+          <div class="aspect-square bg-white rounded-4xl flex flex-col items-center justify-center text-center gap-3">
+            <div class="bg-primary-light size-14 rounded-xl flex items-center justify-center">
               <UIcon name="i-lucide-users" class="size-8 text-primary-500" />
             </div>
             <div>
@@ -56,8 +121,8 @@
             </div>
           </div>
 
-          <div class="aspect-square bg-white rounded-[2rem] flex flex-col items-center justify-center text-center gap-3 cursor-pointer hover:bg-neutral-100 transition-colors" @click="fetchLiveStatus">
-            <div class="bg-error-light p-3 rounded-xl">
+          <div class="aspect-square bg-white rounded-4xl flex flex-col items-center justify-center text-center gap-3">
+            <div class="bg-error-light size-14 rounded-xl flex items-center justify-center">
               <UIcon name="i-lucide-radio" class="size-8 text-error-500" />
             </div>
             <div>
@@ -66,8 +131,8 @@
             </div>
           </div>
 
-          <div class="aspect-square bg-white rounded-[2rem] flex flex-col items-center justify-center text-center gap-3">
-            <div class="bg-success-light p-3 rounded-xl">
+          <div class="aspect-square bg-white rounded-4xl flex flex-col items-center justify-center text-center gap-3">
+            <div class="bg-success-light size-14 rounded-xl flex items-center justify-center">
               <UIcon name="i-lucide-user-check" class="size-8 text-success-500" />
             </div>
             <div>
@@ -76,8 +141,8 @@
             </div>
           </div>
 
-          <div class="aspect-square bg-white rounded-[2rem] flex flex-col items-center justify-center text-center gap-3">
-            <div class="bg-info-light p-3 rounded-xl">
+          <div class="aspect-square bg-white rounded-4xl flex flex-col items-center justify-center text-center gap-3">
+            <div class="bg-info-light size-14 rounded-xl flex items-center justify-center">
               <UIcon name="i-lucide-shield-check" class="size-8 text-info-500" />
             </div>
             <div>
@@ -86,8 +151,8 @@
             </div>
           </div>
 
-          <div class="aspect-square bg-white rounded-[2rem] flex flex-col items-center justify-center text-center gap-3">
-            <div class="bg-warning-light p-3 rounded-xl">
+          <div class="aspect-square bg-white rounded-4xl flex flex-col items-center justify-center text-center gap-3">
+            <div class="bg-warning-light size-14 rounded-xl flex items-center justify-center">
               <UIcon name="i-lucide-user-plus" class="size-8 text-warning-500" />
             </div>
             <div>
@@ -106,6 +171,8 @@
                 icon="i-lucide-user-plus"
                 label="Inviter un streamer"
                 color="primary"
+                variant="solid"
+                size="lg"
                 @click="showInviteModal = true"
               />
             </div>
@@ -125,6 +192,8 @@
               icon="i-lucide-user-plus"
               label="Inviter un streamer"
               color="primary"
+              variant="solid"
+              size="lg"
               @click="showInviteModal = true"
             />
           </div>
@@ -133,29 +202,29 @@
             <div
               v-for="member in sortedMembers"
               :key="member.id"
-              class="flex items-center justify-between p-4 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors"
+              class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 bg-neutral-100 rounded-lg hover:bg-neutral-200 transition-colors"
             >
-              <div class="flex items-center gap-4">
+              <div class="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
                 <!-- Avatar with Live Badge -->
-                <div class="relative">
+                <div class="relative shrink-0">
                   <img
                     v-if="member.streamer.profileImageUrl"
                     :src="member.streamer.profileImageUrl"
                     :alt="member.streamer.twitchDisplayName"
-                    class="size-12 rounded-full ring-2"
+                    class="size-10 sm:size-12 rounded-full ring-2"
                     :class="liveStatus[member.streamer.twitchUserId]?.is_live ? 'ring-error-500' : 'ring-brand-light'"
                   />
                   <div
                     v-else
-                    class="size-12 rounded-full ring-2 ring-brand-light bg-brand-light flex items-center justify-center"
+                    class="size-10 sm:size-12 rounded-full ring-2 ring-brand-light bg-brand-light flex items-center justify-center"
                   >
-                    <UIcon name="i-lucide-user" class="size-6 text-brand-500" />
+                    <UIcon name="i-lucide-user" class="size-5 sm:size-6 text-brand-500" />
                   </div>
                   <LiveBadge :live-status="liveStatus[member.streamer.twitchUserId]" />
                 </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <p class="font-semibold text-primary">
+                <div class="flex-1 min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <p class="font-semibold text-primary text-sm sm:text-base truncate">
                       {{ member.streamer.twitchDisplayName }}
                     </p>
                     <UBadge
@@ -184,7 +253,7 @@
                     :href="`https://twitch.tv/${member.streamer.twitchLogin}`"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="text-sm text-primary-400 hover:text-primary-300 transition-colors inline-flex items-center gap-1"
+                    class="text-xs sm:text-sm text-primary-400 hover:text-primary-300 transition-colors inline-flex items-center gap-1"
                   >
                     @{{ member.streamer.twitchLogin }}
                     <UIcon name="i-lucide-external-link" class="size-3" />
@@ -192,7 +261,7 @@
                   <!-- Live info -->
                   <p
                     v-if="liveStatus[member.streamer.twitchUserId]?.is_live"
-                    class="text-xs text-error-500 mt-1"
+                    class="text-xs text-error-500 mt-1 line-clamp-1"
                   >
                     🔴 En live{{ liveStatus[member.streamer.twitchUserId]?.game_name ? ` sur ${liveStatus[member.streamer.twitchUserId].game_name}` : '' }}
                     {{ liveStatus[member.streamer.twitchUserId]?.viewer_count !== undefined ? `(${liveStatus[member.streamer.twitchUserId].viewer_count} viewers)` : '' }}
@@ -200,7 +269,7 @@
                 </div>
               </div>
 
-              <div class="flex items-center gap-4">
+              <div class="flex items-center gap-2 sm:gap-4 w-full sm:w-auto justify-end">
                 <!-- Authorization status badge with countdown -->
                 <MemberAuthorizationBadge
                   v-if="member.status === 'ACTIVE'"
@@ -213,12 +282,13 @@
                 <UButton
                   v-if="!member.isOwner"
                   icon="i-lucide-x"
-                  label="Révoquer"
                   color="error"
-                  variant="ghost"
+                  variant="solid"
                   size="sm"
                   @click="handleRemoveMember(member.id, member.streamer.twitchDisplayName)"
-                />
+                >
+                  <span class="hidden sm:inline">Révoquer</span>
+                </UButton>
               </div>
             </div>
           </div>
@@ -329,6 +399,10 @@
               icon="i-lucide-search"
               placeholder="Nom ou login Twitch..."
               size="lg"
+              :ui="{
+                root: 'ring-0 border-0 rounded-lg overflow-hidden',
+                base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+              }"
             />
             <p class="text-xs text-muted mt-1">Tapez au moins 2 caractères</p>
           </div>
@@ -406,16 +480,20 @@
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useCampaigns } from "@/composables/useCampaigns";
+import { useMockData } from "@/composables/useMockData";
 import type { Campaign, CampaignMembership, StreamerSearchResult, LiveStatusMap } from "@/types";
+import type { MockDataModule } from "@/composables/useMockData";
 
 const _router = useRouter();
 const route = useRoute();
 const campaignId = route.params.id as string;
 
 const { getCampaignDetails, inviteStreamer, removeMember, searchTwitchStreamers, deleteCampaign, getLiveStatus } = useCampaigns();
+const { enabled: mockEnabled, loadMockData, withMockFallback } = useMockData();
 
 const campaign = ref<Campaign | null>(null);
 const liveStatus = ref<LiveStatusMap>({});
+const mockData = ref<MockDataModule | null>(null);
 
 definePageMeta({
   layout: "authenticated" as const,
@@ -431,9 +509,11 @@ const searchQuery = ref("");
 const searchResults = ref<StreamerSearchResult[]>([]);
 const searching = ref(false);
 
-// Auto-refresh interval for authorization status
+// Auto-refresh intervals
 let refreshInterval: ReturnType<typeof setInterval> | null = null;
-const REFRESH_INTERVAL_MS = 60000; // Refresh every 60 seconds
+let liveStatusInterval: ReturnType<typeof setInterval> | null = null;
+const REFRESH_INTERVAL_MS = 60000; // Refresh members every 60 seconds
+const LIVE_STATUS_INTERVAL_MS = 30000; // Refresh live status every 30 seconds
 
 // Computed properties
 const activeMembersCount = computed(() => members.value.filter((m) => m.status === "ACTIVE").length);
@@ -498,6 +578,9 @@ const filteredSearchResults = computed(() => {
 
 // Load campaign and members
 onMounted(async () => {
+  // Charger les mock data si disponibles
+  mockData.value = await loadMockData();
+
   await loadMembers();
   startAutoRefresh();
 });
@@ -511,16 +594,28 @@ onUnmounted(() => {
 });
 
 const startAutoRefresh = () => {
-  if (refreshInterval) return;
-  refreshInterval = setInterval(async () => {
-    await refreshMembersQuietly();
-  }, REFRESH_INTERVAL_MS);
+  if (!refreshInterval) {
+    refreshInterval = setInterval(async () => {
+      await refreshMembersQuietly();
+    }, REFRESH_INTERVAL_MS);
+  }
+
+  // Auto-refresh live status every 30 seconds
+  if (!liveStatusInterval) {
+    liveStatusInterval = setInterval(async () => {
+      await fetchLiveStatus();
+    }, LIVE_STATUS_INTERVAL_MS);
+  }
 };
 
 const stopAutoRefresh = () => {
   if (refreshInterval) {
     clearInterval(refreshInterval);
     refreshInterval = null;
+  }
+  if (liveStatusInterval) {
+    clearInterval(liveStatusInterval);
+    liveStatusInterval = null;
   }
 };
 
@@ -530,9 +625,18 @@ const fetchLiveStatus = async () => {
     console.log("[LiveStatus] Fetching live status for campaign:", campaignId);
     const status = await getLiveStatus(campaignId);
     console.log("[LiveStatus] Response:", JSON.stringify(status));
-    liveStatus.value = status;
+    // Utiliser mock data si vide et mock activé
+    if (mockEnabled.value && Object.keys(status).length === 0 && mockData.value) {
+      liveStatus.value = mockData.value.mockLiveStatus;
+    } else {
+      liveStatus.value = status;
+    }
   } catch (error) {
     console.error("[LiveStatus] Error fetching live status:", error);
+    // Fallback sur mock data en cas d'erreur
+    if (mockEnabled.value && mockData.value) {
+      liveStatus.value = mockData.value.mockLiveStatus;
+    }
   }
 };
 
@@ -563,9 +667,15 @@ const loadMembers = async () => {
       fetchLiveStatus(),
     ]);
     campaign.value = data.campaign;
-    members.value = data.members;
+    // Utiliser mock data si vide
+    members.value = withMockFallback(data.members, mockData.value?.mockMembers ?? []);
   } catch (error) {
     console.error("Error loading campaign:", error);
+    // Fallback sur mock data en cas d'erreur
+    if (mockEnabled.value && mockData.value) {
+      campaign.value = mockData.value.mockCampaigns[0] ?? null;
+      members.value = mockData.value.mockMembers;
+    }
   } finally {
     loadingMembers.value = false;
   }
@@ -651,7 +761,7 @@ const confirmDeleteCampaign = async () => {
   try {
     await deleteCampaign(campaignId);
     showDeleteModal.value = false;
-    _router.push({ path: "/mj/campaigns" });
+    _router.push({ path: "/mj" });
   } catch (error) {
     console.error("Error deleting campaign:", error);
   }

@@ -10,7 +10,7 @@ type StoreName =
   | "user"
   | "campaigns"
   | "campaignDetails"
-  | "sessions"
+  | "polls"
   | "pollTemplates"
   | "pollResults"
   | "invitations";

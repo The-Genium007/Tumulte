@@ -1,4 +1,5 @@
 <template>
+  <!-- Alertes feedback (toujours en bas à droite) -->
   <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
     <UAlert
       v-if="feedback.type === 'success'"
@@ -21,124 +22,132 @@
       @close="feedback = { type: '', message: '' }"
       closable
     />
-
-    <UCard
-      v-if="open"
-      class="w-210 max-w-[95vw] bg-elevated border border-default shadow-2xl"
-    >
-      <div class="space-y-4">
-        <header class="flex items-start justify-between gap-3">
-          <div>
-            <p class="text-xs uppercase tracking-wide text-muted">Support Discord</p>
-            <h2 class="text-xl font-semibold">{{ modalTitle }}</h2>
-            <p class="text-sm text-muted mt-1">
-              {{ modalDescription }}
-            </p>
-            <div v-if="actionTypeLabel" class="mt-2">
-              <UBadge color="warning" variant="soft" size="sm">
-                <UIcon name="i-lucide-alert-circle" class="mr-1 size-3" />
-                {{ actionTypeLabel }}
-              </UBadge>
-            </div>
-          </div>
-          <UButton
-            icon="i-lucide-x"
-            color="neutral"
-            variant="ghost"
-            @click="closeSupport"
-            aria-label="Fermer"
-            square
-          />
-        </header>
-
-        <div class="space-y-3">
-          <div class="space-y-2">
-            <label class="text-sm font-semibold text-secondary">
-              Décris le problème <span class="text-error-400">*</span>
-            </label>
-            <UTextarea
-              v-model="description"
-              :rows="8"
-              placeholder="Ce qui s'est passé, étapes pour reproduire..."
-              class="w-full"
-            />
-          </div>
-
-          <div class="space-y-1">
-            <UCheckbox
-              v-model="includeDiagnostics"
-              label="Joindre automatiquement les logs et métadonnées"
-            />
-            <p class="text-xs text-muted pl-8">
-              Logs front, erreurs JS, snapshot de store, contexte navigateur, compte connecté et traces côté backend.
-            </p>
-          </div>
-
-          <div class="rounded-2xl border border-default bg-muted p-4 space-y-3">
-            <div class="flex items-center gap-2">
-              <UIcon name="i-lucide-clipboard-list" class="text-brand-500 size-5" />
-              <p class="text-sm font-semibold">Ce qui sera envoyé</p>
-            </div>
-            <ul class="space-y-2 text-sm text-secondary">
-              <li class="flex items-start gap-2">
-                <UIcon name="i-lucide-dot" class="text-brand-500 mt-1" />
-                <span>Métadonnées navigateur (URL, UA, locale, viewport, timezone) + session {{ sessionId }}</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <UIcon name="i-lucide-dot" class="text-brand-500 mt-1" />
-                <span>Contexte utilisateur (id, rôle, email, streamer éventuel) + compte connecté : {{ userLabel }}</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <UIcon name="i-lucide-dot" class="text-brand-500 mt-1" />
-                <span>Snapshot store (auth + contrôles de sondage) et performances récentes</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <UIcon name="i-lucide-dot" class="text-brand-500 mt-1" />
-                <span>Derniers logs console et erreurs JS tamponnés (50/20 max)</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <UIcon name="i-lucide-dot" class="text-brand-500 mt-1" />
-                <span>Contexte backend (IP, méthode, env, campagnes/membres liés à ton compte)</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between">
-          <span class="text-xs text-muted">
-            Les tokens/mots de passe ne sont jamais inclus. Vérifie le message avant envoi.
-          </span>
-          <div class="flex gap-2">
-            <UButton
-              color="neutral"
-              variant="ghost"
-              label="Annuler"
-              @click="closeSupport"
-              :disabled="isSending"
-            />
-            <UButton
-              color="primary"
-              :loading="isSending"
-              :disabled="!canSend"
-              icon="i-lucide-send"
-              label="Envoyer"
-              @click="handleSend"
-            />
-          </div>
-        </div>
-      </div>
-    </UCard>
-
-    <UButton
-      v-if="!open"
-      color="primary"
-      variant="solid"
-      icon="i-lucide-life-buoy"
-      class="shadow-lg"
-      @click="open = true"
-      label="Support"
-    />
   </div>
+
+  <!-- Modal Support (pleine page sur mobile, card sur desktop) -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition ease-out duration-200"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition ease-in duration-150"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="open"
+        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      >
+        <!-- Backdrop -->
+        <div
+          class="absolute inset-0 bg-black/50"
+          @click="closeSupport"
+        />
+
+        <!-- Card -->
+        <UCard
+          class="relative w-full sm:w-lg sm:max-w-[95vw] max-h-dvh sm:max-h-[90vh] overflow-y-auto bg-elevated border border-default shadow-2xl rounded-t-2xl sm:rounded-2xl"
+        >
+          <div class="space-y-4">
+            <header>
+              <h2 class="text-xl font-semibold">{{ modalTitle }}</h2>
+              <p class="text-sm text-muted mt-1">
+                Envoi automatique vers les salons Discord de tickets.
+              </p>
+              <div v-if="actionTypeLabel" class="mt-2">
+                <UBadge color="warning" variant="soft" size="sm">
+                  <UIcon name="i-lucide-alert-circle" class="mr-1 size-3" />
+                  {{ actionTypeLabel }}
+                </UBadge>
+              </div>
+            </header>
+
+            <div class="space-y-3">
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-secondary">
+                  Décris le problème <span class="text-error-400">*</span>
+                </label>
+                <UTextarea
+                  v-model="description"
+                  :rows="6"
+                  placeholder="Ce qui s'est passé, étapes pour reproduire..."
+                  class="w-full"
+                  :ui="{
+                    root: 'ring-0 border-0 rounded-lg overflow-hidden',
+                    base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+                  }"
+                />
+              </div>
+
+              <div class="space-y-1">
+                <UCheckbox
+                  v-model="includeDiagnostics"
+                  label="Joindre automatiquement les logs et métadonnées"
+                />
+                <p class="text-xs text-muted pl-8">
+                  Logs front, erreurs JS, snapshot de store, contexte navigateur, compte connecté et traces côté backend.
+                </p>
+              </div>
+
+              <div class="rounded-2xl border border-default bg-muted p-4 space-y-3">
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-lucide-clipboard-list" class="text-brand-500 size-5" />
+                  <p class="text-sm font-semibold">Ce qui sera envoyé</p>
+                </div>
+                <ul class="space-y-2 text-sm text-secondary">
+                  <li class="flex items-start gap-2">
+                    <UIcon name="i-lucide-dot" class="text-brand-500 mt-1 shrink-0" />
+                    <span>Métadonnées navigateur (URL, UA, locale, viewport, timezone) + session {{ sessionId }}</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <UIcon name="i-lucide-dot" class="text-brand-500 mt-1 shrink-0" />
+                    <span>Contexte utilisateur (id, rôle, email, streamer éventuel) + compte connecté : {{ userLabel }}</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <UIcon name="i-lucide-dot" class="text-brand-500 mt-1 shrink-0" />
+                    <span>Snapshot store (auth + contrôles de sondage) et performances récentes</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <UIcon name="i-lucide-dot" class="text-brand-500 mt-1 shrink-0" />
+                    <span>Derniers logs console et erreurs JS tamponnés (50/20 max)</span>
+                  </li>
+                  <li class="flex items-start gap-2">
+                    <UIcon name="i-lucide-dot" class="text-brand-500 mt-1 shrink-0" />
+                    <span>Contexte backend (IP, méthode, env, campagnes/membres liés à ton compte)</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
+              <span class="text-xs text-muted order-2 sm:order-1 text-center sm:text-left">
+                Les tokens/mots de passe ne sont jamais inclus.
+              </span>
+              <div class="flex gap-2 order-1 sm:order-2">
+                <UButton
+                  color="neutral"
+                  variant="ghost"
+                  label="Annuler"
+                  class="flex-1 sm:flex-none"
+                  @click="closeSupport"
+                  :disabled="isSending"
+                />
+                <UButton
+                  color="primary"
+                  :loading="isSending"
+                  :disabled="!canSend"
+                  icon="i-lucide-send"
+                  label="Envoyer"
+                  class="flex-1 sm:flex-none"
+                  @click="handleSend"
+                />
+              </div>
+            </div>
+          </div>
+        </UCard>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -171,7 +180,6 @@ const feedback = ref<{ type: "success" | "error" | ""; message: string }>({
 const modalTitle = computed(() =>
   prefillActionType.value ? "Signaler une erreur" : "Déclarer un bug"
 );
-const modalDescription = "Envoi automatique vers le salon des tickets via webhook.";
 
 // Label du badge pour le type d'erreur
 const actionTypeLabel = computed(() =>

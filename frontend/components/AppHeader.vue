@@ -9,7 +9,7 @@
             alt="Tumulte"
             class="size-10 sm:size-12"
           />
-          <h1 class="hidden sm:block text-xl sm:text-2xl font-bold text-primary">Tumulte</h1>
+          <h1 class="text-lg sm:text-2xl font-bold text-primary">Tumulte</h1>
         </div>
 
         <!-- User Menu -->

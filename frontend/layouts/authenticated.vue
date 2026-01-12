@@ -1,12 +1,15 @@
 <template>
   <div class="min-h-screen bg-subtle flex flex-col">
+    <!-- PWA Install Prompt -->
+    <PwaInstallPrompt />
+
     <!-- Header flottant -->
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 pt-6 max-w-7xl">
       <AppHeader />
     </div>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col">
+    <main class="flex-1 flex flex-col pb-20 lg:pb-0">
       <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-7xl flex-1">
         <!-- Indicateur hors-ligne -->
         <OfflineIndicator />
@@ -21,6 +24,9 @@
 
     <!-- Footer -->
     <AppFooter />
+
+    <!-- Bottom Navigation (mobile only) -->
+    <BottomNavigation />
 
     <!-- Widgets globaux -->
     <SupportWidget />

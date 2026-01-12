@@ -5,8 +5,8 @@
  * Change these values to use different color palettes from your design tokens.
  *
  * Available palettes (defined in assets/css/main.css):
- * - brand: Primary brand color (purple by default)
- * - accent: Secondary accent color (pink by default)
+ * - brand: Primary brand color (#0f0b04)
+ * - secondary: Secondary color (#0f0b04)
  * - neutral: Gray scale for text/backgrounds
  * - success: Green for success states
  * - error: Red for error states
@@ -18,7 +18,7 @@ export default defineAppConfig({
     colors: {
       // Main colors - change these to remap the entire UI
       primary: "brand", // Uses --color-brand-* from main.css
-      secondary: "accent", // Uses --color-accent-* from main.css
+      secondary: "secondary", // Uses --color-secondary-* from main.css (#0f0b04)
 
       // Semantic colors for states
       success: "success",
@@ -39,34 +39,84 @@ export default defineAppConfig({
     },
     alert: {
       slots: {
-        root: "ring-0 border-0 p-6",
+        root: "border-0 p-6",
+      },
+      variants: {
+        variant: {
+          solid: "ring-0",
+          soft: "ring-0",
+          subtle: "ring-0",
+          outline: "",
+        },
       },
     },
     badge: {
       slots: {
-        base: "ring-0 p-2",
+        base: "p-2",
+      },
+      variants: {
+        variant: {
+          solid: "ring-0",
+          soft: "ring-0",
+          subtle: "ring-0",
+          outline: "",
+        },
       },
     },
     button: {
       slots: {
-        base: "ring-0 p-4",
+        base: "p-4",
+      },
+      variants: {
+        variant: {
+          solid: "ring-0",
+          soft: "ring-0",
+          subtle: "ring-0",
+          ghost: "ring-0",
+          link: "ring-0",
+          outline: "",
+        },
       },
     },
     input: {
       slots: {
-        root: "ring-0 border-3 border-primary-500 rounded-[1rem] overflow-hidden w-full",
-        base: "p-4 rounded-[1rem]",
+        root: "ring-0 border-0 rounded-lg overflow-hidden w-full",
+        base: "px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg",
       },
     },
     select: {
       slots: {
-        base: "ring-0 p-4",
+        base: "ring-0 border-0 px-3.5 py-2.5 bg-primary-100 text-primary-500 rounded-lg",
       },
     },
     textarea: {
       slots: {
-        root: "ring-0 border-3 border-primary-500 rounded-[1rem] overflow-hidden w-full",
-        base: "p-4 rounded-[1rem]",
+        root: "ring-0 border-0 rounded-lg overflow-hidden w-full",
+        base: "px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg",
+      },
+    },
+    checkbox: {
+      slots: {
+        root: "ring-0",
+        base: "ring-0 border-0 bg-primary-100 data-[state=checked]:bg-primary-500",
+      },
+    },
+    radioGroup: {
+      slots: {
+        root: "ring-0",
+        base: "ring-0 border-0 bg-primary-100 data-[state=checked]:bg-primary-500",
+      },
+    },
+    switch: {
+      slots: {
+        root: "ring-0 border-0 bg-primary-100 data-[state=checked]:bg-primary-500",
+      },
+    },
+    selectMenu: {
+      slots: {
+        base: "ring-0 border-0 bg-primary-100 text-primary-400 rounded-lg",
+        content: "ring-0 border-0 bg-white rounded-lg shadow-lg",
+        item: "hover:bg-primary-50",
       },
     },
     modal: {

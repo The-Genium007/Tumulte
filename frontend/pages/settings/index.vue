@@ -1,15 +1,24 @@
 <template>
-
-    <div class="min-h-screen py-6">
-      <div class="max-w-300 mx-auto space-y-6">
-        <!-- Bouton retour -->
-        <UButton
-          color="neutral"
-          variant="soft"
-          icon="i-lucide-arrow-left"
-          label="Retour au dashboard"
-          @click="goBackToDashboard"
-        />
+    <div class="min-h-screen">
+      <div class="mx-auto space-y-6">
+        <!-- Header avec retour -->
+        <UCard>
+          <div class="flex items-center gap-4">
+            <UButton
+              color="neutral"
+              variant="soft"
+              size="xl"
+              square
+              class="group shrink-0"
+              @click="goBackToDashboard"
+            >
+              <template #leading>
+                <UIcon name="i-lucide-arrow-left" class="size-6 sm:size-12 transition-transform duration-200 group-hover:-translate-x-1" />
+              </template>
+            </UButton>
+            <h1 class="text-xl sm:text-3xl font-bold text-primary">Réglages</h1>
+          </div>
+        </UCard>
 
         <!-- Informations de base -->
         <UCard>
@@ -79,7 +88,7 @@
             <div v-if="user?.streamer" class="p-4 rounded-lg bg-neutral-100 border border-default">
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-3">
-                  <div class="bg-brand-light p-2 rounded-lg">
+                  <div class="p-2">
                     <UIcon name="i-lucide-twitch" class="size-6 text-brand-500" />
                   </div>
                   <div>
@@ -95,7 +104,7 @@
             <div class="p-4 rounded-lg bg-neutral-100 border border-default opacity-60">
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-3">
-                  <div class="bg-neutral-200 p-2 rounded-lg">
+                  <div class="p-2">
                     <UIcon name="i-lucide-dice-6" class="size-6 text-neutral-500" />
                   </div>
                   <div>
@@ -110,7 +119,7 @@
             <div class="p-4 rounded-lg bg-neutral-100 border border-default opacity-60">
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-3">
-                  <div class="bg-neutral-200 p-2 rounded-lg">
+                  <div class="p-2">
                     <UIcon name="i-lucide-castle" class="size-6 text-neutral-500" />
                   </div>
                   <div>
@@ -125,7 +134,7 @@
             <div class="p-4 rounded-lg bg-neutral-100 border border-default opacity-60">
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-3">
-                  <div class="bg-neutral-200 p-2 rounded-lg">
+                  <div class="p-2">
                     <UIcon name="i-lucide-flask-conical" class="size-6 text-neutral-500" />
                   </div>
                   <div>
@@ -140,7 +149,7 @@
             <div class="p-4 rounded-lg bg-neutral-100 border border-default opacity-60">
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-3">
-                  <div class="bg-neutral-200 p-2 rounded-lg">
+                  <div class="p-2">
                     <UIcon name="i-lucide-video" class="size-6 text-neutral-500" />
                   </div>
                   <div>
@@ -171,7 +180,7 @@
 
           <div class="space-y-4">
             <div class="p-4 rounded-lg bg-error-light border-error-light">
-              <div class="flex items-start justify-between">
+              <div class="flex flex-col sm:flex-row items-start justify-between gap-4">
                 <div class="flex-1">
                   <h3 class="font-semibold text-primary mb-1">Bloque mon compte </h3>
                   <p class="text-sm text-muted">
@@ -182,6 +191,7 @@
                   color="error"
                   variant="solid"
                   label="Révoquer l'acces"
+                  class="w-full sm:w-auto shrink-0"
                   @click="showRevokeModal = true"
                 />
               </div>
@@ -201,7 +211,7 @@
 
           <div class="space-y-4">
             <div class="p-4 rounded-lg bg-error-light border-error-light">
-              <div class="flex items-start justify-between">
+              <div class="flex flex-col sm:flex-row items-start justify-between gap-4">
                 <div class="flex-1">
                   <h3 class="font-semibold text-primary mb-1">Supprimer mon compte et mes données</h3>
                   <p class="text-sm text-muted">
@@ -212,6 +222,7 @@
                   color="error"
                   variant="solid"
                   label="Supprimer le compte"
+                  class="w-full sm:w-auto shrink-0"
                   @click="showDeleteModal = true"
                 />
               </div>
@@ -223,7 +234,7 @@
     </div>
 
     <!-- Modal de confirmation de suppression -->
-    <UModal v-model:open="showDeleteModal">
+    <UModal v-model:open="showDeleteModal" class="w-full max-w-lg mx-4">
       <template #header>
         <div class="flex items-center gap-3">
           <div class="bg-error-light p-2 rounded-lg">
@@ -251,23 +262,29 @@
               v-model="deleteConfirmation"
               placeholder="Tapez SUPPRIMER"
               size="lg"
+              :ui="{
+                root: 'ring-0 border-0 rounded-lg overflow-hidden',
+                base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+              }"
             />
           </div>
         </div>
       </template>
 
       <template #footer>
-        <div class="flex justify-end gap-3">
+        <div class="flex flex-col sm:flex-row justify-end gap-3 w-full">
           <UButton
             color="neutral"
             variant="soft"
             label="Annuler"
+            class="w-full sm:w-auto"
             @click="showDeleteModal = false"
           />
           <UButton
             color="error"
             variant="solid"
             label="Confirmer la suppression"
+            class="w-full sm:w-auto"
             :disabled="deleteConfirmation !== 'SUPPRIMER'"
             :loading="deleteLoading"
             @click="handleDeleteAccount"
@@ -277,7 +294,7 @@
     </UModal>
 
     <!-- Modal de confirmation de révocation Twitch -->
-    <UModal v-model:open="showRevokeModal">
+    <UModal v-model:open="showRevokeModal" class="w-full max-w-lg mx-4">
       <template #header>
         <div class="flex items-center gap-3">
           <h3 class="text-xl font-semibold text-primary">Confirmer la révocation</h3>
@@ -301,17 +318,19 @@
       </template>
 
       <template #footer>
-        <div class="flex justify-end gap-3">
+        <div class="flex flex-col sm:flex-row justify-end gap-3 w-full">
           <UButton
             color="neutral"
             variant="outline"
             label="Annuler"
+            class="w-full sm:w-auto"
             @click="showRevokeModal = false"
           />
           <UButton
             color="error"
             variant="solid"
             label="Confirmer la révocation"
+            class="w-full sm:w-auto"
             :loading="revokeLoading"
             @click="confirmRevokeTwitch"
           />
@@ -322,10 +341,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useSettings } from '@/composables/useSettings'
+import { useMockData } from '@/composables/useMockData'
+import type { MockDataModule } from '@/composables/useMockData'
+import type { User } from '@/types'
 
 definePageMeta({
   layout: "authenticated" as const,
@@ -333,8 +355,23 @@ definePageMeta({
 });
 
 const _router = useRouter()
-const { user, logout } = useAuth()
+const { user: authUser, logout } = useAuth()
 const { revokeTwitchAccess, deleteAccount } = useSettings()
+const { enabled: mockEnabled, loadMockData } = useMockData()
+
+const mockData = ref<MockDataModule | null>(null)
+
+// User avec fallback sur mock data
+const user = computed<User | null>(() => {
+  if (mockEnabled.value && !authUser.value && mockData.value) {
+    return mockData.value.mockUsers.streamerUser
+  }
+  return authUser.value
+})
+
+onMounted(async () => {
+  mockData.value = await loadMockData()
+})
 
 const showDeleteModal = ref(false)
 const deleteConfirmation = ref('')

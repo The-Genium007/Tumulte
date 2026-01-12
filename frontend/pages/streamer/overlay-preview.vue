@@ -1,34 +1,43 @@
 <template>
   <div class="preview-page">
-    <!-- Zone de prévisualisation -->
-    <div class="preview-area">
+    <!-- Header Card -->
+    <UCard class="preview-header-card">
       <div class="preview-header">
-        <div class="preview-title-section">
-          <h2 class="preview-title">Prévisualisation Overlay</h2>
-          <UBadge v-if="configName" color="primary" variant="soft">
-            {{ configName }}
-          </UBadge>
+        <div class="flex items-center gap-4">
+          <UButton
+            color="neutral"
+            variant="soft"
+            size="xl"
+            square
+            class="group"
+            to="/streamer"
+          >
+            <template #leading>
+              <UIcon name="i-lucide-arrow-left" class="size-12 transition-transform duration-200 group-hover:-translate-x-1" />
+            </template>
+          </UButton>
+          <div class="preview-title-section">
+            <h2 class="preview-title">Prévisualisation Overlay</h2>
+            <UBadge v-if="configName" color="primary" variant="soft">
+              {{ configName }}
+            </UBadge>
+          </div>
         </div>
         <div class="preview-actions">
           <UButton
-            color="neutral"
-            variant="ghost"
-            icon="i-heroicons-arrow-left"
-            to="/streamer"
-          >
-            Retour
-          </UButton>
-          <UButton
             v-if="isDev"
             color="primary"
-            icon="i-heroicons-pencil-square"
+            icon="i-lucide-pencil"
             to="/streamer/studio"
           >
             Ouvrir le Studio
           </UButton>
         </div>
       </div>
+    </UCard>
 
+    <!-- Zone de prévisualisation -->
+    <div class="preview-content">
       <!-- Canvas de prévisualisation avec damier -->
       <div ref="canvasWrapper" class="preview-canvas-wrapper">
         <div
@@ -66,24 +75,24 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Panneau de contrôles -->
-    <div class="controls-panel">
-      <PreviewControls
-        :elements="elements"
-        :selected-element-id="selectedElementId"
-        :current-state="currentState"
-        @select-element="selectElement"
-        @toggle-visibility="toggleVisibility"
-        @play-entry="handlePlayEntry"
-        @play-loop="handlePlayLoop"
-        @stop-loop="handleStopLoop"
-        @play-result="handlePlayResult"
-        @play-exit="handlePlayExit"
-        @play-full-sequence="handlePlayFullSequence"
-        @reset="handleReset"
-      />
+      <!-- Panneau de contrôles -->
+      <div class="controls-panel">
+        <PreviewControls
+          :elements="elements"
+          :selected-element-id="selectedElementId"
+          :current-state="currentState"
+          @select-element="toggleElement"
+          @toggle-visibility="toggleVisibility"
+          @play-entry="handlePlayEntry"
+          @play-loop="handlePlayLoop"
+          @stop-loop="handleStopLoop"
+          @play-result="handlePlayResult"
+          @play-exit="handlePlayExit"
+          @play-full-sequence="handlePlayFullSequence"
+          @reset="handleReset"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -152,7 +161,8 @@ const calculateCanvasScale = () => {
   if (!canvasWrapper.value) return;
 
   const wrapperRect = canvasWrapper.value.getBoundingClientRect();
-  // Ajouter une marge pour éviter que le canvas touche les bords
+  // Le padding CSS (1rem) gère la marge visuelle, getBoundingClientRect inclut ce padding
+  // donc on utilise les dimensions brutes
   const availableWidth = wrapperRect.width - 32;
   const availableHeight = wrapperRect.height - 32;
 
@@ -170,18 +180,18 @@ let resizeObserver: ResizeObserver | null = null;
 // Charger la configuration au montage
 onMounted(async () => {
   try {
-    // La configuration est déjà dans le store si on vient du Studio
-    // Sinon, on charge la configuration active depuis l'API
-    if (store.elements.length === 0) {
-      // Charger la liste des configs pour trouver celle qui est active
-      const configs = await api.fetchConfigs();
-      const activeConfig = configs.find((c) => c.isActive);
+    // Toujours charger les configs pour récupérer le nom de la config active
+    const configs = await api.fetchConfigs();
+    const activeConfig = configs.find((c) => c.isActive);
 
-      if (activeConfig) {
-        // Charger les détails de la config active
+    if (activeConfig) {
+      // Définir le nom de la config
+      configName.value = activeConfig.name;
+
+      // Si le store est vide (on ne vient pas du Studio), charger les éléments
+      if (store.elements.length === 0) {
         const fullConfig = await api.fetchConfig(activeConfig.id);
         store.loadConfig(fullConfig.config);
-        configName.value = fullConfig.name;
       }
     }
 
@@ -236,9 +246,9 @@ const setElementRef = (id: string, el: any) => {
   }
 };
 
-// Sélectionner un élément
-const selectElement = (id: string) => {
-  selectedElementId.value = id;
+// Toggle la sélection d'un élément (sélectionne ou désélectionne)
+const toggleElement = (id: string) => {
+  selectedElementId.value = selectedElementId.value === id ? null : id;
 };
 
 // Toggle visibilité
@@ -371,23 +381,21 @@ const handleReset = () => {
 <style scoped>
 .preview-page {
   display: flex;
-  height: 100vh;
-  background: var(--ui-bg);
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  background: var(--color-bg-page);
 }
 
-.preview-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem;
-  overflow: hidden;
+/* Header Card */
+.preview-header-card {
+  flex-shrink: 0;
 }
 
 .preview-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
 }
 
 .preview-title-section {
@@ -397,15 +405,25 @@ const handleReset = () => {
 }
 
 .preview-title {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  color: var(--ui-text);
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .preview-actions {
   display: flex;
+  align-items: center;
   gap: 0.75rem;
+}
+
+/* Content area */
+.preview-content {
+  flex: 1;
+  display: flex;
+  gap: 0.75rem;
+  min-height: 0;
+  align-items: stretch; /* Les deux cartes ont la même hauteur */
 }
 
 .preview-canvas-wrapper {
@@ -413,19 +431,18 @@ const handleReset = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
-  background: var(--ui-bg-elevated);
-  border-radius: 1rem;
+  padding: 1rem; /* Marge uniforme de 1rem */
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: 2rem;
   overflow: hidden;
-  min-height: 0; /* Permet au flex de réduire la taille */
 }
 
 .preview-canvas {
   position: relative;
-  border-radius: 0.5rem;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  /* Empêcher le canvas de dépasser avec le scale */
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
 }
 
@@ -434,17 +451,17 @@ const handleReset = () => {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(45deg, #2a2a2a 25%, transparent 25%),
-    linear-gradient(-45deg, #2a2a2a 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #2a2a2a 75%),
-    linear-gradient(-45deg, transparent 75%, #2a2a2a 75%);
+    linear-gradient(45deg, #d0d0d0 25%, transparent 25%),
+    linear-gradient(-45deg, #d0d0d0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #d0d0d0 75%),
+    linear-gradient(-45deg, transparent 75%, #d0d0d0 75%);
   background-size: 20px 20px;
   background-position:
     0 0,
     0 10px,
     10px -10px,
     -10px 0px;
-  background-color: #1a1a1a;
+  background-color: #e8e8e8;
 }
 
 .no-config-message {
@@ -494,23 +511,23 @@ const handleReset = () => {
 }
 
 .controls-panel {
-  width: 320px;
-  border-left: 1px solid var(--ui-border);
-  background: var(--ui-bg);
+  width: 300px;
+  flex-shrink: 0;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: 2rem;
   overflow-y: auto;
 }
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .preview-page {
+  .preview-content {
     flex-direction: column;
   }
 
   .controls-panel {
     width: 100%;
     max-height: 40vh;
-    border-left: none;
-    border-top: 1px solid var(--ui-border);
   }
 }
 </style>

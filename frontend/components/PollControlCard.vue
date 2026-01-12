@@ -116,7 +116,7 @@
 
     <!-- Options et Résultats -->
     <div v-if="(status === 'sending' || status === 'running' || status === 'pending' || results) && status !== 'cancelled'" class="mt-6 pt-6 border-t border-default">
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <div
           v-for="(option, index) in allOptions"
           :key="index"

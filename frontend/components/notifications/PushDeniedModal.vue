@@ -1,5 +1,5 @@
 <template>
-  <UModal v-model:open="isOpen">
+  <UModal v-model:open="isOpen" class="w-full max-w-lg mx-4">
     <template #header>
       <div class="flex items-center gap-3">
         <div class="bg-warning-light p-2 rounded-lg">
@@ -61,8 +61,14 @@
     </template>
 
     <template #footer>
-      <div class="flex justify-end gap-3">
-        <UButton color="neutral" variant="soft" label="Compris" @click="close" />
+      <div class="flex justify-end gap-3 w-full">
+        <UButton
+          color="neutral"
+          variant="soft"
+          label="Compris"
+          class="w-full sm:w-auto"
+          @click="close"
+        />
       </div>
     </template>
   </UModal>

@@ -22,7 +22,6 @@ export default defineNuxtConfig({
   colorMode: {
     preference: "light",
     fallback: "light",
-    forced: true, // Désactive complètement le dark mode
   },
 
   // Google Fonts configuration

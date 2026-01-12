@@ -1,6 +1,6 @@
 <template>
 
-    <div class="min-h-screen py-6">
+    <div class="min-h-screen">
       <div class="max-w-300 mx-auto space-y-6">
 
 
@@ -15,7 +15,7 @@
           size="xl"
           square
           class="group"
-          @click="_router.push('/mj/campaigns')"
+          @click="_router.push('/mj')"
         >
           <template #leading>
             <UIcon name="i-lucide-arrow-left" class="size-12 transition-transform duration-200 group-hover:-translate-x-1" />
@@ -39,7 +39,7 @@
             </h2>
           </template>
 
-          <div class="space-y-6 w-1/3">
+          <div class="space-y-6 w-full lg:w-1/2 xl:w-1/3">
             <!-- Name Field -->
             <div>
               <label class="block text-sm font-bold text-secondary ml-4 uppercase">
@@ -51,6 +51,10 @@
                 placeholder="Ma super campagne"
                 size="lg"
                 autofocus
+                :ui="{
+                  root: 'ring-0 border-0 rounded-lg overflow-hidden',
+                  base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+                }"
               />
             </div>
 
@@ -64,6 +68,10 @@
                 type="textarea"
                 placeholder="Description de la campagne..."
                 :rows="6"
+                :ui="{
+                  root: 'ring-0 border-0 rounded-lg overflow-hidden',
+                  base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+                }"
               />
             </div>
           </div>
@@ -114,7 +122,7 @@ const handleCreate = async () => {
       description: description.value.trim() || undefined,
     });
 
-    _router.push("/mj/campaigns");
+    _router.push("/mj");
   } catch (error: unknown) {
     console.error("Failed to create campaign:", error);
   } finally {

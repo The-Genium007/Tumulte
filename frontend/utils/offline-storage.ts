@@ -11,7 +11,7 @@ import type {
   PollTemplate,
   PollResults,
   CampaignInvitation,
-  PollSession,
+  Poll,
 } from "@/types/api";
 
 // Default TTL: 7 days in milliseconds
@@ -46,9 +46,9 @@ interface TumulteDB extends DBSchema {
     key: string;
     value: StoredData<CampaignDetail>;
   };
-  sessions: {
+  polls: {
     key: string;
-    value: StoredData<PollSession>;
+    value: StoredData<Poll[]>;
   };
   pollTemplates: {
     key: string;
@@ -75,7 +75,7 @@ type StoreName =
   | "user"
   | "campaigns"
   | "campaignDetails"
-  | "sessions"
+  | "polls"
   | "pollTemplates"
   | "pollResults"
   | "invitations";
@@ -113,8 +113,8 @@ class OfflineStorage {
         if (!db.objectStoreNames.contains("campaignDetails")) {
           db.createObjectStore("campaignDetails");
         }
-        if (!db.objectStoreNames.contains("sessions")) {
-          db.createObjectStore("sessions");
+        if (!db.objectStoreNames.contains("polls")) {
+          db.createObjectStore("polls");
         }
         if (!db.objectStoreNames.contains("pollTemplates")) {
           db.createObjectStore("pollTemplates");
@@ -234,7 +234,7 @@ class OfflineStorage {
       await db.clear("user");
       await db.clear("campaigns");
       await db.clear("campaignDetails");
-      await db.clear("sessions");
+      await db.clear("polls");
       await db.clear("pollTemplates");
       await db.clear("pollResults");
       await db.clear("invitations");
@@ -317,7 +317,7 @@ class OfflineStorage {
         "user",
         "campaigns",
         "campaignDetails",
-        "sessions",
+        "polls",
         "pollTemplates",
         "pollResults",
         "invitations",
@@ -427,19 +427,22 @@ export async function getStoredPollTemplates(
 }
 
 /**
- * Store poll session
+ * Store polls for a campaign
  */
-export async function storeSession(session: PollSession): Promise<void> {
-  await offlineStorage.set<PollSession>("sessions", session, session.id);
+export async function storePolls(
+  campaignId: string,
+  polls: Poll[],
+): Promise<void> {
+  await offlineStorage.set<Poll[]>("polls", polls, campaignId);
 }
 
 /**
- * Get stored poll session
+ * Get stored polls for a campaign
  */
-export async function getStoredSession(
-  sessionId: string,
-): Promise<PollSession | null> {
-  return offlineStorage.get<PollSession>("sessions", sessionId);
+export async function getStoredPolls(
+  campaignId: string,
+): Promise<Poll[] | null> {
+  return offlineStorage.get<Poll[]>("polls", campaignId);
 }
 
 /**
@@ -449,7 +452,7 @@ export async function storePollResults(results: PollResults): Promise<void> {
   await offlineStorage.set<PollResults>(
     "pollResults",
     results,
-    results.pollInstance.id,
+    results.pollInstanceId,
   );
 }
 

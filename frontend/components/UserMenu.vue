@@ -3,15 +3,19 @@
     <!-- Avatar utilisateur avec badge de notification -->
     <button
       @click="isOpen = !isOpen"
-      class="relative flex items-center gap-2 p-1 rounded-lg hover:bg-neutral-100 transition-colors"
+      class="group relative flex items-center gap-2 p-1 rounded-lg transition-colors"
       aria-label="Menu utilisateur"
     >
       <div class="relative">
-        <TwitchAvatar
-          :image-url="user?.streamer?.profileImageUrl"
-          :display-name="user?.streamer?.twitchDisplayName || 'User'"
-          size="md"
-        />
+        <div class="relative rounded-full overflow-hidden">
+          <TwitchAvatar
+            :image-url="user?.streamer?.profileImageUrl"
+            :display-name="user?.streamer?.twitchDisplayName || 'User'"
+            size="md"
+          />
+          <!-- Overlay coloré au hover -->
+          <div class="absolute inset-0 bg-primary-100 opacity-0 group-hover:opacity-60 transition-opacity rounded-full" />
+        </div>
 
         <!-- Badge de notification d'invitations -->
         <UBadge
@@ -49,7 +53,7 @@
                 size="lg"
               />
               <div class="flex flex-col">
-                <span class="text-sm font-semibold text-primary">
+                <span class="font-heading text-lg text-primary uppercase">
                   {{ user?.streamer?.twitchDisplayName }}
                 </span>
               </div>
@@ -91,6 +95,16 @@
             <!-- Divider -->
             <div class="my-1 border-t border-default"></div>
 
+            <!-- Installer l'application (PWA) -->
+            <button
+              v-if="canInstall"
+              @click="handleInstallPwa"
+              class="w-full flex items-center gap-3 px-4 py-2 text-sm text-secondary hover:bg-neutral-100 rounded-lg transition-colors"
+            >
+              <UIcon name="i-lucide-download" class="size-4" />
+              <span>Installer l'application</span>
+            </button>
+
             <!-- Tableau de bord MJ -->
             <NuxtLink
               to="/mj"
@@ -110,6 +124,15 @@
               <UIcon name="i-lucide-settings" class="size-4" />
               <span>Réglages</span>
             </NuxtLink>
+
+            <!-- Support -->
+            <button
+              @click="handleOpenSupport"
+              class="w-full flex items-center gap-3 px-4 py-2 text-sm text-secondary hover:bg-neutral-100 rounded-lg transition-colors"
+            >
+              <UIcon name="i-lucide-life-buoy" class="size-4" />
+              <span>Support</span>
+            </button>
 
             <!-- Divider -->
             <div class="my-1 border-t border-default"></div>
@@ -135,10 +158,14 @@ import { useRouter } from 'vue-router'
 import { onClickOutside } from '@vueuse/core'
 import { useAuth } from '@/composables/useAuth'
 import { useNotifications } from '@/composables/useNotifications'
+import { usePwaInstall } from '@/composables/usePwaInstall'
+import { useSupportWidget } from '@/composables/useSupportWidget'
 
 const router = useRouter()
 const { user, logout } = useAuth()
 const { invitationCount, hasInvitations } = useNotifications()
+const { canInstall, install } = usePwaInstall()
+const { openSupport } = useSupportWidget()
 
 const isOpen = ref(false)
 const menuRef = ref(null)
@@ -155,5 +182,21 @@ const handleLogout = async () => {
   await logout()
   isOpen.value = false
   router.push('/login')
+}
+
+/**
+ * Gère l'installation de la PWA
+ */
+const handleInstallPwa = async () => {
+  await install()
+  isOpen.value = false
+}
+
+/**
+ * Ouvre le widget de support
+ */
+const handleOpenSupport = () => {
+  isOpen.value = false
+  openSupport()
 }
 </script>

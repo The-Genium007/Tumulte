@@ -1,9 +1,9 @@
 <template>
   <div class="flex items-center gap-2">
-    <!-- Owner: Permanent authorization -->
+    <!-- Owner: Permanent authorization (solid success) -->
     <div
       v-if="isOwner"
-      class="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-primary-light text-primary-400 border border-primary-light"
+      class="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-success-500 text-white"
     >
       <UIcon name="i-lucide-infinity" class="size-3.5" />
       <span>Permanent</span>
@@ -19,10 +19,10 @@
       <span class="tabular-nums">{{ formatTime(displaySeconds) }}</span>
     </div>
 
-    <!-- Not authorized -->
+    <!-- Not authorized (solid neutral) -->
     <div
       v-else-if="!isPollAuthorized"
-      class="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-neutral-200/10 text-muted border border-default/20"
+      class="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium bg-neutral-500 text-white"
     >
       <UIcon name="i-lucide-shield-off" class="size-3.5" />
       <span>Non autorisé</span>
@@ -56,17 +56,17 @@ const emit = defineEmits<{
 const displaySeconds = ref(props.remainingSeconds || 0);
 let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
-// Dynamic class based on urgency
+// Dynamic class based on urgency (solid variant)
 const urgencyClass = computed(() => {
   if (displaySeconds.value <= 300) {
     // Less than 5 minutes - red/urgent
-    return "bg-error-light text-error-500 border border-error-light";
+    return "bg-error-500 text-white";
   } else if (displaySeconds.value <= 1800) {
     // Less than 30 minutes - amber/warning
-    return "bg-warning-light text-warning-500 border border-warning-light";
+    return "bg-warning-500 text-white";
   } else {
     // More than 30 minutes - green/safe
-    return "bg-success-light text-success-500 border border-success-light";
+    return "bg-success-500 text-white";
   }
 });
 

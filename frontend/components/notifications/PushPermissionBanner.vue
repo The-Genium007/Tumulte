@@ -2,9 +2,9 @@
   <UAlert
     v-if="showBanner"
     color="primary"
-    variant="solid"
+    variant="soft"
     icon="i-lucide-bell"
-    class="mb-4"
+    class=""
   >
     <template #title> Activer les notifications </template>
     <template #description>
@@ -15,6 +15,7 @@
       <div class="flex gap-2">
         <UButton
           color="primary"
+          variant="solid"
           size="sm"
           :loading="loading"
           @click="handleEnable"

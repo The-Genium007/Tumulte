@@ -1,14 +1,12 @@
 <template>
   <div
-    class="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-950 via-purple-950/20 to-gray-950"
+    class="min-h-screen flex items-center justify-center bg-page px-4"
   >
     <UCard class="w-full max-w-md">
       <template #header>
         <div class="text-center space-y-3">
           <div class="flex justify-center">
-            <div class="bg-primary-light p-4 rounded-2xl">
-              <UIcon name="i-lucide-chart-bar" class="size-12 text-primary-500" />
-            </div>
+            <img src="~/assets/images/logo.png" alt="Tumulte" class="size-24" />
           </div>
           <h1 class="text-3xl font-bold text-primary">Tumulte</h1>
           <p class="text-sm text-muted">

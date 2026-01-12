@@ -54,20 +54,22 @@
         <div class="space-y-4">
           <h3 class="text-lg font-medium text-primary">Types de notifications</h3>
 
-          <div
-            v-for="pref in notificationTypes"
-            :key="pref.key"
-            class="flex items-center justify-between py-2"
-          >
-            <div>
-              <p class="font-medium text-primary">{{ pref.label }}</p>
-              <p class="text-sm text-muted">{{ pref.description }}</p>
+          <div class="grid grid-cols-2 gap-4">
+            <div
+              v-for="pref in notificationTypes"
+              :key="pref.key"
+              class="flex items-center justify-between p-3 bg-neutral-100 rounded-lg"
+            >
+              <div>
+                <p class="font-medium text-primary">{{ pref.label }}</p>
+                <p class="text-sm text-muted">{{ pref.description }}</p>
+              </div>
+              <USwitch
+                :model-value="localPreferences[pref.key]"
+                :disabled="!localPreferences.pushEnabled"
+                @update:model-value="(value: boolean) => handleUpdate(pref.key, value)"
+              />
             </div>
-            <USwitch
-              :model-value="localPreferences[pref.key]"
-              :disabled="!localPreferences.pushEnabled"
-              @update:model-value="(value: boolean) => handleUpdate(pref.key, value)"
-            />
           </div>
         </div>
 
