@@ -182,12 +182,12 @@ export class PollResultsDto {
     const percentages: Record<string, number> = {}
 
     for (const [index, votes] of Object.entries(aggregated.votesByOption || {})) {
-      const optionName = options[parseInt(index)] || `Option ${parseInt(index) + 1}`
+      const optionName = options[Number.parseInt(index)] || `Option ${Number.parseInt(index) + 1}`
       votesByOption[optionName] = votes as number
     }
 
     for (const [index, percentage] of Object.entries(aggregated.percentages || {})) {
-      const optionName = options[parseInt(index)] || `Option ${parseInt(index) + 1}`
+      const optionName = options[Number.parseInt(index)] || `Option ${Number.parseInt(index) + 1}`
       percentages[optionName] = percentage as number
     }
 

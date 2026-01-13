@@ -30,11 +30,16 @@ onMounted(async () => {
     // Récupérer l'utilisateur connecté
     await fetchMe();
 
-    // Récupérer la destination de redirection
-    const redirect = (route.query.redirect as string) || "/";
+    // Récupérer et valider la destination de redirection
+    // Sécurité: empêcher les open redirects vers des domaines externes
+    const rawRedirect = (route.query.redirect as string) || "/";
+    const safeRedirect =
+      rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+        ? rawRedirect
+        : "/";
 
     // Rediriger vers la page appropriée
-    _router.push(redirect);
+    _router.push(safeRedirect);
   } catch (error) {
     // Déclencher le support pour l'erreur de callback
     triggerSupportForError("auth_callback", error);

@@ -92,11 +92,26 @@ self.addEventListener("notificationclick", (event) => {
   // Déterminer l'URL de destination
   let url = "/";
 
+  // Fonction de validation d'URL (sécurité: empêcher navigation vers domaines externes)
+  const validateUrl = (inputUrl) => {
+    if (!inputUrl) return null;
+    try {
+      const urlObj = new URL(inputUrl, self.location.origin);
+      // Autoriser uniquement les URLs same-origin
+      if (urlObj.origin === self.location.origin) {
+        return urlObj.pathname + urlObj.search + urlObj.hash;
+      }
+    } catch {
+      // URL invalide
+    }
+    return null;
+  };
+
   // Action "accept" pour les invitations - rediriger vers les invitations
   if (event.action === "accept" && notificationType === "campaign:invitation") {
     url = "/streamer/invitations";
   } else if (data.url) {
-    url = data.url;
+    url = validateUrl(data.url) || "/";
   } else if (data.invitationId) {
     url = "/streamer/invitations";
   } else if (data.campaignId) {

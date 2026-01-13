@@ -221,7 +221,8 @@ export default defineNuxtConfig({
           content: [
             "default-src 'self'",
             // Scripts: self + inline (Vue/Nuxt needs it) + Umami analytics
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://zerocase-umami-2548df-51-83-45-107.traefik.me",
+            // Note: unsafe-eval only needed in dev for HMR, removed in production for security
+            `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === "development" ? "'unsafe-eval'" : ""} https://zerocase-umami-2548df-51-83-45-107.traefik.me`,
             // Styles: self + inline (Tailwind/Vue needs it)
             "style-src 'self' 'unsafe-inline'",
             // Images: self + data URIs + Twitch CDN for profile images
