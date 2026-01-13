@@ -98,7 +98,7 @@ class SupportReportService {
     })
 
     if (githubIssue) {
-      result.githubIssueUrl = githubIssue.html_url
+      result.githubIssueUrl = githubIssue.htmlUrl
     }
 
     // 2. Envoyer sur Discord #support-bugs

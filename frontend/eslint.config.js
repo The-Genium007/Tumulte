@@ -74,6 +74,7 @@ export default [
         useMockData: 'readonly',
         useDevice: 'readonly',
         usePwaInstall: 'readonly',
+        useLoadingScreen: 'readonly',
       }
     }
   },

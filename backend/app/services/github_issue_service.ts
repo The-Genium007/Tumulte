@@ -1,10 +1,20 @@
 import env from '#start/env'
 import logger from '@adonisjs/core/services/logger'
 
+/** Raw GitHub API response - uses snake_case as per GitHub API */
+type GitHubApiIssueResponse = {
+  id: number
+  number: number
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  html_url: string
+  title: string
+  state: string
+}
+
 type GitHubIssueResponse = {
   id: number
   number: number
-  html_url: string
+  htmlUrl: string
   title: string
   state: string
 }
@@ -67,12 +77,20 @@ class GitHubIssueService {
         return null
       }
 
-      const issue = (await response.json()) as GitHubIssueResponse
+      const apiResponse = (await response.json()) as GitHubApiIssueResponse
+
+      const issue: GitHubIssueResponse = {
+        id: apiResponse.id,
+        number: apiResponse.number,
+        htmlUrl: apiResponse.html_url,
+        title: apiResponse.title,
+        state: apiResponse.state,
+      }
 
       logger.info({
         message: 'GitHub issue created',
         issueNumber: issue.number,
-        issueUrl: issue.html_url,
+        issueUrl: issue.htmlUrl,
       })
 
       return issue

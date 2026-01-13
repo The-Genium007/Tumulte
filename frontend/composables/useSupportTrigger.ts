@@ -9,7 +9,10 @@ export const useSupportTrigger = () => {
   // Fonctions vides pour compatibilité avec le code existant
   const canAutoOpen = (): boolean => false;
 
-  const triggerSupportForError = (): boolean => {
+  const triggerSupportForError = (
+    _errorType?: string,
+    _error?: unknown,
+  ): boolean => {
     // Ne fait plus rien - Sentry gère les erreurs automatiques
     return false;
   };
