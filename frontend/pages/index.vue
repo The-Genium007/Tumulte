@@ -1,3 +1,24 @@
+<script setup lang="ts">
+import { useAuth } from "@/composables/useAuth";
+
+definePageMeta({
+  middleware: async () => {
+    const { fetchMe } = useAuth();
+
+    try {
+      // Essayer de récupérer l'utilisateur connecté
+      await fetchMe();
+
+      // Tous les utilisateurs authentifiés vont vers /streamer
+      return navigateTo("/streamer");
+    } catch {
+      // Si non authentifié, rediriger vers login
+      return navigateTo("/login");
+    }
+  },
+});
+</script>
+
 <template>
   <div class="min-h-screen flex items-center justify-center bg-secondary">
     <UIcon
@@ -6,25 +27,3 @@
     />
   </div>
 </template>
-
-<script setup lang="ts">
-import { onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { useAuth } from "@/composables/useAuth";
-
-const _router = useRouter();
-const { fetchMe } = useAuth();
-
-onMounted(async () => {
-  try {
-    // Essayer de récupérer l'utilisateur connecté
-    await fetchMe();
-
-    // Tous les utilisateurs authentifiés vont vers /streamer
-    _router.push({ name: "streamer-index" });
-  } catch {
-    // Si non authentifié, rediriger vers login
-    _router.push({ name: "login" });
-  }
-});
-</script>
