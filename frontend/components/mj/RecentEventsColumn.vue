@@ -9,7 +9,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  "view-results": [poll: PollInstance];
+  viewResults: [poll: PollInstance];
 }>();
 
 const config = useRuntimeConfig();
@@ -177,7 +177,7 @@ watch(
         v-for="poll in finishedPolls"
         :key="poll.id"
         class="flex items-center gap-3 p-3 bg-neutral-50 rounded-lg cursor-pointer hover:bg-neutral-100 transition-colors group"
-        @click="emit('view-results', poll)"
+        @click="emit('viewResults', poll)"
       >
         <!-- Icône -->
         <div

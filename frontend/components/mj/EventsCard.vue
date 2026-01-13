@@ -14,7 +14,7 @@ const props = defineProps<{
 const toast = useToast();
 const pollsStore = usePollsStore();
 const pollControlStore = usePollControlStore();
-const { pollStatus } = storeToRefs(pollControlStore);
+const { pollStatus: _pollStatus } = storeToRefs(pollControlStore);
 const { enabled: mockEnabled, loadMockData } = useMockData();
 const { subscribeToPoll } = useWebSocket();
 

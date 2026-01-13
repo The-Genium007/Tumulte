@@ -2,7 +2,9 @@ import type { LiveStatusMap } from "@/types";
 
 // Statuts live pour les membres mockés
 // Les clés correspondent aux twitchUserId des membres
+// Note: LiveStatusMap uses snake_case properties (is_live, game_name, etc.) to match Twitch API responses
 
+/* eslint-disable camelcase */
 export const mockLiveStatus: LiveStatusMap = {
   // Live_Gamer - En live avec beaucoup de viewers
   "303030303": {
@@ -40,3 +42,4 @@ export const mockLiveStatus: LiveStatusMap = {
     is_live: false,
   },
 };
+/* eslint-enable camelcase */

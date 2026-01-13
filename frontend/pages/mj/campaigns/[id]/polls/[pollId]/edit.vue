@@ -15,7 +15,7 @@ const router = useRouter();
 const toast = useToast();
 const pollsStore = usePollsStore();
 
-const campaignId = computed(() => route.params.id as string);
+const _campaignId = computed(() => route.params.id as string);
 const pollId = computed(() => route.params.pollId as string);
 
 // Loading state

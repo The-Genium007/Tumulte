@@ -262,7 +262,7 @@ const selectedCampaignStreamers = computed<StreamerDisplay[]>(() => {
     }));
 });
 
-const formatAuthTime = (seconds: number | null): string => {
+const _formatAuthTime = (seconds: number | null): string => {
   if (!seconds) return 'Non autorisé';
 
   // Si l'autorisation est > 1 an (31536000 secondes), c'est "permanent"
@@ -484,7 +484,7 @@ const handleCloseOrCancel = () => {
 };
 
 // Confirmer la fermeture de la session active
-const confirmCloseSession = () => {
+const _confirmCloseSession = () => {
   // Nettoyer la souscription WebSocket
   if (pollSubscriptionCleanup.value) {
     pollSubscriptionCleanup.value();

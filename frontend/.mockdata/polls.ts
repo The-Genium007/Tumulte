@@ -3,7 +3,7 @@
 
 import type { Poll } from "~/types/api";
 
-export interface MockPoll extends Poll {}
+export type MockPoll = Poll;
 
 // Helper pour créer des dates relatives au moment actuel
 const now = Date.now();
