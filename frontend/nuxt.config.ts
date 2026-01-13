@@ -16,7 +16,16 @@ export default defineNuxtConfig({
     "@vite-pwa/nuxt",
     "@tresjs/nuxt",
     "@nuxt/fonts",
+    "@sentry/nuxt/module",
   ],
+
+  sentry: {
+    sourceMapsUploadOptions: {
+      org: process.env.SENTRY_ORG || "",
+      project: process.env.SENTRY_PROJECT || "",
+      authToken: process.env.SENTRY_AUTH_TOKEN || "",
+    },
+  },
 
   // Force light theme only - no dark mode
   colorMode: {
@@ -47,6 +56,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || "http://localhost:3333",
+      sentryDsn: process.env.NUXT_PUBLIC_SENTRY_DSN || "",
+      sentryEnvironment: process.env.NODE_ENV || "development",
     },
   },
 

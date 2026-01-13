@@ -50,26 +50,46 @@
         >
           <div class="space-y-4">
             <header>
-              <h2 class="text-xl font-semibold">{{ modalTitle }}</h2>
+              <h2 class="text-xl font-semibold">Support & Feedback</h2>
               <p class="text-sm text-muted mt-1">
-                Envoi automatique vers les salons Discord de tickets.
+                Signalez un bug ou proposez une amélioration.
               </p>
-              <div v-if="actionTypeLabel" class="mt-2">
-                <UBadge color="warning" variant="soft" size="sm">
-                  <UIcon name="i-lucide-alert-circle" class="mr-1 size-3" />
-                  {{ actionTypeLabel }}
-                </UBadge>
-              </div>
             </header>
 
-            <div class="space-y-3">
+            <!-- Tabs -->
+            <UTabs
+              v-model="activeTab"
+              :items="tabs"
+              class="w-full"
+              :ui="{
+                trigger: 'data-[state=inactive]:bg-primary-100 data-[state=inactive]:text-primary-500',
+              }"
+            />
+
+            <!-- Bug Tab Content -->
+            <div v-if="activeTab === 'bug'" class="space-y-3">
               <div class="space-y-2">
                 <label class="text-sm font-semibold text-secondary">
-                  Décris le problème <span class="text-error-400">*</span>
+                  Titre du bug <span class="text-error-400">*</span>
+                </label>
+                <UInput
+                  v-model="bugTitle"
+                  placeholder="Ex: Impossible de lancer un sondage"
+                  class="w-full"
+                  :ui="{
+                    root: 'ring-0 border-0 rounded-lg overflow-hidden',
+                    base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+                  }"
+                />
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-secondary">
+                  Description <span class="text-error-400">*</span>
                 </label>
                 <UTextarea
-                  v-model="description"
-                  :rows="6"
+                  v-model="bugDescription"
+                  :rows="4"
                   placeholder="Ce qui s'est passé, étapes pour reproduire..."
                   class="w-full"
                   :ui="{
@@ -82,40 +102,62 @@
               <div class="space-y-1">
                 <UCheckbox
                   v-model="includeDiagnostics"
-                  label="Joindre automatiquement les logs et métadonnées"
+                  label="Joindre les données techniques (logs, session)"
                 />
                 <p class="text-xs text-muted pl-8">
-                  Logs front, erreurs JS, snapshot de store, contexte navigateur, compte connecté et traces côté backend.
+                  Aide à diagnostiquer le problème plus rapidement.
                 </p>
               </div>
 
-              <div class="rounded-2xl border border-default bg-muted p-4 space-y-3">
+              <div class="rounded-2xl border border-default bg-muted p-3 space-y-2">
                 <div class="flex items-center gap-2">
-                  <UIcon name="i-lucide-clipboard-list" class="text-brand-500 size-5" />
-                  <p class="text-sm font-semibold">Ce qui sera envoyé</p>
+                  <UIcon name="i-lucide-link" class="text-brand-500 size-4" />
+                  <p class="text-sm font-medium">Session ID pour corrélation Sentry</p>
                 </div>
-                <ul class="space-y-2 text-sm text-secondary">
-                  <li class="flex items-start gap-2">
-                    <UIcon name="i-lucide-dot" class="text-brand-500 mt-1 shrink-0" />
-                    <span>Métadonnées navigateur (URL, UA, locale, viewport, timezone) + session {{ sessionId }}</span>
-                  </li>
-                  <li class="flex items-start gap-2">
-                    <UIcon name="i-lucide-dot" class="text-brand-500 mt-1 shrink-0" />
-                    <span>Contexte utilisateur (id, rôle, email, streamer éventuel) + compte connecté : {{ userLabel }}</span>
-                  </li>
-                  <li class="flex items-start gap-2">
-                    <UIcon name="i-lucide-dot" class="text-brand-500 mt-1 shrink-0" />
-                    <span>Snapshot store (auth + contrôles de sondage) et performances récentes</span>
-                  </li>
-                  <li class="flex items-start gap-2">
-                    <UIcon name="i-lucide-dot" class="text-brand-500 mt-1 shrink-0" />
-                    <span>Derniers logs console et erreurs JS tamponnés (50/20 max)</span>
-                  </li>
-                  <li class="flex items-start gap-2">
-                    <UIcon name="i-lucide-dot" class="text-brand-500 mt-1 shrink-0" />
-                    <span>Contexte backend (IP, méthode, env, campagnes/membres liés à ton compte)</span>
-                  </li>
-                </ul>
+                <code class="text-xs text-muted block truncate">{{ sessionId }}</code>
+              </div>
+            </div>
+
+            <!-- Suggestion Tab Content -->
+            <div v-if="activeTab === 'suggestion'" class="space-y-3">
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-secondary">
+                  Titre de la suggestion <span class="text-error-400">*</span>
+                </label>
+                <UInput
+                  v-model="suggestionTitle"
+                  placeholder="Ex: Ajouter un mode sombre"
+                  class="w-full"
+                  :ui="{
+                    root: 'ring-0 border-0 rounded-lg overflow-hidden',
+                    base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+                  }"
+                />
+              </div>
+
+              <div class="space-y-2">
+                <label class="text-sm font-semibold text-secondary">
+                  Description <span class="text-error-400">*</span>
+                </label>
+                <UTextarea
+                  v-model="suggestionDescription"
+                  :rows="4"
+                  placeholder="Décris ton idée en détail..."
+                  class="w-full"
+                  :ui="{
+                    root: 'ring-0 border-0 rounded-lg overflow-hidden',
+                    base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+                  }"
+                />
+              </div>
+
+              <div class="rounded-2xl border border-default bg-muted p-3">
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-lucide-message-circle" class="text-brand-500 size-4" />
+                  <p class="text-sm text-secondary">
+                    Une discussion GitHub sera créée automatiquement.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -136,8 +178,8 @@
                   color="primary"
                   :loading="isSending"
                   :disabled="!canSend"
-                  icon="i-lucide-send"
-                  label="Envoyer"
+                  :icon="activeTab === 'bug' ? 'i-lucide-bug' : 'i-lucide-lightbulb'"
+                  :label="activeTab === 'bug' ? 'Signaler' : 'Proposer'"
                   class="flex-1 sm:flex-none"
                   @click="handleSend"
                 />
@@ -157,45 +199,52 @@ import { useAuthStore } from "@/stores/auth";
 import { useSupportReporter } from "@/composables/useSupportReporter";
 import { useSupportWidget } from "@/composables/useSupportWidget";
 import { getSupportSnapshot } from "@/utils/supportTelemetry";
-import { ACTION_TYPE_LABELS } from "@/utils/supportErrorMessages";
 
 const authStore = useAuthStore();
-const { sendSupportReport } = useSupportReporter();
-const {
-  isSupportWidgetOpen: open,
-  prefillMessage,
-  prefillActionType,
-  closeSupport,
-} = useSupportWidget();
+const { sendBugReport, sendSuggestion } = useSupportReporter();
+const { isSupportWidgetOpen: open, closeSupport } = useSupportWidget();
 const router = useRouter();
-const description = ref("");
+
+// Tabs
+const tabs = [
+  { label: "Bug", value: "bug", icon: "i-lucide-bug" },
+  { label: "Suggestion", value: "suggestion", icon: "i-lucide-lightbulb" },
+];
+const activeTab = ref<"bug" | "suggestion">("bug");
+
+// Bug form
+const bugTitle = ref("");
+const bugDescription = ref("");
 const includeDiagnostics = ref(true);
+
+// Suggestion form
+const suggestionTitle = ref("");
+const suggestionDescription = ref("");
+
+// State
 const isSending = ref(false);
 const feedback = ref<{ type: "success" | "error" | ""; message: string }>({
   type: "",
   message: "",
 });
 
-// Titre dynamique selon si c'est une erreur auto-détectée ou non
-const modalTitle = computed(() =>
-  prefillActionType.value ? "Signaler une erreur" : "Déclarer un bug"
-);
-
-// Label du badge pour le type d'erreur
-const actionTypeLabel = computed(() =>
-  prefillActionType.value ? ACTION_TYPE_LABELS[prefillActionType.value] : null
-);
-
 const sessionId = computed(() => getSupportSnapshot().sessionId || "n/a");
-const userLabel = computed(() => {
-  if (authStore.user?.displayName) return authStore.user.displayName;
-  if (authStore.user?.streamer?.twitchDisplayName) {
-    return authStore.user.streamer.twitchDisplayName;
-  }
-  return "Inconnu";
-});
 
-const canSend = computed(() => description.value.trim().length > 5 && !isSending.value);
+const canSend = computed(() => {
+  if (isSending.value) return false;
+
+  if (activeTab.value === "bug") {
+    return (
+      bugTitle.value.trim().length >= 5 &&
+      bugDescription.value.trim().length >= 10
+    );
+  } else {
+    return (
+      suggestionTitle.value.trim().length >= 5 &&
+      suggestionDescription.value.trim().length >= 10
+    );
+  }
+});
 
 onMounted(async () => {
   if (!authStore.user) {
@@ -210,20 +259,8 @@ onMounted(async () => {
 watch(
   () => router.currentRoute.value.fullPath,
   () => {
-    // Refermer si on change de page
     closeSupport();
   },
-);
-
-// Watch pour remplir la description quand un prefill arrive
-watch(
-  prefillMessage,
-  (newMessage) => {
-    if (newMessage) {
-      description.value = newMessage;
-    }
-  },
-  { immediate: true },
 );
 
 const handleSend = async () => {
@@ -233,9 +270,28 @@ const handleSend = async () => {
   feedback.value = { type: "", message: "" };
 
   try {
-    await sendSupportReport(description.value, { includeDiagnostics: includeDiagnostics.value });
-    feedback.value = { type: "success", message: "Ticket envoyé sur Discord." };
-    description.value = "";
+    if (activeTab.value === "bug") {
+      const result = await sendBugReport(bugTitle.value, bugDescription.value, {
+        includeDiagnostics: includeDiagnostics.value,
+      });
+      const message = result.githubIssueUrl
+        ? "Bug signalé et issue GitHub créée !"
+        : "Bug signalé sur Discord.";
+      feedback.value = { type: "success", message };
+      bugTitle.value = "";
+      bugDescription.value = "";
+    } else {
+      const result = await sendSuggestion(
+        suggestionTitle.value,
+        suggestionDescription.value
+      );
+      const message = result.githubDiscussionUrl
+        ? "Suggestion envoyée et discussion GitHub créée !"
+        : "Suggestion envoyée sur Discord.";
+      feedback.value = { type: "success", message };
+      suggestionTitle.value = "";
+      suggestionDescription.value = "";
+    }
     closeSupport();
   } catch (error: unknown) {
     feedback.value = {

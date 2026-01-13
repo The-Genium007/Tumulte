@@ -241,6 +241,7 @@ router
 router
   .group(() => {
     router.post('/report', [supportController, 'report'])
+    router.post('/suggestion', [supportController, 'suggestion'])
     router.get('/logs', [supportController, 'getLogs'])
   })
   .prefix('/support')
