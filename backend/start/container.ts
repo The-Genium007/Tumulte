@@ -134,12 +134,6 @@ app.container.bind('campaignMembershipRepository', async () => {
   return new mod.campaignMembershipRepository()
 })
 
-// Poll Template Repository
-app.container.bind('pollTemplateRepository', async () => {
-  const mod = await import('#repositories/poll_template_repository')
-  return new mod.pollTemplateRepository()
-})
-
 // Poll Repository
 app.container.bind('pollRepository', async () => {
   const mod = await import('#repositories/poll_repository')
@@ -224,9 +218,6 @@ declare module '@adonisjs/core/types' {
     >
     campaignMembershipRepository: InstanceType<
       typeof import('#repositories/campaign_membership_repository').CampaignMembershipRepository
-    >
-    pollTemplateRepository: InstanceType<
-      typeof import('#repositories/poll_template_repository').PollTemplateRepository
     >
     pollRepository: InstanceType<typeof import('#repositories/poll_repository').PollRepository>
     pollInstanceRepository: InstanceType<
