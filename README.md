@@ -1,8 +1,9 @@
 <p align="center">
-  <h1 align="center">Tumulte</h1>
-  <p align="center">
-    <strong>Multi-stream Twitch poll system for Tabletop RPG sessions</strong>
-  </p>
+  <img src="frontend/assets/images/logo.png" alt="Tumulte Logo" width="80" />
+</p>
+<h1 align="center">Tumulte</h1>
+<p align="center">
+  <strong>Multi-stream Twitch poll system for Tabletop RPG sessions</strong>
 </p>
 
 <p align="center">
