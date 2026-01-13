@@ -2,7 +2,8 @@
   <div class="preview-page">
     <!-- Header Card -->
     <UCard class="preview-header-card">
-      <div class="preview-header">
+      <!-- Desktop header: single row -->
+      <div class="preview-header-desktop">
         <div class="flex items-center gap-4">
           <UButton
             color="neutral"
@@ -23,14 +24,46 @@
             </UBadge>
           </div>
         </div>
-        <div class="preview-actions">
+        <div v-if="isDev" class="preview-actions">
           <UButton
-            v-if="isDev"
             color="primary"
             icon="i-lucide-pencil"
             to="/streamer/studio"
           >
             Ouvrir le Studio
+          </UButton>
+        </div>
+      </div>
+
+      <!-- Mobile header: stacked layout -->
+      <div class="preview-header-mobile">
+        <div class="mobile-top-row">
+          <UButton
+            color="neutral"
+            variant="soft"
+            size="lg"
+            square
+            class="group"
+            to="/streamer"
+          >
+            <template #leading>
+              <UIcon name="i-lucide-arrow-left" class="size-8 transition-transform duration-200 group-hover:-translate-x-1" />
+            </template>
+          </UButton>
+          <h2 class="preview-title">Prévisualisation</h2>
+        </div>
+        <div class="mobile-bottom-row">
+          <UBadge v-if="configName" color="primary" variant="soft" size="lg">
+            {{ configName }}
+          </UBadge>
+          <UButton
+            v-if="isDev"
+            color="primary"
+            icon="i-lucide-pencil"
+            size="sm"
+            to="/streamer/studio"
+          >
+            Studio
           </UButton>
         </div>
       </div>
@@ -152,26 +185,20 @@ const canvasStyle = computed(() => {
     width: `${CANVAS_WIDTH}px`,
     height: `${CANVAS_HEIGHT}px`,
     transform: `scale(${canvasScale.value})`,
-    transformOrigin: "center center",
+    transformOrigin: "top left",
   };
 });
 
-// Calculer l'échelle du canvas en fonction de l'espace disponible
+/**
+ * Calcule l'échelle du canvas en fonction de l'espace disponible.
+ * Le wrapper utilise aspect-ratio: 16/9, donc on calcule uniquement sur la largeur.
+ */
 const calculateCanvasScale = () => {
   if (!canvasWrapper.value) return;
 
   const wrapperRect = canvasWrapper.value.getBoundingClientRect();
-  // Le padding CSS (1rem) gère la marge visuelle, getBoundingClientRect inclut ce padding
-  // donc on utilise les dimensions brutes
-  const availableWidth = wrapperRect.width - 32;
-  const availableHeight = wrapperRect.height - 32;
-
-  // Calculer l'échelle pour que le canvas 1920x1080 tienne dans l'espace disponible
-  const scaleX = availableWidth / CANVAS_WIDTH;
-  const scaleY = availableHeight / CANVAS_HEIGHT;
-
-  // Utiliser la plus petite échelle pour préserver le ratio
-  canvasScale.value = Math.min(scaleX, scaleY, 1); // Max 1 pour ne pas agrandir
+  const scaleX = wrapperRect.width / CANVAS_WIDTH;
+  canvasScale.value = Math.min(scaleX, 1);
 };
 
 // Observer le redimensionnement
@@ -392,10 +419,16 @@ const handleReset = () => {
   flex-shrink: 0;
 }
 
-.preview-header {
+/* Desktop header */
+.preview-header-desktop {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+/* Mobile header - hidden by default */
+.preview-header-mobile {
+  display: none;
 }
 
 .preview-title-section {
@@ -417,33 +450,48 @@ const handleReset = () => {
   gap: 0.75rem;
 }
 
+/* Mobile header rows */
+.mobile-top-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mobile-bottom-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-neutral-200);
+}
+
 /* Content area */
 .preview-content {
   flex: 1;
   display: flex;
   gap: 0.75rem;
   min-height: 0;
-  align-items: stretch; /* Les deux cartes ont la même hauteur */
 }
 
+/* Canvas wrapper: aspect-ratio based layout for all screen sizes */
 .preview-canvas-wrapper {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem; /* Marge uniforme de 1rem */
+  position: relative;
+  aspect-ratio: 16 / 9;
   background: var(--color-bg-muted);
   border: 1px solid var(--color-neutral-200);
-  border-radius: 2rem;
+  border-radius: 1rem;
   overflow: hidden;
 }
 
 .preview-canvas {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  flex-shrink: 0;
 }
 
 /* Fond en damier style Photoshop */
@@ -519,15 +567,35 @@ const handleReset = () => {
   overflow-y: auto;
 }
 
-/* Responsive */
+/* Responsive - Mobile & Tablet */
 @media (max-width: 1024px) {
-  .preview-content {
-    flex-direction: column;
+  /* Show mobile header, hide desktop header */
+  .preview-header-desktop {
+    display: none;
   }
 
+  .preview-header-mobile {
+    display: block;
+  }
+
+  /* Switch to grid layout */
+  .preview-content {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 0.75rem;
+  }
+
+  /* Canvas wrapper: remove border on mobile */
+  .preview-canvas-wrapper {
+    border: none;
+    background: transparent;
+  }
+
+  /* Controls panel: full width, scrollable */
   .controls-panel {
     width: 100%;
-    max-height: 40vh;
+    min-height: 0;
+    overflow-y: auto;
   }
 }
 </style>
