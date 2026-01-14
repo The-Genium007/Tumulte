@@ -104,6 +104,8 @@ onUnmounted(() => {
     var(--color-overlay-bg-dark),
     var(--color-overlay-bg-dark-alt)
   );
+  /* Fallback pour Safari et navigateurs anciens */
+  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   border-radius: 24px;
   padding: 2.5rem;
