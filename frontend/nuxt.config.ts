@@ -257,6 +257,28 @@ export default defineNuxtConfig({
         // Note: X-Frame-Options and frame-ancestors must be set via HTTP headers on your reverse proxy
       ],
       link: [
+        // Preconnect Google Fonts pour optimisation
+        { rel: "preconnect", href: "https://fonts.googleapis.com" },
+        {
+          rel: "preconnect",
+          href: "https://fonts.gstatic.com",
+          crossorigin: "anonymous",
+        },
+        // Favicons - SVG moderne + PNG fallback
+        { rel: "icon", type: "image/svg+xml", href: "/pwa-icon.svg" },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "32x32",
+          href: "/favicon-32x32.png",
+        },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "16x16",
+          href: "/favicon-16x16.png",
+        },
+        // Apple Touch Icon
         { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
         // Apple splash screens pour différents appareils iOS
         {
