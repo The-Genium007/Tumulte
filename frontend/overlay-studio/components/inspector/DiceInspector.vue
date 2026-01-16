@@ -11,158 +11,28 @@
         />
       </button>
       <div v-show="expandedSections.colors" class="section-content">
-        <div class="color-field">
-          <label>Couleur de base</label>
-          <div class="color-input-wrapper">
-            <input
-              type="color"
-              :value="props.colors.baseColor"
-              @input="updateColor('baseColor', ($event.target as HTMLInputElement).value)"
-            />
-            <UInput
-              :model-value="props.colors.baseColor"
-              size="xs"
-              class="color-text"
-              :ui="inputUi"
-              @update:model-value="(v: string | number) => updateColor('baseColor', String(v))"
-            />
-          </div>
-        </div>
-        <div class="color-field">
-          <label>Couleur des numéros</label>
-          <div class="color-input-wrapper">
-            <input
-              type="color"
-              :value="props.colors.numberColor"
-              @input="updateColor('numberColor', ($event.target as HTMLInputElement).value)"
-            />
-            <UInput
-              :model-value="props.colors.numberColor"
-              size="xs"
-              class="color-text"
-              :ui="inputUi"
-              @update:model-value="(v: string | number) => updateColor('numberColor', String(v))"
-            />
-          </div>
-        </div>
-        <div class="color-field">
-          <label>Glow critique succès</label>
-          <div class="color-input-wrapper">
-            <input
-              type="color"
-              :value="props.colors.criticalSuccessGlow"
-              @input="updateColor('criticalSuccessGlow', ($event.target as HTMLInputElement).value)"
-            />
-            <UInput
-              :model-value="props.colors.criticalSuccessGlow"
-              size="xs"
-              class="color-text"
-              :ui="inputUi"
-              @update:model-value="(v: string | number) => updateColor('criticalSuccessGlow', String(v))"
-            />
-          </div>
-        </div>
-        <div class="color-field">
-          <label>Glow critique échec</label>
-          <div class="color-input-wrapper">
-            <input
-              type="color"
-              :value="props.colors.criticalFailureGlow"
-              @input="updateColor('criticalFailureGlow', ($event.target as HTMLInputElement).value)"
-            />
-            <UInput
-              :model-value="props.colors.criticalFailureGlow"
-              size="xs"
-              class="color-text"
-              :ui="inputUi"
-              @update:model-value="(v: string | number) => updateColor('criticalFailureGlow', String(v))"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Section Physique -->
-    <div class="inspector-section">
-      <button class="section-header" @click="toggleSection('physics')">
-        <UIcon name="i-lucide-atom" class="size-4" />
-        <span>Physique</span>
-        <UIcon
-          :name="expandedSections.physics ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-          class="size-4 ml-auto"
+        <ColorModule
+          :model-value="props.colors.baseColor"
+          label="Couleur de base"
+          @update:model-value="(v: string) => updateColor('baseColor', v)"
         />
-      </button>
-      <div v-show="expandedSections.physics" class="section-content">
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Gravité</label>
-            <span class="slider-value">{{ props.physics.gravity }}</span>
-          </div>
-          <URange
-            :model-value="props.physics.gravity"
-            :min="-50"
-            :max="-10"
-            :step="1"
-            size="sm"
-            @update:model-value="(v: number) => updatePhysics('gravity', v)"
-          />
-        </div>
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Rebond</label>
-            <span class="slider-value">{{ props.physics.bounciness.toFixed(2) }}</span>
-          </div>
-          <URange
-            :model-value="props.physics.bounciness"
-            :min="0"
-            :max="1"
-            :step="0.05"
-            size="sm"
-            @update:model-value="(v: number) => updatePhysics('bounciness', v)"
-          />
-        </div>
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Friction</label>
-            <span class="slider-value">{{ props.physics.friction.toFixed(2) }}</span>
-          </div>
-          <URange
-            :model-value="props.physics.friction"
-            :min="0"
-            :max="1"
-            :step="0.05"
-            size="sm"
-            @update:model-value="(v: number) => updatePhysics('friction', v)"
-          />
-        </div>
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Force de lancer</label>
-            <span class="slider-value">{{ props.physics.rollForce.toFixed(1) }}</span>
-          </div>
-          <URange
-            :model-value="props.physics.rollForce"
-            :min="0.5"
-            :max="3"
-            :step="0.1"
-            size="sm"
-            @update:model-value="(v: number) => updatePhysics('rollForce', v)"
-          />
-        </div>
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Force de rotation</label>
-            <span class="slider-value">{{ props.physics.spinForce.toFixed(1) }}</span>
-          </div>
-          <URange
-            :model-value="props.physics.spinForce"
-            :min="0.5"
-            :max="3"
-            :step="0.1"
-            size="sm"
-            @update:model-value="(v: number) => updatePhysics('spinForce', v)"
-          />
-        </div>
+        <ColorModule
+          :model-value="props.colors.numberColor"
+          label="Couleur des numéros"
+          @update:model-value="(v: string) => updateColor('numberColor', v)"
+        />
+        <ColorModule
+          :model-value="props.colors.criticalSuccessGlow"
+          label="Glow critique succès"
+          :presets="['#22c55e', '#10b981', '#34d399', '#4ade80']"
+          @update:model-value="(v: string) => updateColor('criticalSuccessGlow', v)"
+        />
+        <ColorModule
+          :model-value="props.colors.criticalFailureGlow"
+          label="Glow critique échec"
+          :presets="['#ef4444', '#dc2626', '#f87171', '#fb923c']"
+          @update:model-value="(v: string) => updateColor('criticalFailureGlow', v)"
+        />
       </div>
     </div>
 
@@ -292,63 +162,24 @@
         />
       </button>
       <div v-show="expandedSections.audio" class="section-content">
-        <div class="audio-field">
-          <div class="audio-header">
-            <UCheckbox
-              :model-value="props.audio.rollSound.enabled"
-              label="Son de lancer"
-              @update:model-value="(v: boolean | 'indeterminate') => updateAudio('rollSound', 'enabled', v === true)"
-            />
-          </div>
-          <div v-if="props.audio.rollSound.enabled" class="slider-field">
-            <URange
-              :model-value="props.audio.rollSound.volume"
-              :min="0"
-              :max="1"
-              :step="0.05"
-              size="sm"
-              @update:model-value="(v: number) => updateAudio('rollSound', 'volume', v)"
-            />
-          </div>
-        </div>
-        <div class="audio-field">
-          <div class="audio-header">
-            <UCheckbox
-              :model-value="props.audio.criticalSuccessSound.enabled"
-              label="Son critique succès"
-              @update:model-value="(v: boolean | 'indeterminate') => updateAudio('criticalSuccessSound', 'enabled', v === true)"
-            />
-          </div>
-          <div v-if="props.audio.criticalSuccessSound.enabled" class="slider-field">
-            <URange
-              :model-value="props.audio.criticalSuccessSound.volume"
-              :min="0"
-              :max="1"
-              :step="0.05"
-              size="sm"
-              @update:model-value="(v: number) => updateAudio('criticalSuccessSound', 'volume', v)"
-            />
-          </div>
-        </div>
-        <div class="audio-field">
-          <div class="audio-header">
-            <UCheckbox
-              :model-value="props.audio.criticalFailureSound.enabled"
-              label="Son critique échec"
-              @update:model-value="(v: boolean | 'indeterminate') => updateAudio('criticalFailureSound', 'enabled', v === true)"
-            />
-          </div>
-          <div v-if="props.audio.criticalFailureSound.enabled" class="slider-field">
-            <URange
-              :model-value="props.audio.criticalFailureSound.volume"
-              :min="0"
-              :max="1"
-              :step="0.05"
-              size="sm"
-              @update:model-value="(v: number) => updateAudio('criticalFailureSound', 'volume', v)"
-            />
-          </div>
-        </div>
+        <AudioModule
+          :model-value="rollSoundConfig"
+          label="Son de lancer"
+          :show-preview="false"
+          @update:model-value="(v: AudioConfig) => updateAudioFromModule('rollSound', v)"
+        />
+        <AudioModule
+          :model-value="criticalSuccessSoundConfig"
+          label="Son critique succès"
+          :show-preview="false"
+          @update:model-value="(v: AudioConfig) => updateAudioFromModule('criticalSuccessSound', v)"
+        />
+        <AudioModule
+          :model-value="criticalFailureSoundConfig"
+          label="Son critique échec"
+          :show-preview="false"
+          @update:model-value="(v: AudioConfig) => updateAudioFromModule('criticalFailureSound', v)"
+        />
       </div>
     </div>
 
@@ -363,45 +194,34 @@
         />
       </button>
       <div v-show="expandedSections.resultText" class="section-content">
-        <div class="checkbox-field">
-          <UCheckbox
+        <div class="inline-field">
+          <label>Afficher le résultat</label>
+          <USwitch
             :model-value="props.resultText.enabled"
-            label="Afficher le résultat"
-            @update:model-value="(v: boolean | 'indeterminate') => updateResultText('enabled', v === true)"
+            size="sm"
+            @update:model-value="(v: boolean) => updateResultText('enabled', v)"
           />
         </div>
         <template v-if="props.resultText.enabled">
-          <div class="slider-field">
-            <div class="slider-header">
-              <label>Taille police</label>
-              <span class="slider-value">{{ props.resultText.typography.fontSize }}px</span>
-            </div>
-            <URange
-              :model-value="props.resultText.typography.fontSize"
-              :min="12"
-              :max="72"
-              :step="1"
-              size="sm"
-              @update:model-value="(v: number) => updateResultTextTypography('fontSize', v)"
-            />
-          </div>
-          <div class="color-field">
-            <label>Couleur</label>
-            <div class="color-input-wrapper">
-              <input
-                type="color"
-                :value="props.resultText.typography.color"
-                @input="updateResultTextTypography('color', ($event.target as HTMLInputElement).value)"
-              />
-              <UInput
-                :model-value="props.resultText.typography.color"
-                size="xs"
-                class="color-text"
-                :ui="inputUi"
-                @update:model-value="(v: string | number) => updateResultTextTypography('color', String(v))"
-              />
-            </div>
-          </div>
+          <!-- Typography using TextModule -->
+          <TextModule
+            :model-value="resultTextTypographyConfig"
+            :show-font-family="true"
+            :show-font-size="true"
+            :show-font-weight="true"
+            :show-text-align="false"
+            :font-size-min="12"
+            :font-size-max="72"
+            @update:model-value="updateResultTextFromModule"
+          />
+          <!-- Color using ColorModule -->
+          <ColorModule
+            :model-value="props.resultText.typography.color"
+            label="Couleur du texte"
+            :presets="['#ffffff', '#ffff00', '#00ff00', '#ff0000']"
+            @update:model-value="(v: string) => updateResultTextTypography('color', v)"
+          />
+          <!-- Offset Y -->
           <div class="slider-field">
             <div class="slider-header">
               <label>Décalage Y</label>
@@ -416,6 +236,7 @@
               @update:model-value="(v: number) => updateResultText('offsetY', v)"
             />
           </div>
+          <!-- Display Duration -->
           <div class="slider-field">
             <div class="slider-header">
               <label>Durée affichage</label>
@@ -431,48 +252,6 @@
             />
           </div>
         </template>
-      </div>
-    </div>
-
-    <!-- Section Layout -->
-    <div class="inspector-section">
-      <button class="section-header" @click="toggleSection('layout')">
-        <UIcon name="i-lucide-layout-grid" class="size-4" />
-        <span>Disposition</span>
-        <UIcon
-          :name="expandedSections.layout ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-          class="size-4 ml-auto"
-        />
-      </button>
-      <div v-show="expandedSections.layout" class="section-content">
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Dés maximum</label>
-            <span class="slider-value">{{ props.layout.maxDice }}</span>
-          </div>
-          <URange
-            :model-value="props.layout.maxDice"
-            :min="1"
-            :max="10"
-            :step="1"
-            size="sm"
-            @update:model-value="(v: number) => updateLayout('maxDice', v)"
-          />
-        </div>
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Taille des dés</label>
-            <span class="slider-value">{{ props.layout.diceSize }}px</span>
-          </div>
-          <URange
-            :model-value="props.layout.diceSize"
-            :min="40"
-            :max="120"
-            :step="5"
-            size="sm"
-            @update:model-value="(v: number) => updateLayout('diceSize', v)"
-          />
-        </div>
       </div>
     </div>
 
@@ -507,7 +286,7 @@
           <URange
             v-model="previewDiceCount"
             :min="1"
-            :max="props.layout.maxDice"
+            :max="10"
             :step="1"
             size="sm"
           />
@@ -571,9 +350,15 @@
 
 <script setup lang="ts">
 import { reactive, computed } from "vue";
+import {
+  ColorModule,
+  AudioModule,
+  TextModule,
+  type AudioConfig,
+  type TextStyleConfig,
+} from "./modules";
 import type {
   DiceColorConfig,
-  DicePhysicsConfig,
   DiceAnimationsConfig,
   DiceAudioConfig,
   DiceResultTextConfig,
@@ -583,39 +368,27 @@ import type {
 
 const props = defineProps<{
   colors: DiceColorConfig;
-  physics: DicePhysicsConfig;
   animations: DiceAnimationsConfig;
   audio: DiceAudioConfig;
   resultText: DiceResultTextConfig;
-  layout: { maxDice: number; diceSize: number };
   mockData: DiceMockData;
 }>();
 
 const emit = defineEmits<{
   updateColors: [colors: Partial<DiceColorConfig>];
-  updatePhysics: [physics: Partial<DicePhysicsConfig>];
   updateAnimations: [animations: Partial<DiceAnimationsConfig>];
   updateAudio: [audio: Partial<DiceAudioConfig>];
   updateResultText: [resultText: Partial<DiceResultTextConfig>];
-  updateLayout: [layout: Partial<{ maxDice: number; diceSize: number }>];
   updateMockData: [mockData: Partial<DiceMockData>];
   playPreview: [];
 }>();
 
-// UI config for inputs
-const inputUi = {
-  root: "ring-0 border-0 rounded-lg overflow-hidden",
-  base: "px-2 py-1.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg text-xs",
-};
-
 // Sections collapsed/expanded state
 const expandedSections = reactive({
   colors: true,
-  physics: false,
   animations: false,
   audio: false,
   resultText: false,
-  layout: false,
   preview: true,
 });
 
@@ -703,6 +476,51 @@ const currentTotalResult = computed(() => {
   return props.mockData.diceValues.reduce((sum, val) => sum + val, 0);
 });
 
+// ===== Audio Module Adapters =====
+// Convert DiceAudioConfig (enabled, volume) to AudioConfig format for AudioModule
+const rollSoundConfig = computed<AudioConfig>(() => ({
+  enabled: props.audio.rollSound.enabled,
+  volume: props.audio.rollSound.volume,
+}));
+
+const criticalSuccessSoundConfig = computed<AudioConfig>(() => ({
+  enabled: props.audio.criticalSuccessSound.enabled,
+  volume: props.audio.criticalSuccessSound.volume,
+}));
+
+const criticalFailureSoundConfig = computed<AudioConfig>(() => ({
+  enabled: props.audio.criticalFailureSound.enabled,
+  volume: props.audio.criticalFailureSound.volume,
+}));
+
+const updateAudioFromModule = (
+  soundKey: keyof DiceAudioConfig,
+  config: AudioConfig,
+) => {
+  emit("updateAudio", {
+    [soundKey]: { enabled: config.enabled, volume: config.volume },
+  });
+};
+
+// ===== Result Text Typography Adapter =====
+// Convert TypographySettings to TextStyleConfig for TextModule
+const resultTextTypographyConfig = computed<TextStyleConfig>(() => ({
+  fontFamily: props.resultText.typography.fontFamily,
+  fontSize: props.resultText.typography.fontSize,
+  fontWeight: props.resultText.typography.fontWeight,
+}));
+
+const updateResultTextFromModule = (config: TextStyleConfig) => {
+  emit("updateResultText", {
+    typography: {
+      ...props.resultText.typography,
+      ...(config.fontFamily !== undefined && { fontFamily: config.fontFamily }),
+      ...(config.fontSize !== undefined && { fontSize: config.fontSize }),
+      ...(config.fontWeight !== undefined && { fontWeight: config.fontWeight }),
+    },
+  });
+};
+
 // Fonctions utilitaires
 function getDiceMaxValue(diceType: DiceType): number {
   const option = diceTypeOptions.find((opt) => opt.value === diceType);
@@ -763,10 +581,6 @@ const updateColor = (key: keyof DiceColorConfig, value: string) => {
   emit("updateColors", { [key]: value });
 };
 
-const updatePhysics = (key: keyof DicePhysicsConfig, value: number) => {
-  emit("updatePhysics", { [key]: value });
-};
-
 const updateAnimationEntry = (key: string, value: string | number) => {
   emit("updateAnimations", {
     entry: { ...props.animations.entry, [key]: value },
@@ -785,16 +599,6 @@ const updateAnimationResult = (key: string, value: number) => {
   });
 };
 
-const updateAudio = (
-  soundKey: keyof DiceAudioConfig,
-  property: string,
-  value: boolean | number,
-) => {
-  emit("updateAudio", {
-    [soundKey]: { ...props.audio[soundKey], [property]: value },
-  });
-};
-
 const updateResultText = (key: string, value: boolean | number) => {
   emit("updateResultText", { [key]: value });
 };
@@ -803,10 +607,6 @@ const updateResultTextTypography = (key: string, value: string | number) => {
   emit("updateResultText", {
     typography: { ...props.resultText.typography, [key]: value },
   });
-};
-
-const updateLayout = (key: string, value: number) => {
-  emit("updateLayout", { [key]: value });
 };
 </script>
 
@@ -845,38 +645,6 @@ const updateLayout = (key: string, value: number) => {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-}
-
-/* Color fields */
-.color-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.color-field label {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.color-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.color-input-wrapper input[type="color"] {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid var(--color-neutral-300);
-  border-radius: 6px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.color-text {
-  flex: 1;
 }
 
 /* Slider fields */
@@ -933,24 +701,6 @@ const updateLayout = (key: string, value: number) => {
 .inline-field label {
   font-size: 0.75rem;
   color: var(--color-text-muted);
-}
-
-/* Audio fields */
-.audio-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.audio-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* Checkbox fields */
-.checkbox-field {
-  padding: 0.25rem 0;
 }
 
 /* Generic field */
