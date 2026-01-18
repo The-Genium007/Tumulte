@@ -229,6 +229,12 @@ export default class VttWebSocketService {
         criticalType: data.criticalType,
         diceResults: data.diceResults,
         metadata: data.metadata,
+        // Enriched flavor data
+        skill: data.skill,
+        skillRaw: data.skillRaw,
+        ability: data.ability,
+        abilityRaw: data.abilityRaw,
+        modifiers: data.modifiers,
       })
 
       // Get the VTT connection
@@ -249,6 +255,12 @@ export default class VttWebSocketService {
         isHidden: data.isHidden || false,
         rollType: data.rollType,
         metadata: data.metadata,
+        // Enriched flavor data from FlavorParser
+        skill: data.skill,
+        skillRaw: data.skillRaw,
+        ability: data.ability,
+        abilityRaw: data.abilityRaw,
+        modifiers: data.modifiers,
       })
 
       socket.emit('dice:roll:ack', { success: true, rollId: diceRoll.id })

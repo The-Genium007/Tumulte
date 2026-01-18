@@ -41,6 +41,22 @@ export default class DiceRoll extends BaseModel {
   @column()
   declare vttData: object | null
 
+  // Enriched flavor data from FlavorParser
+  @column()
+  declare skill: string | null
+
+  @column()
+  declare skillRaw: string | null
+
+  @column()
+  declare ability: string | null
+
+  @column()
+  declare abilityRaw: string | null
+
+  @column()
+  declare modifiers: string[] | null
+
   @column.dateTime({ autoCreate: true })
   declare rolledAt: DateTime
 

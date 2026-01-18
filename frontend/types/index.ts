@@ -310,4 +310,10 @@ export interface DiceRollEvent {
   rollType: string | null;
   rolledAt: string;
   isOwnCharacter?: boolean;
+  // Enriched flavor data from FlavorParser
+  skill: string | null; // Normalized skill key (e.g., "perception")
+  skillRaw: string | null; // Raw skill name for display (e.g., "Perception")
+  ability: string | null; // Normalized ability key (e.g., "dexterity")
+  abilityRaw: string | null; // Raw ability name for display (e.g., "Dextérité")
+  modifiers: string[] | null; // Detected modifiers (e.g., ["+2", "-1"])
 }

@@ -59,8 +59,27 @@
           </span>
         </div>
 
-        <!-- Roll Type (if available) -->
-        <div v-if="diceRoll?.rollType" class="roll-type">
+        <!-- Skill & Ability Info (if available from FlavorParser) -->
+        <div v-if="diceRoll?.skillRaw || diceRoll?.abilityRaw" class="skill-info">
+          <span v-if="diceRoll?.skillRaw" class="skill-name">{{ diceRoll.skillRaw }}</span>
+          <span v-if="diceRoll?.skillRaw && diceRoll?.abilityRaw" class="skill-separator">•</span>
+          <span v-if="diceRoll?.abilityRaw" class="ability-name">({{ diceRoll.abilityRaw }})</span>
+        </div>
+
+        <!-- Modifiers (if available) -->
+        <div v-if="diceRoll?.modifiers && diceRoll.modifiers.length > 0" class="modifiers">
+          <span
+            v-for="(mod, index) in diceRoll.modifiers"
+            :key="index"
+            class="modifier"
+            :class="{ 'modifier-positive': mod.startsWith('+'), 'modifier-negative': mod.startsWith('-') }"
+          >
+            {{ mod }}
+          </span>
+        </div>
+
+        <!-- Roll Type (if available, fallback when no skill/ability) -->
+        <div v-if="diceRoll?.rollType && !diceRoll?.skillRaw" class="roll-type">
           {{ formatRollType(diceRoll.rollType) }}
         </div>
       </div>
@@ -311,6 +330,64 @@ defineExpose({
   font-weight: 600;
   color: rgb(203, 213, 225);
   font-family: 'Courier New', monospace;
+}
+
+/* Skill & Ability Info */
+.skill-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+}
+
+.skill-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgb(147, 197, 253);
+  text-transform: capitalize;
+}
+
+.skill-separator {
+  color: rgba(148, 163, 184, 0.5);
+  font-size: 12px;
+}
+
+.ability-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgb(148, 163, 184);
+}
+
+/* Modifiers */
+.modifiers {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.modifier {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+}
+
+.modifier-positive {
+  background: rgba(34, 197, 94, 0.2);
+  color: rgb(74, 222, 128);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.modifier-negative {
+  background: rgba(239, 68, 68, 0.2);
+  color: rgb(252, 165, 165);
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 /* Roll Type */

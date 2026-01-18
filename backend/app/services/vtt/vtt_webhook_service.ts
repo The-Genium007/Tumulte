@@ -19,6 +19,12 @@ interface DiceRollPayload {
   isHidden?: boolean
   rollType?: string | null
   metadata?: Record<string, unknown>
+  // Enriched flavor data from FlavorParser
+  skill?: string | null
+  skillRaw?: string | null
+  ability?: string | null
+  abilityRaw?: string | null
+  modifiers?: string[] | null
 }
 
 export default class VttWebhookService {
@@ -62,6 +68,12 @@ export default class VttWebhookService {
       isHidden: payload.isHidden || false,
       rollType: payload.rollType || null,
       vttData: payload.metadata || null,
+      // Enriched flavor data from FlavorParser
+      skill: payload.skill || null,
+      skillRaw: payload.skillRaw || null,
+      ability: payload.ability || null,
+      abilityRaw: payload.abilityRaw || null,
+      modifiers: payload.modifiers || null,
     })
 
     return diceRoll

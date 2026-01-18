@@ -332,6 +332,12 @@ const handleRollDice = () => {
     isCritical: isCriticalSuccess || isCriticalFailure,
     criticalType: isCriticalSuccess ? "success" : isCriticalFailure ? "failure" : null,
     isHidden: false,
+    // Enriched flavor data (preview mode - no real parsing)
+    skill: null,
+    skillRaw: null,
+    ability: null,
+    abilityRaw: null,
+    modifiers: null,
   };
 
   emit("rollDice", diceRollEvent);

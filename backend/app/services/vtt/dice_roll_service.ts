@@ -16,6 +16,12 @@ interface CreateDiceRollData {
   isHidden: boolean
   rollType: string | null
   vttData: object | null
+  // Enriched flavor data
+  skill: string | null
+  skillRaw: string | null
+  ability: string | null
+  abilityRaw: string | null
+  modifiers: string[] | null
 }
 
 export default class DiceRollService {
@@ -36,6 +42,12 @@ export default class DiceRollService {
       isHidden: data.isHidden,
       rollType: data.rollType,
       vttData: data.vttData,
+      // Enriched flavor data
+      skill: data.skill,
+      skillRaw: data.skillRaw,
+      ability: data.ability,
+      abilityRaw: data.abilityRaw,
+      modifiers: data.modifiers,
     })
 
     // 2. Charger les relations nécessaires
@@ -71,6 +83,12 @@ export default class DiceRollService {
       isHidden: diceRoll.isHidden,
       rollType: diceRoll.rollType,
       rolledAt: diceRoll.rolledAt.toISO(),
+      // Enriched flavor data
+      skill: diceRoll.skill,
+      skillRaw: diceRoll.skillRaw,
+      ability: diceRoll.ability,
+      abilityRaw: diceRoll.abilityRaw,
+      modifiers: diceRoll.modifiers,
     }
 
     // 1. Event global vers le channel de campagne (pour le GM)
