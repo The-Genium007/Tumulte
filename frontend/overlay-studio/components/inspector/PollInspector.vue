@@ -216,6 +216,27 @@
             @update:model-value="(v: boolean | 'indeterminate') => updateProgressBar('showTimeText', v === true)"
           />
         </div>
+
+        <!-- Options de style du texte du temps (conditionnelles) -->
+        <template v-if="props.progressBar.showTimeText">
+          <div class="field-group">
+            <label class="group-label">Style du texte</label>
+            <TextModule
+              :model-value="timeTextStyle"
+              :show-font-family="true"
+              :show-font-weight="true"
+              :show-text-align="false"
+              :font-size-min="10"
+              :font-size-max="48"
+              @update:model-value="handleTimeTextStyleUpdate"
+            />
+            <ColorModule
+              :model-value="props.progressBar.timeTextStyle.color"
+              label="Couleur"
+              @update:model-value="(v: string) => updateTimeTextStyle('color', v)"
+            />
+          </div>
+        </template>
       </div>
     </div>
 
@@ -518,6 +539,12 @@ const percentageTextStyle = computed<TextStyleConfig>(() => ({
   fontWeight: props.optionPercentageStyle.fontWeight,
 }));
 
+const timeTextStyle = computed<TextStyleConfig>(() => ({
+  fontFamily: props.progressBar.timeTextStyle.fontFamily,
+  fontSize: props.progressBar.timeTextStyle.fontSize,
+  fontWeight: props.progressBar.timeTextStyle.fontWeight,
+}));
+
 // Conversions pour BorderModule
 const borderModuleValue = computed<BorderConfig>(() => ({
   width: props.optionBoxStyle.borderWidth,
@@ -622,6 +649,24 @@ const updateMedalColor = (key: keyof MedalColors, value: string) => {
 
 const updateProgressBar = (key: keyof ProgressBarConfig, value: string | number | boolean) => {
   emit("updateProgressBar", { [key]: value });
+};
+
+const handleTimeTextStyleUpdate = (value: TextStyleConfig) => {
+  const updatedTimeTextStyle: TypographySettings = {
+    ...props.progressBar.timeTextStyle,
+    fontFamily: value.fontFamily || props.progressBar.timeTextStyle.fontFamily,
+    fontSize: value.fontSize || props.progressBar.timeTextStyle.fontSize,
+    fontWeight: value.fontWeight || props.progressBar.timeTextStyle.fontWeight,
+  };
+  emit("updateProgressBar", { timeTextStyle: updatedTimeTextStyle });
+};
+
+const updateTimeTextStyle = (key: keyof TypographySettings, value: string | number) => {
+  const updatedTimeTextStyle: TypographySettings = {
+    ...props.progressBar.timeTextStyle,
+    [key]: value,
+  };
+  emit("updateProgressBar", { timeTextStyle: updatedTimeTextStyle });
 };
 
 const handleAnimationUpdate = (value: AnimationConfig) => {
