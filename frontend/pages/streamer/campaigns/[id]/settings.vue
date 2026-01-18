@@ -86,6 +86,17 @@ const handleConfirmChange = async (characterId: string) => {
     updateLoading.value = false;
   }
 };
+
+// Track if avatar failed to load
+const avatarFailed = ref(false);
+
+const handleAvatarError = () => {
+  avatarFailed.value = true;
+};
+
+const showAvatarFallback = computed(() => {
+  return !settings.value?.assignedCharacter?.avatarUrl || avatarFailed.value;
+});
 </script>
 
 <template>
@@ -135,12 +146,7 @@ const handleConfirmChange = async (characterId: string) => {
         <!-- Section : Mon Personnage -->
         <UCard>
           <template #header>
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-primary-50 rounded-lg">
-                <UIcon name="i-lucide-user-circle" class="size-5 text-primary-500" />
-              </div>
-              <h2 class="text-xl font-semibold text-primary">Mon personnage</h2>
-            </div>
+            <h2 class="text-xl font-semibold text-primary">Mon personnage</h2>
           </template>
 
           <!-- Personnage assigné -->
@@ -149,10 +155,11 @@ const handleConfirmChange = async (characterId: string) => {
               <!-- Avatar -->
               <div class="shrink-0">
                 <img
-                  v-if="settings.assignedCharacter.avatarUrl"
-                  :src="settings.assignedCharacter.avatarUrl"
+                  v-if="!showAvatarFallback"
+                  :src="settings.assignedCharacter.avatarUrl!"
                   :alt="settings.assignedCharacter.name"
                   class="size-16 rounded-full object-cover"
+                  @error="handleAvatarError"
                 />
                 <div
                   v-else

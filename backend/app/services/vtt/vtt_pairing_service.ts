@@ -1,44 +1,9 @@
 import { inject } from '@adonisjs/core'
 import jwt from 'jsonwebtoken'
 import { randomBytes } from 'node:crypto'
-import { DateTime } from 'luxon'
 import VttConnection from '#models/vtt_connection'
-import VttProvider from '#models/vtt_provider'
 import TokenRevocationList from '#models/token_revocation_list'
-import encryption from '@adonisjs/core/services/encryption'
 import env from '#start/env'
-
-/* eslint-disable @typescript-eslint/naming-convention -- JWT standard claims use snake_case */
-export interface PairingClaims {
-  sub: string // 'vtt:foundry' | 'vtt:roll20' | 'vtt:alchemy'
-  aud: string // 'tumulte:api'
-  iss: string // 'foundry-module:tumulte'
-  pairing_code: string
-  world_id: string
-  world_name: string
-  gm_user_id: string
-  module_version: string
-  iat: number
-  exp: number
-  nonce: string
-  jti: string
-}
-/* eslint-enable @typescript-eslint/naming-convention */
-
-export interface PairingUrlParts {
-  token: string
-  state: string
-}
-
-export interface ConnectionTestResult {
-  reachable: boolean
-  worldInfo?: {
-    id: string
-    name: string
-    version: string
-  }
-  error?: string
-}
 
 export interface SessionTokens {
   sessionToken: string
@@ -54,183 +19,6 @@ export default class VttPairingService {
 
   constructor() {
     this.jwtSecret = env.get('APP_KEY')
-  }
-
-  /**
-   * Parse pairing URL from Foundry VTT module
-   * Format: foundry://connect?token=<JWT>&state=<CSRF>
-   */
-  parsePairingUrl(url: string): PairingUrlParts {
-    try {
-      const parsedUrl = new URL(url)
-
-      if (parsedUrl.protocol !== 'foundry:') {
-        throw new Error('Invalid protocol. Expected foundry://')
-      }
-
-      const token = parsedUrl.searchParams.get('token')
-      const state = parsedUrl.searchParams.get('state')
-
-      if (!token || !state) {
-        throw new Error('Missing token or state parameter')
-      }
-
-      return { token, state }
-    } catch (error) {
-      throw new Error(`Invalid pairing URL: ${error.message}`)
-    }
-  }
-
-  /**
-   * Validate JWT pairing token from VTT module
-   */
-  async validatePairingToken(token: string): Promise<PairingClaims> {
-    try {
-      // Verify JWT signature and decode
-      const decoded = jwt.verify(token, this.jwtSecret, {
-        algorithms: ['HS256'],
-        audience: 'tumulte:api',
-      }) as PairingClaims
-
-      // Validate required claims
-      if (!decoded.pairing_code || !decoded.world_id || !decoded.world_name) {
-        throw new Error('Missing required claims in pairing token')
-      }
-
-      // Check if token is already revoked
-      const isRevoked = await TokenRevocationList.isRevoked(decoded.jti)
-      if (isRevoked) {
-        throw new Error('Pairing token has been revoked')
-      }
-
-      // Validate token expiry
-      const now = Math.floor(Date.now() / 1000)
-      if (decoded.exp < now) {
-        throw new Error('Pairing token has expired')
-      }
-
-      return decoded
-    } catch (error) {
-      if (error instanceof jwt.JsonWebTokenError) {
-        throw new Error(`Invalid JWT: ${error.message}`)
-      }
-      throw error
-    }
-  }
-
-  /**
-   * Test connection to VTT before establishing tunnel
-   * Uses MOCK DATA for now
-   */
-  async testConnection(claims: PairingClaims): Promise<ConnectionTestResult> {
-    // MOCK IMPLEMENTATION - Real implementation will ping the VTT
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    // Simulate successful test
-    return {
-      reachable: true,
-      worldInfo: {
-        id: claims.world_id,
-        name: claims.world_name,
-        version: claims.module_version,
-      },
-    }
-
-    /* REAL IMPLEMENTATION (commented for now)
-    try {
-      // Ping the VTT's webhook endpoint
-      const response = await fetch(claims.webhook_url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${claims.pairing_code}`,
-        },
-        body: JSON.stringify({ action: 'ping' }),
-        signal: AbortSignal.timeout(5000),
-      })
-
-      if (!response.ok) {
-        return {
-          reachable: false,
-          error: `HTTP ${response.status}: ${response.statusText}`,
-        }
-      }
-
-      const data = await response.json()
-      return {
-        reachable: true,
-        worldInfo: {
-          id: data.world_id,
-          name: data.world_name,
-          version: data.module_version,
-        },
-      }
-    } catch (error) {
-      return {
-        reachable: false,
-        error: error.message,
-      }
-    }
-    */
-  }
-
-  /**
-   * Complete pairing and create VTT connection with secure tunnel
-   */
-  async completePairing(
-    claims: PairingClaims,
-    userId: string
-  ): Promise<{ connection: VttConnection; tokens: SessionTokens }> {
-    // 1. Verify VTT provider exists
-    const providerName = claims.sub.replace('vtt:', '')
-    const provider = await VttProvider.query().where('name', providerName).firstOrFail()
-
-    // 2. Check if connection already exists for this world
-    const existingConnection = await VttConnection.query()
-      .where('user_id', userId)
-      .where('world_id', claims.world_id)
-      .first()
-
-    if (existingConnection) {
-      throw new Error('Connection already exists for this VTT world')
-    }
-
-    // 3. Generate secure credentials
-    const apiKey = 'ta_' + randomBytes(32).toString('hex')
-    const connectionName = `Foundry - ${claims.world_name}`
-
-    // 4. Encrypt sensitive credentials before storage
-    const sensitiveData = {
-      pairingCode: claims.pairing_code,
-      worldId: claims.world_id,
-      gmUserId: claims.gm_user_id,
-    }
-    const encryptedCredentials = encryption.encrypt(JSON.stringify(sensitiveData))
-
-    // 5. Create connection with initial tokenVersion
-    const connection = await VttConnection.create({
-      userId,
-      vttProviderId: provider.id,
-      name: connectionName,
-      apiKey,
-      webhookUrl: '', // Will be set by VTT module after handshake
-      status: 'active',
-      worldId: claims.world_id,
-      worldName: claims.world_name,
-      pairingCode: claims.pairing_code, // Keep unencrypted for lookup
-      encryptedCredentials,
-      tunnelStatus: 'connecting',
-      moduleVersion: claims.module_version,
-      lastHeartbeatAt: DateTime.now(),
-      tokenVersion: 1,
-    })
-
-    await connection.load('provider')
-
-    // 5. Generate session and refresh tokens (include tokenVersion for validation)
-    const tokens = await this.generateSessionTokens(connection.id, userId, connection.tokenVersion)
-
-    return { connection, tokens }
   }
 
   /**
@@ -350,7 +138,12 @@ export default class VttPairingService {
    * Increments tokenVersion to instantly invalidate all existing tokens
    */
   async revokeConnectionTokens(connectionId: string, _reason: string): Promise<void> {
-    const connection = await VttConnection.findOrFail(connectionId)
+    const connection = await VttConnection.find(connectionId)
+
+    // Connection may already be deleted - that's fine, nothing to revoke
+    if (!connection) {
+      return
+    }
 
     // Increment tokenVersion to invalidate all existing tokens instantly
     // This is more efficient than adding all tokens to revocation list

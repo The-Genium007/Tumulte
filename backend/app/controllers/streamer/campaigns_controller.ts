@@ -7,6 +7,7 @@ import { CampaignDto } from '#dtos/campaigns/campaign_dto'
 import { CampaignInvitationDto } from '#dtos/campaigns/campaign_invitation_dto'
 import { CharacterDto } from '#dtos/characters/character_dto'
 import { campaignMembership as CampaignMembership } from '#models/campaign_membership'
+import { campaign as Campaign } from '#models/campaign'
 import CharacterAssignment from '#models/character_assignment'
 import Character from '#models/character'
 import { pollInstance as PollInstance } from '#models/poll_instance'
@@ -95,20 +96,56 @@ export default class CampaignsController {
   }
 
   /**
-   * Liste les campagnes actives du streamer
+   * Liste les campagnes actives du streamer (membre OU propriétaire)
    * GET /api/v2/streamer/campaigns
    */
   async index({ auth, response }: HttpContext) {
-    const streamer = await this.streamerRepository.findByUserId(auth.user!.id)
+    const user = auth.user!
+    const streamer = await this.streamerRepository.findByUserId(user.id)
 
     if (!streamer) {
       return response.notFound({ error: 'Streamer profile not found' })
     }
 
+    // Récupérer les campagnes où l'utilisateur est membre actif
     const memberships = await this.membershipService.listActiveCampaigns(streamer.id)
+    const memberCampaigns = memberships.map((m) => ({
+      ...CampaignDto.fromModel(m.campaign),
+      isOwner: false,
+    }))
+
+    // Récupérer les campagnes où l'utilisateur est propriétaire
+    const ownedCampaigns = await Campaign.query()
+      .where('ownerId', user.id)
+      .orderBy('created_at', 'desc')
+
+    const ownerCampaigns = ownedCampaigns.map((c) => ({
+      ...CampaignDto.fromModel(c),
+      isOwner: true,
+    }))
+
+    // Fusionner et dédupliquer (un MJ pourrait théoriquement être aussi membre)
+    const allCampaignIds = new Set<string>()
+    const allCampaigns = []
+
+    // Ajouter d'abord les campagnes possédées (priorité)
+    for (const campaign of ownerCampaigns) {
+      if (!allCampaignIds.has(campaign.id)) {
+        allCampaignIds.add(campaign.id)
+        allCampaigns.push(campaign)
+      }
+    }
+
+    // Ajouter les campagnes où on est membre
+    for (const campaign of memberCampaigns) {
+      if (!allCampaignIds.has(campaign.id)) {
+        allCampaignIds.add(campaign.id)
+        allCampaigns.push(campaign)
+      }
+    }
 
     return response.ok({
-      data: memberships.map((m) => CampaignDto.fromModel(m.campaign)),
+      data: allCampaigns,
     })
   }
 
@@ -156,17 +193,18 @@ export default class CampaignsController {
   }
 
   /**
-   * Récupère les paramètres de campagne pour le streamer
+   * Récupère les paramètres de campagne pour le streamer ou le MJ (propriétaire)
    * GET /api/v2/streamer/campaigns/:campaignId/settings
    */
   async getSettings({ auth, params, response }: HttpContext) {
-    const streamer = await this.streamerRepository.findByUserId(auth.user!.id)
+    const user = auth.user!
+    const streamer = await this.streamerRepository.findByUserId(user.id)
 
     if (!streamer) {
       return response.notFound({ error: 'Streamer profile not found' })
     }
 
-    // Vérifier que le streamer est membre actif de la campagne
+    // Vérifier que le streamer est membre actif OU propriétaire de la campagne
     const membership = await CampaignMembership.query()
       .where('campaignId', params.campaignId)
       .where('streamerId', streamer.id)
@@ -174,9 +212,17 @@ export default class CampaignsController {
       .preload('campaign')
       .first()
 
-    if (!membership) {
+    const ownedCampaign = await Campaign.query()
+      .where('id', params.campaignId)
+      .where('ownerId', user.id)
+      .first()
+
+    if (!membership && !ownedCampaign) {
       return response.notFound({ error: 'Campaign not found or not a member' })
     }
+
+    // Utiliser la campagne du membership ou celle possédée
+    const campaign = membership?.campaign || ownedCampaign!
 
     // Récupérer l'assignation de personnage actuelle
     const assignment = await CharacterAssignment.query()
@@ -192,32 +238,39 @@ export default class CampaignsController {
       .first()
 
     return response.ok({
-      campaign: CampaignDto.fromModel(membership.campaign),
+      campaign: CampaignDto.fromModel(campaign),
       assignedCharacter: assignment ? CharacterDto.fromModel(assignment.character) : null,
       canChangeCharacter: !activePoll,
+      isOwner: !!ownedCampaign,
     })
   }
 
   /**
-   * Modifie le personnage assigné au streamer pour une campagne
+   * Modifie le personnage assigné au streamer ou MJ pour une campagne
    * PUT /api/v2/streamer/campaigns/:campaignId/character
    * Body: { characterId: string }
    */
   async updateCharacter({ auth, params, request, response }: HttpContext) {
-    const streamer = await this.streamerRepository.findByUserId(auth.user!.id)
+    const user = auth.user!
+    const streamer = await this.streamerRepository.findByUserId(user.id)
 
     if (!streamer) {
       return response.notFound({ error: 'Streamer profile not found' })
     }
 
-    // Vérifier que le streamer est membre actif de la campagne
+    // Vérifier que le streamer est membre actif OU propriétaire de la campagne
     const membership = await CampaignMembership.query()
       .where('campaignId', params.campaignId)
       .where('streamerId', streamer.id)
       .where('status', 'ACTIVE')
       .first()
 
-    if (!membership) {
+    const ownedCampaign = await Campaign.query()
+      .where('id', params.campaignId)
+      .where('ownerId', user.id)
+      .first()
+
+    if (!membership && !ownedCampaign) {
       return response.notFound({ error: 'Campaign not found or not a member' })
     }
 

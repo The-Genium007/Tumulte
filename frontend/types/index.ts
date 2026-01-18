@@ -26,6 +26,7 @@ export interface Campaign {
   ownerName?: string;
   joinedAt?: string;
   createdAt: string;
+  isOwner?: boolean;
 }
 
 export interface CampaignMembership {

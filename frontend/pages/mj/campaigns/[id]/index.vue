@@ -33,17 +33,32 @@
               </div>
             </div>
 
-            <!-- Bouton supprimer à droite -->
-            <UButton
-              icon="i-lucide-trash-2"
-              color="error"
-              variant="solid"
-              class="w-full sm:w-auto"
-              @click="handleDeleteCampaign"
-            >
-              <span class="sm:hidden">Supprimer la campagne</span>
-              <span class="hidden sm:inline">Supprimer</span>
-            </UButton>
+            <!-- Boutons d'action -->
+            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <!-- Bouton Mon personnage -->
+              <UButton
+                icon="i-lucide-user-circle"
+                color="primary"
+                variant="soft"
+                class="w-full sm:w-auto"
+                :to="`/streamer/campaigns/${campaignId}/settings`"
+              >
+                <span class="sm:hidden">Mon personnage</span>
+                <span class="hidden sm:inline">Mon personnage</span>
+              </UButton>
+
+              <!-- Bouton supprimer -->
+              <UButton
+                icon="i-lucide-trash-2"
+                color="error"
+                variant="solid"
+                class="w-full sm:w-auto"
+                @click="handleDeleteCampaign"
+              >
+                <span class="sm:hidden">Supprimer la campagne</span>
+                <span class="hidden sm:inline">Supprimer</span>
+              </UButton>
+            </div>
           </div>
         </UCard>
 

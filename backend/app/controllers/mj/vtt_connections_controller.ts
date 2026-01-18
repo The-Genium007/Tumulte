@@ -11,9 +11,6 @@ import { randomBytes } from 'node:crypto'
 import { DateTime } from 'luxon'
 import env from '#start/env'
 
-// CSRF state expiration time (5 minutes)
-const PAIRING_STATE_EXPIRY_MS = 5 * 60 * 1000
-
 interface PendingPairing {
   code: string
   worldId: string
@@ -237,146 +234,6 @@ export default class VttConnectionsController {
   }
 
   /**
-   * Start a pairing session and generate CSRF state
-   * GET /mj/vtt-connections/start-pairing
-   */
-  async startPairingSession({ session, response }: HttpContext) {
-    // Generate CSRF state token
-    const state = randomBytes(32).toString('hex')
-    const expiresAt = Date.now() + PAIRING_STATE_EXPIRY_MS
-
-    // Store in session
-    session.put('vtt_pairing_state', state)
-    session.put('vtt_pairing_expires', expiresAt)
-
-    return response.ok({
-      state,
-      expiresIn: PAIRING_STATE_EXPIRY_MS / 1000, // seconds
-    })
-  }
-
-  /**
-   * Initiate pairing with VTT module
-   * POST /mj/vtt-connections/pair
-   */
-  async initiatePairing({ auth, request, response, session }: HttpContext) {
-    const user = auth.user!
-    const { pairingUrl } = request.only(['pairingUrl'])
-
-    try {
-      // 1. Parse pairing URL (extracts token and state)
-      const { token, state } = this.vttPairingService.parsePairingUrl(pairingUrl)
-
-      // 2. Validate CSRF state against session (skip for mock tokens in dev mode)
-      const isDev = env.get('NODE_ENV') === 'development'
-      const isMockToken = state === 'mock-csrf-state-xyz'
-
-      if (!isDev || !isMockToken) {
-        // Normal CSRF validation for production and non-mock tokens
-        const sessionState = session.get('vtt_pairing_state')
-        const sessionExpires = session.get('vtt_pairing_expires')
-
-        if (!sessionState) {
-          return response.badRequest({
-            error: 'No pairing session found. Please restart pairing process.',
-          })
-        }
-
-        if (Date.now() > sessionExpires) {
-          session.forget('vtt_pairing_state')
-          session.forget('vtt_pairing_expires')
-          return response.badRequest({
-            error: 'Pairing session expired. Please restart pairing process.',
-          })
-        }
-
-        if (state !== sessionState) {
-          return response.forbidden({
-            error: 'Invalid CSRF state. Possible security attack detected.',
-          })
-        }
-
-        // Clear the used state from session
-        session.forget('vtt_pairing_state')
-        session.forget('vtt_pairing_expires')
-      }
-
-      // 3. Validate JWT token
-      const claims = await this.vttPairingService.validatePairingToken(token)
-
-      // 4. Test connection to VTT
-      const testResult = await this.vttPairingService.testConnection(claims)
-
-      if (!testResult.reachable) {
-        return response.badRequest({
-          error: 'Cannot reach VTT',
-          details: testResult.error,
-        })
-      }
-
-      // 5. Complete pairing and create connection
-      const { connection, tokens } = await this.vttPairingService.completePairing(claims, user.id)
-
-      return response.created({
-        connection: {
-          id: connection.id,
-          name: connection.name,
-          worldId: connection.worldId,
-          worldName: connection.worldName,
-          moduleVersion: connection.moduleVersion,
-          status: connection.status,
-          tunnelStatus: connection.tunnelStatus,
-          provider: connection.provider,
-        },
-        tokens: {
-          sessionToken: tokens.sessionToken,
-          refreshToken: tokens.refreshToken,
-          expiresIn: tokens.expiresIn,
-        },
-      })
-    } catch (error) {
-      return response.badRequest({
-        error: error.message,
-      })
-    }
-  }
-
-  /**
-   * Test pairing connection before completing
-   * POST /mj/vtt-connections/test-pairing
-   */
-  async testPairing({ request, response }: HttpContext) {
-    const { pairingUrl } = request.only(['pairingUrl'])
-
-    try {
-      // 1. Parse and validate pairing URL
-      const { token } = this.vttPairingService.parsePairingUrl(pairingUrl)
-      const claims = await this.vttPairingService.validatePairingToken(token)
-
-      // 2. Test connection
-      const testResult = await this.vttPairingService.testConnection(claims)
-
-      if (!testResult.reachable) {
-        return response.ok({
-          success: false,
-          error: testResult.error,
-        })
-      }
-
-      // 3. Return world info if successful
-      return response.ok({
-        success: true,
-        worldInfo: testResult.worldInfo,
-      })
-    } catch (error) {
-      return response.badRequest({
-        success: false,
-        error: error.message,
-      })
-    }
-  }
-
-  /**
    * Revoke a VTT connection
    * POST /mj/vtt-connections/:id/revoke
    */
@@ -467,43 +324,48 @@ export default class VttConnectionsController {
       }
 
       // Check if connection already exists for this world
-      const existingConnection = await VttConnection.query()
+      let connection = await VttConnection.query()
         .where('user_id', user.id)
         .where('world_id', pending.worldId)
+        .preload('provider')
         .first()
 
-      if (existingConnection) {
-        return response.badRequest({
-          error: 'A connection already exists for this Foundry world',
-          connectionId: existingConnection.id,
+      if (connection) {
+        // Reuse existing connection - update it with new pairing info
+        connection.status = 'active'
+        connection.tunnelStatus = 'connecting'
+        connection.pairingCode = pending.code
+        connection.moduleVersion = pending.moduleVersion
+        connection.lastHeartbeatAt = DateTime.now()
+        connection.tokenVersion = (connection.tokenVersion || 1) + 1 // Invalidate old tokens
+        await connection.save()
+      } else {
+        // Get Foundry provider
+        const provider = await VttProvider.query().where('name', 'foundry').firstOrFail()
+
+        // Generate secure credentials
+        const apiKey = 'ta_' + randomBytes(32).toString('hex')
+        const connectionName = `Foundry - ${pending.worldName}`
+
+        // Create new connection
+        connection = await VttConnection.create({
+          userId: user.id,
+          vttProviderId: provider.id,
+          name: connectionName,
+          apiKey,
+          webhookUrl: '',
+          status: 'active',
+          worldId: pending.worldId,
+          worldName: pending.worldName,
+          pairingCode: pending.code,
+          tunnelStatus: 'connecting',
+          moduleVersion: pending.moduleVersion,
+          lastHeartbeatAt: DateTime.now(),
+          tokenVersion: 1,
         })
+
+        await connection.load('provider')
       }
-
-      // Get Foundry provider
-      const provider = await VttProvider.query().where('name', 'foundry').firstOrFail()
-
-      // Generate secure credentials
-      const apiKey = 'ta_' + randomBytes(32).toString('hex')
-      const connectionName = `Foundry - ${pending.worldName}`
-
-      // Create the connection
-      const connection = await VttConnection.create({
-        userId: user.id,
-        vttProviderId: provider.id,
-        name: connectionName,
-        apiKey,
-        webhookUrl: '',
-        status: 'active',
-        worldId: pending.worldId,
-        worldName: pending.worldName,
-        pairingCode: pending.code,
-        tunnelStatus: 'connecting',
-        moduleVersion: pending.moduleVersion,
-        lastHeartbeatAt: DateTime.now(),
-        tokenVersion: 1,
-      })
-
-      await connection.load('provider')
 
       // Generate session tokens
       const tokens = await this.vttPairingService.generateSessionTokensForConnection(
@@ -518,7 +380,7 @@ export default class VttConnectionsController {
       // Store completed pairing for the module to pick up
       const completedData = {
         connectionId: connection.id,
-        apiKey,
+        apiKey: connection.apiKey,
         sessionToken: tokens.sessionToken,
         refreshToken: tokens.refreshToken,
         expiresIn: tokens.expiresIn,
@@ -534,6 +396,22 @@ export default class VttConnectionsController {
       // Clean up pending pairing
       await redis.del(pendingKey)
 
+      // Check if a campaign already exists for this connection
+      let campaign = await Campaign.query().where('vtt_connection_id', connection.id).first()
+
+      if (!campaign) {
+        // Create a new campaign linked to this VTT connection
+        campaign = await Campaign.create({
+          name: pending.worldName,
+          description: `Campagne importée depuis Foundry VTT (${pending.worldName})`,
+          ownerId: user.id,
+          vttConnectionId: connection.id,
+          vttCampaignId: pending.worldId,
+          vttCampaignName: pending.worldName,
+          lastVttSyncAt: DateTime.now(),
+        })
+      }
+
       return response.created({
         connection: {
           id: connection.id,
@@ -545,7 +423,12 @@ export default class VttConnectionsController {
           tunnelStatus: connection.tunnelStatus,
           provider: connection.provider,
         },
-        message: 'Pairing successful! The Foundry module will connect shortly.',
+        campaign: {
+          id: campaign.id,
+          name: campaign.name,
+          description: campaign.description,
+        },
+        message: 'Pairing successful! Campaign created automatically.',
       })
     } catch (error) {
       return response.badRequest({

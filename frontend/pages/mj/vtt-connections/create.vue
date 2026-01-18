@@ -38,7 +38,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h2 class="text-xl font-semibold text-primary">
-              URL de connexion
+              Code de connexion
             </h2>
             <button
               class="flex items-center justify-center size-8 rounded-full bg-primary-100 hover:bg-primary-200 transition-colors"
@@ -56,89 +56,50 @@
             color="primary"
             variant="soft"
             icon="i-lucide-info"
-            title="Comment obtenir l'URL de connexion ?"
+            title="Comment obtenir le code de connexion ?"
           >
             <template #description>
               <ol class="list-decimal list-inside space-y-2 mt-2">
                 <li>Installez le module Tumulte dans votre VTT (Foundry, Roll20, ou Alchemy RPG)</li>
                 <li>Ouvrez les paramètres du module</li>
-                <li>Cliquez sur "Générer URL de connexion"</li>
-                <li>Copiez l'URL et collez-la ci-dessous</li>
+                <li>Cliquez sur "Connect to Tumulte"</li>
+                <li>Copiez le code affiché (ex: ABC-123) et collez-le ci-dessous</li>
               </ol>
             </template>
           </UAlert>
 
-          <!-- URL Input -->
+          <!-- Code Input -->
           <div class="w-full lg:w-2/3">
             <label class="block text-sm font-bold text-secondary ml-4 uppercase mb-2">
-              URL de connexion <span class="text-error-500">*</span>
+              Code de connexion <span class="text-error-500">*</span>
             </label>
             <UInput
-              v-model="pairingUrl"
+              v-model="pairingCode"
               type="text"
-              placeholder="foundry://connect?token=..."
+              placeholder="ABC-123"
               size="lg"
-              :disabled="testing || pairing"
+              :disabled="pairing"
               :ui="{
                 root: 'ring-0 border-0 rounded-lg overflow-hidden',
-                base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg font-mono text-sm',
+                base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg font-mono text-2xl tracking-widest text-center uppercase',
               }"
+              @input="formatCode"
             />
-            <p v-if="urlError" class="text-xs text-error-500 mt-2 ml-4">
-              {{ urlError }}
+            <p v-if="codeError" class="text-xs text-error-500 mt-2 ml-4">
+              {{ codeError }}
             </p>
           </div>
 
-          <!-- Test Connection Button -->
-          <div v-if="!testResult && !pairingSuccess" class="flex gap-3">
-            <UButton
-              color="primary"
-              variant="soft"
-              label="Tester la connexion"
-              icon="i-lucide-plug-zap"
-              size="lg"
-              :loading="testing"
-              :disabled="!isUrlValid || pairing"
-              @click="handleTestConnection"
-            />
-          </div>
-
-          <!-- Test Result - Success -->
+          <!-- Pairing Error -->
           <UAlert
-            v-if="testResult?.success"
-            color="success"
-            variant="soft"
-            icon="i-lucide-check-circle"
-            title="Connexion réussie !"
-          >
-            <template #description>
-              <div class="space-y-2 mt-2">
-                <div class="flex items-center gap-2">
-                  <span class="font-semibold">Monde :</span>
-                  <span>{{ testResult.worldInfo?.name }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="font-semibold">ID :</span>
-                  <span class="font-mono text-xs">{{ testResult.worldInfo?.id }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="font-semibold">Version :</span>
-                  <span>{{ testResult.worldInfo?.version }}</span>
-                </div>
-              </div>
-            </template>
-          </UAlert>
-
-          <!-- Test Result - Error -->
-          <UAlert
-            v-if="testResult?.success === false"
+            v-if="pairingError"
             color="error"
             variant="soft"
             icon="i-lucide-alert-circle"
             title="Échec de la connexion"
           >
             <template #description>
-              <p class="mt-2">{{ testResult.error }}</p>
+              <p class="mt-2">{{ pairingError }}</p>
             </template>
           </UAlert>
 
@@ -154,25 +115,26 @@
               <p class="mt-2">
                 Votre VTT <strong>{{ pairingSuccess.connection.name }}</strong> est maintenant connecté à Tumulte.
               </p>
+              <p class="mt-2">
+                La campagne <strong>{{ pairingSuccess.campaign.name }}</strong> a été créée automatiquement.
+              </p>
+              <p class="mt-2 text-sm text-muted flex items-center gap-2">
+                <UIcon name="i-lucide-loader-2" class="animate-spin size-4" />
+                Redirection vers votre campagne...
+              </p>
             </template>
           </UAlert>
 
-          <!-- Establish Connection Button -->
-          <div v-if="testResult?.success && !pairingSuccess" class="flex gap-3">
+          <!-- Connect Button -->
+          <div v-if="!pairingSuccess" class="flex gap-3">
             <UButton
               color="primary"
-              label="Établir la connexion sécurisée"
-              icon="i-lucide-shield-check"
+              label="Connecter"
+              icon="i-lucide-plug-zap"
               size="lg"
               :loading="pairing"
+              :disabled="!isCodeValid"
               @click="handlePairing"
-            />
-            <UButton
-              color="neutral"
-              variant="soft"
-              label="Annuler"
-              :disabled="pairing"
-              @click="resetForm"
             />
           </div>
         </div>
@@ -309,15 +271,11 @@ const _router = useRouter();
 const toast = useToast();
 const config = useRuntimeConfig();
 
-const pairingUrl = ref("");
-const testing = ref(false);
+const pairingCode = ref("");
 const pairing = ref(false);
 const showSecurityModal = ref(false);
-const testResult = ref<{
-  success: boolean;
-  worldInfo?: { id: string; name: string; version: string };
-  error?: string;
-} | null>(null);
+const codeError = ref("");
+const pairingError = ref("");
 const pairingSuccess = ref<{
   connection: {
     id: string;
@@ -326,115 +284,78 @@ const pairingSuccess = ref<{
     worldName: string;
     moduleVersion: string;
   };
+  campaign: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  message: string;
 } | null>(null);
-const urlError = ref("");
 
-const isUrlValid = computed(() => {
-  const url = pairingUrl.value.trim();
-  return url.startsWith("foundry://connect?") && url.includes("token=");
+// Validate code format: ABC-123 or ABC123
+const isCodeValid = computed(() => {
+  const code = pairingCode.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return code.length === 6;
 });
 
-const handleTestConnection = async () => {
-  if (!isUrlValid.value) {
-    urlError.value = "URL invalide. Format attendu : foundry://connect?token=...";
-    return;
+// Auto-format code as user types (ABC-123)
+const formatCode = () => {
+  let value = pairingCode.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (value.length > 3) {
+    value = value.slice(0, 3) + "-" + value.slice(3, 6);
   }
-
-  urlError.value = "";
-  testing.value = true;
-  testResult.value = null;
-
-  try {
-    const response = await fetch(`${config.public.apiBase}/mj/vtt-connections/test-pairing`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        pairingUrl: pairingUrl.value.trim(),
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Test de connexion échoué");
-    }
-
-    const data = await response.json();
-    testResult.value = data;
-
-    if (data.success) {
-      toast.add({
-        title: "Test réussi",
-        description: "La connexion au VTT fonctionne correctement",
-        color: "success",
-      });
-    } else {
-      toast.add({
-        title: "Test échoué",
-        description: data.error || "Impossible de contacter le VTT",
-        color: "error",
-      });
-    }
-  } catch (error: unknown) {
-    console.error("Failed to test connection:", error);
-    testResult.value = {
-      success: false,
-      error: error instanceof Error ? error.message : "Erreur inconnue",
-    };
-    toast.add({
-      title: "Erreur",
-      description: "Impossible de tester la connexion",
-      color: "error",
-    });
-  } finally {
-    testing.value = false;
-  }
+  pairingCode.value = value;
+  codeError.value = "";
+  pairingError.value = "";
 };
 
 const handlePairing = async () => {
+  if (!isCodeValid.value) {
+    codeError.value = "Code invalide. Format attendu : ABC-123";
+    return;
+  }
+
   pairing.value = true;
+  pairingError.value = "";
 
   try {
-    const response = await fetch(`${config.public.apiBase}/mj/vtt-connections/pair`, {
+    const response = await fetch(`${config.public.apiBase}/mj/vtt-connections/pair-with-code`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        pairingUrl: pairingUrl.value.trim(),
+        code: pairingCode.value.trim(),
       }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Échec de l'établissement de la connexion");
+      throw new Error(data.error || "Échec de l'établissement de la connexion");
     }
 
-    const data = await response.json();
     pairingSuccess.value = data;
 
     toast.add({
       title: "Connexion établie",
-      description: `Le VTT "${data.connection.name}" est maintenant connecté`,
+      description: `Campagne "${data.campaign.name}" créée avec succès`,
       color: "success",
     });
 
-    // Store tokens (optional - could be stored in localStorage for future use)
-    // localStorage.setItem(`vtt_session_${data.connection.id}`, data.tokens.sessionToken);
-    // localStorage.setItem(`vtt_refresh_${data.connection.id}`, data.tokens.refreshToken);
+    // Redirect to the newly created campaign after a short delay
+    setTimeout(() => {
+      _router.push(`/mj/campaigns/${data.campaign.id}`);
+    }, 2000);
   } catch (error: unknown) {
     console.error("Failed to establish pairing:", error);
+    pairingError.value = error instanceof Error ? error.message : "Impossible d'établir la connexion";
     toast.add({
       title: "Erreur",
-      description: error instanceof Error ? error.message : "Impossible d'établir la connexion",
+      description: pairingError.value,
       color: "error",
     });
   } finally {
     pairing.value = false;
   }
-};
-
-const resetForm = () => {
-  testResult.value = null;
-  urlError.value = "";
 };
 </script>

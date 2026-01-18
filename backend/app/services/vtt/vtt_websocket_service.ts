@@ -280,7 +280,11 @@ export default class VttWebSocketService {
   private async handleCharacterUpdate(socket: VttSocket, data: any): Promise<void> {
     try {
       const connectionId = socket.vttConnectionId!
-      logger.debug('Character update received', { connectionId, data })
+      logger.info('Character update received', {
+        connectionId,
+        characterName: data.name,
+        campaignId: data.campaignId,
+      })
 
       // Get the VTT connection
       const connection = await VttConnection.findOrFail(connectionId)
@@ -591,13 +595,15 @@ export default class VttWebSocketService {
 
     const vttNamespace = this.io.of('/vtt')
 
-    // Update connection status
-    const connection = await VttConnection.findOrFail(connectionId)
-    connection.status = 'revoked'
-    connection.tunnelStatus = 'disconnected'
-    await connection.save()
+    // Update connection status (if it still exists)
+    const connection = await VttConnection.find(connectionId)
+    if (connection) {
+      connection.status = 'revoked'
+      connection.tunnelStatus = 'disconnected'
+      await connection.save()
+    }
 
-    // Emit revocation event to VTT
+    // Emit revocation event to VTT (even if connection is deleted, sockets may still exist)
     vttNamespace.to(`vtt:${connectionId}`).emit('connection:revoked', {
       reason,
       timestamp: DateTime.now().toISO(),

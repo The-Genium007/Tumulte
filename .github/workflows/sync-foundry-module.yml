@@ -24,6 +24,33 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Nécessaire pour git subtree (besoin de tout l'historique)
+      
+      - name: Inject API URL based on environment
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+
+          if [ "${BRANCH_NAME}" = "main" ]; then
+            API_URL="https://api.tumulte.app"
+            echo "🏷️ Production build - using ${API_URL}"
+          else
+            API_URL="https://api-staging.tumulte.app"
+            echo "🧪 Staging build - using ${API_URL}"
+          fi
+
+          # Replace placeholder in tumulte.js
+          sed -i "s|__TUMULTE_API_URL__|${API_URL}|g" modules-vtt/foundry/scripts/tumulte.js
+
+          # Verify replacement
+          if grep -q "__TUMULTE_API_URL__" modules-vtt/foundry/scripts/tumulte.js; then
+            echo "❌ ERROR: Placeholder was not replaced!"
+            exit 1
+          fi
+
+          echo "✅ API URL injected: ${API_URL}"
+
+          # Commit the change (needed for subtree split)
+          git add modules-vtt/foundry/scripts/tumulte.js
+          git commit -m "ci: inject API URL for ${BRANCH_NAME} environment"
 
       - name: Configure Git
         run: |

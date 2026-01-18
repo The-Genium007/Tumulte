@@ -8,19 +8,31 @@ export default class CharactersController {
   /**
    * Récupère les personnages disponibles pour une campagne
    * GET /streamer/campaigns/:campaignId/characters
+   * Accessible aux membres actifs ET aux propriétaires de la campagne
    */
   async index({ auth, params, response }: HttpContext) {
     const user = auth.user!
 
-    // Vérifier que le streamer est membre de cette campagne
     const streamer = await Streamer.query().where('user_id', user.id).firstOrFail()
 
-    const campaign = await Campaign.query()
+    // Vérifier que le streamer est membre actif OU propriétaire de la campagne
+    const campaignAsMember = await Campaign.query()
       .where('id', params.campaignId)
       .whereHas('memberships', (query) => {
         query.where('streamer_id', streamer.id).where('status', 'ACTIVE')
       })
-      .firstOrFail()
+      .first()
+
+    const campaignAsOwner = await Campaign.query()
+      .where('id', params.campaignId)
+      .where('owner_id', user.id)
+      .first()
+
+    const campaign = campaignAsMember || campaignAsOwner
+
+    if (!campaign) {
+      return response.notFound({ error: 'Campaign not found or access denied' })
+    }
 
     // Récupérer tous les personnages de la campagne
     const characters = await Character.query()
@@ -44,19 +56,31 @@ export default class CharactersController {
   /**
    * Assigne un personnage au streamer pour une campagne
    * POST /streamer/campaigns/:campaignId/characters/:characterId/assign
+   * Accessible aux membres actifs ET aux propriétaires de la campagne
    */
   async assign({ auth, params, response }: HttpContext) {
     const user = auth.user!
 
-    // Vérifier que le streamer est membre de cette campagne
     const streamer = await Streamer.query().where('user_id', user.id).firstOrFail()
 
-    const campaign = await Campaign.query()
+    // Vérifier que le streamer est membre actif OU propriétaire de la campagne
+    const campaignAsMember = await Campaign.query()
       .where('id', params.campaignId)
       .whereHas('memberships', (query) => {
         query.where('streamer_id', streamer.id).where('status', 'ACTIVE')
       })
-      .firstOrFail()
+      .first()
+
+    const campaignAsOwner = await Campaign.query()
+      .where('id', params.campaignId)
+      .where('owner_id', user.id)
+      .first()
+
+    const campaign = campaignAsMember || campaignAsOwner
+
+    if (!campaign) {
+      return response.notFound({ error: 'Campaign not found or access denied' })
+    }
 
     // Vérifier que le personnage existe et appartient à cette campagne
     const character = await Character.query()
@@ -98,19 +122,29 @@ export default class CharactersController {
   /**
    * Retire l'assignment de personnage du streamer pour une campagne
    * DELETE /streamer/campaigns/:campaignId/characters/unassign
+   * Accessible aux membres actifs ET aux propriétaires de la campagne
    */
   async unassign({ auth, params, response }: HttpContext) {
     const user = auth.user!
 
-    // Vérifier que le streamer est membre de cette campagne
     const streamer = await Streamer.query().where('user_id', user.id).firstOrFail()
 
-    await Campaign.query()
+    // Vérifier que le streamer est membre actif OU propriétaire de la campagne
+    const campaignAsMember = await Campaign.query()
       .where('id', params.campaignId)
       .whereHas('memberships', (query) => {
         query.where('streamer_id', streamer.id).where('status', 'ACTIVE')
       })
-      .firstOrFail()
+      .first()
+
+    const campaignAsOwner = await Campaign.query()
+      .where('id', params.campaignId)
+      .where('owner_id', user.id)
+      .first()
+
+    if (!campaignAsMember && !campaignAsOwner) {
+      return response.notFound({ error: 'Campaign not found or access denied' })
+    }
 
     // Supprimer l'assignment du streamer pour cette campagne
     await CharacterAssignment.query()

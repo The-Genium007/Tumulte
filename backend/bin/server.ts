@@ -36,6 +36,31 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
     })
     app.listen('SIGTERM', () => app.terminate())
     app.listenIf(app.managedByPm2, 'SIGINT', () => app.terminate())
+
+    // Initialize Socket.IO when server is ready
+    app.ready(async () => {
+      const { Server } = await import('socket.io')
+      const server = await app.container.make('server')
+      const httpServer = server.getNodeServer()
+
+      if (httpServer) {
+        const env = await import('#start/env')
+        const io = new Server(httpServer, {
+          cors: {
+            origin: env.default.get('FRONTEND_URL', 'http://localhost:3000'),
+            methods: ['GET', 'POST'],
+            credentials: true,
+          },
+          transports: ['websocket', 'polling'],
+        })
+
+        const { default: VttWebSocketService } = await import('#services/vtt/vtt_websocket_service')
+        const vttWebSocketService = new VttWebSocketService()
+        vttWebSocketService.setup(io)
+
+        console.log('[Socket.IO] Server initialized successfully')
+      }
+    })
   })
   .httpServer()
   .start()

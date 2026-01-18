@@ -120,22 +120,10 @@ router
     router.get('/vtt-connections/sync-all', '#controllers/mj/vtt_connections_controller.syncAll')
     router.get('/vtt-providers', '#controllers/mj/vtt_connections_controller.listProviders')
 
-    // VTT Secure Pairing - Static routes (must be before :id)
-    router.get(
-      '/vtt-connections/start-pairing',
-      '#controllers/mj/vtt_connections_controller.startPairingSession'
-    )
-    router.post(
-      '/vtt-connections/pair',
-      '#controllers/mj/vtt_connections_controller.initiatePairing'
-    )
+    // VTT Secure Pairing - Code-based pairing (static routes must be before :id)
     router.post(
       '/vtt-connections/pair-with-code',
       '#controllers/mj/vtt_connections_controller.pairWithCode'
-    )
-    router.post(
-      '/vtt-connections/test-pairing',
-      '#controllers/mj/vtt_connections_controller.testPairing'
     )
     router.post(
       '/vtt-connections/refresh-token',

@@ -186,19 +186,21 @@
               <div class="flex-1 p-4 sm:p-6">
                 <div class="flex items-center gap-2 mb-2">
                   <h3 class="font-semibold text-base sm:text-lg text-primary">{{ campaign.name }}</h3>
-                  <UBadge color="success" variant="solid" size="xs">Actif</UBadge>
+                  <UBadge v-if="campaign.isOwner" color="primary" variant="solid" size="xs">Propriétaire</UBadge>
+                  <UBadge v-else color="success" variant="solid" size="xs">Actif</UBadge>
                 </div>
                 <p v-if="campaign.description" class="text-muted text-sm mb-3">
                   {{ campaign.description }}
                 </p>
                 <div class="space-y-1">
-                  <div class="flex items-center gap-2 text-sm text-muted">
+                  <!-- Afficher "Maître du jeu" seulement si on n'est pas le propriétaire -->
+                  <div v-if="!campaign.isOwner" class="flex items-center gap-2 text-sm text-muted">
                     <UIcon name="i-lucide-crown" class="size-4 shrink-0" />
                     <span class="truncate">Maître du jeu : <strong class="text-secondary">{{ campaign.ownerName }}</strong></span>
                   </div>
                   <div class="flex items-center gap-2 text-xs text-muted">
-                    <UIcon name="i-lucide-calendar-check" class="size-3 shrink-0" />
-                    <span>Rejoint le {{ formatDate(campaign.joinedAt) }}</span>
+                    <UIcon :name="campaign.isOwner ? 'i-lucide-calendar-plus' : 'i-lucide-calendar-check'" class="size-3 shrink-0" />
+                    <span>{{ campaign.isOwner ? 'Créée le' : 'Rejoint le' }} {{ formatDate(campaign.isOwner ? campaign.createdAt : campaign.joinedAt) }}</span>
                   </div>
                 </div>
                 <!-- Bouton Paramètres -->
@@ -214,8 +216,9 @@
                 </div>
               </div>
 
-              <!-- Bouton quitter (carré, pleine hauteur) -->
+              <!-- Bouton quitter (seulement si on n'est pas propriétaire) -->
               <button
+                v-if="!campaign.isOwner"
                 class="w-full sm:w-24 py-4 sm:py-0 self-stretch flex items-center justify-center gap-2 bg-error-100 hover:bg-error-200 text-error-600 transition-colors rounded-b-lg sm:rounded-b-none sm:rounded-r-lg"
                 @click="handleLeave(campaign.id, campaign.name)"
               >

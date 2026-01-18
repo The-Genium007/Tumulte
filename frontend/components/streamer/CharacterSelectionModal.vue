@@ -44,6 +44,17 @@ const handleCancel = () => {
   emit("cancel");
   model.value = false;
 };
+
+// Track which avatars failed to load
+const failedAvatars = ref<Set<string>>(new Set());
+
+const handleAvatarError = (characterId: string) => {
+  failedAvatars.value.add(characterId);
+};
+
+const shouldShowFallback = (character: Character) => {
+  return !character.avatarUrl || failedAvatars.value.has(character.id);
+};
 </script>
 
 <template>
@@ -51,16 +62,9 @@ const handleCancel = () => {
     <template #content>
       <UCard>
         <template #header>
-          <div class="flex items-center gap-3">
-            <div class="p-2 bg-primary-50 rounded-lg">
-              <UIcon name="i-lucide-user-circle" class="size-5 text-primary-500" />
-            </div>
-            <div>
-              <h3 class="text-lg font-semibold text-primary">
-                {{ title || "Choisir un personnage" }}
-              </h3>
-            </div>
-          </div>
+          <h3 class="text-lg font-semibold text-primary">
+            {{ title || "Choisir un personnage" }}
+          </h3>
         </template>
 
         <div class="space-y-4">
@@ -84,10 +88,11 @@ const handleCancel = () => {
               <!-- Avatar -->
               <div class="shrink-0">
                 <img
-                  v-if="character.avatarUrl"
-                  :src="character.avatarUrl"
+                  v-if="!shouldShowFallback(character)"
+                  :src="character.avatarUrl!"
                   :alt="character.name"
                   class="size-12 rounded-full object-cover"
+                  @error="handleAvatarError(character.id)"
                 />
                 <div
                   v-else

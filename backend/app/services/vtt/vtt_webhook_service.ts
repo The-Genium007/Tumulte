@@ -4,6 +4,7 @@ import { campaign as Campaign } from '#models/campaign'
 import Character from '#models/character'
 import DiceRoll from '#models/dice_roll'
 import DiceRollService from '#services/vtt/dice_roll_service'
+import logger from '@adonisjs/core/services/logger'
 
 interface DiceRollPayload {
   campaignId: string // VTT campaign ID
@@ -122,10 +123,26 @@ export default class VttWebhookService {
     }
   ): Promise<Character> {
     // Trouver la campagne
+    logger.info('syncCharacter looking for campaign', {
+      vttConnectionId: vttConnection.id,
+      campaignId,
+    })
+
     const campaign = await Campaign.query()
       .where('vtt_connection_id', vttConnection.id)
       .where('vtt_campaign_id', campaignId)
-      .firstOrFail()
+      .first()
+
+    if (!campaign) {
+      logger.error('Campaign not found for character sync', {
+        vttConnectionId: vttConnection.id,
+        campaignId,
+        characterName: characterData.name,
+      })
+      throw new Error(
+        `Campaign not found: vttConnectionId=${vttConnection.id}, campaignId=${campaignId}`
+      )
+    }
 
     // Chercher ou créer le personnage
     let character = await Character.query()
