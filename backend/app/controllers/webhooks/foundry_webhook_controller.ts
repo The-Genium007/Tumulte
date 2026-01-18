@@ -7,6 +7,7 @@ import VttPairingService from '#services/vtt/vtt_pairing_service'
 import VttWebSocketService from '#services/vtt/vtt_websocket_service'
 import redis from '@adonisjs/redis/services/main'
 import logger from '@adonisjs/core/services/logger'
+import env from '#start/env'
 
 // Pairing code format: ABC-123 (6 chars)
 const PAIRING_CODE_LENGTH = 6
@@ -184,11 +185,15 @@ export default class FoundryWebhookController {
 
       logger.info('Foundry pairing code generated', { code, worldId, worldName })
 
+      // Build API URL - use API_URL env var if set, otherwise construct from HOST:PORT
+      const apiUrl = env.get('API_URL') || `http://${env.get('HOST')}:${env.get('PORT')}`
+
       return response.ok({
         success: true,
         code,
         expiresIn: PAIRING_CODE_EXPIRY,
         expiresAt: pendingPairing.expiresAt,
+        serverUrl: apiUrl,
       })
     } catch (error) {
       logger.error('Failed to generate pairing code', { error })
@@ -235,6 +240,7 @@ export default class FoundryWebhookController {
           sessionToken: result.sessionToken,
           refreshToken: result.refreshToken,
           expiresIn: result.expiresIn,
+          serverUrl: result.serverUrl,
         })
       }
 

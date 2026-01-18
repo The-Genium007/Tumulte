@@ -260,9 +260,7 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { useAuth } from "@/composables/useAuth";
 import { useCampaigns } from "@/composables/useCampaigns";
 import { useSupportTrigger } from "@/composables/useSupportTrigger";
-import { useMockData } from "@/composables/useMockData";
 import type { AuthorizationStatus } from "@/types/index";
-import type { MockDataModule } from "@/composables/useMockData";
 
 definePageMeta({
   layout: "authenticated" as const,
@@ -274,13 +272,9 @@ const API_URL = config.public.apiBase;
 const { user: _user } = useAuth();
 const { fetchInvitations, getAuthorizationStatus, grantAuthorization, revokeAuthorization } = useCampaigns();
 const { triggerSupportForError } = useSupportTrigger();
-const { enabled: mockEnabled, loadMockData, withMockFallback } = useMockData();
 
 // Dev mode
 const isDev = import.meta.dev;
-
-// Mock data
-const mockData = ref<MockDataModule | null>(null);
 
 const overlayUrl = ref<string | null>(null);
 const loadingOverlay = ref(false);
@@ -328,16 +322,12 @@ const copyOverlayUrl = async () => {
 // Charger le nombre d'invitations
 const loadInvitationCount = async () => {
   try {
-    const apiInvitations = await fetchInvitations();
-    const invitations = withMockFallback(apiInvitations, mockData.value?.mockInvitations ?? []);
+    const invitations = await fetchInvitations();
     invitationCount.value = invitations.length;
   } catch (error) {
     // Fail silencieusement - pas critique
     console.error("Failed to load invitations:", error);
-    // En cas d'erreur, utiliser les mock data si disponibles
-    if (mockEnabled.value && mockData.value) {
-      invitationCount.value = mockData.value.mockInvitations.length;
-    }
+    invitationCount.value = 0;
   }
 };
 
@@ -347,7 +337,7 @@ const loadAuthorizationStatus = async () => {
   try {
     const data = await getAuthorizationStatus();
     // Mapper les données snake_case vers camelCase
-    const apiStatuses: AuthorizationStatus[] = data.map((item) => ({
+    authorizationStatuses.value = data.map((item): AuthorizationStatus => ({
       campaignId: item.campaign_id,
       campaignName: item.campaign_name,
       isOwner: item.is_owner,
@@ -355,17 +345,12 @@ const loadAuthorizationStatus = async () => {
       expiresAt: item.expires_at,
       remainingSeconds: item.remaining_seconds,
     }));
-    authorizationStatuses.value = withMockFallback(apiStatuses, mockData.value?.mockAuthorizationStatuses ?? []);
     // Démarrer le compteur après avoir chargé les données
     startCountdown();
   } catch (error) {
     // Fail silencieusement - pas critique
     console.error("Failed to load authorization status:", error);
-    // En cas d'erreur, utiliser les mock data si disponibles
-    if (mockEnabled.value && mockData.value) {
-      authorizationStatuses.value = mockData.value.mockAuthorizationStatuses;
-      startCountdown();
-    }
+    authorizationStatuses.value = [];
   } finally {
     loadingAuth.value = false;
   }
@@ -438,9 +423,6 @@ const formatTime = (seconds: number): string => {
 
 // Charger automatiquement l'URL de l'overlay, les invitations et les autorisations au montage
 onMounted(async () => {
-  // Charger les données mockées si disponibles
-  mockData.value = await loadMockData();
-
   fetchOverlayUrl();
   await loadInvitationCount();
   await loadAuthorizationStatus();

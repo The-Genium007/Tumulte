@@ -32,7 +32,6 @@
 
     <!-- Widgets globaux -->
     <SupportWidget />
-    <DevModeIndicator />
   </div>
 </template>
 
@@ -41,7 +40,6 @@ import { onMounted } from 'vue'
 import AppHeader from '@/components/AppHeader.vue'
 import AppFooter from '@/components/AppFooter.vue'
 import SupportWidget from '@/components/SupportWidget.vue'
-import DevModeIndicator from '@/components/DevModeIndicator.vue'
 import { useAuth } from '@/composables/useAuth'
 import { usePushNotifications } from '@/composables/usePushNotifications'
 import { useVttAutoSync } from '@/composables/useVttAutoSync'

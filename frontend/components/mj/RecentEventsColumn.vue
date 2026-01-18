@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { PollInstance } from "~/types/api";
-import { useMockData } from "@/composables/useMockData";
 import { usePollsStore } from "~/stores/polls";
 
 const props = defineProps<{
@@ -14,12 +13,10 @@ const emit = defineEmits<{
 
 const config = useRuntimeConfig();
 const API_URL = config.public.apiBase;
-const { enabled: mockEnabled, loadMockData } = useMockData();
 const pollsStore = usePollsStore();
 
 const loading = ref(false);
 const finishedPolls = ref<PollInstance[]>([]);
-const mockPollInstances = ref<PollInstance[]>([]);
 
 /**
  * Récupère les sondages terminés de la campagne
@@ -39,28 +36,16 @@ const fetchFinishedPolls = async () => {
     const data = await response.json();
 
     // Filtrer uniquement les sondages terminés et trier par date de fin
-    const apiPolls = (data.data || [])
+    finishedPolls.value = (data.data || [])
       .filter((poll: PollInstance) => poll.status === "ENDED" && poll.endedAt)
       .sort(
         (a: PollInstance, b: PollInstance) =>
           new Date(b.endedAt!).getTime() - new Date(a.endedAt!).getTime()
       )
       .slice(0, 20); // Limiter à 20 derniers
-
-    // Use mock data as fallback when enabled and API returns empty
-    if (mockEnabled.value && apiPolls.length === 0) {
-      finishedPolls.value = mockPollInstances.value;
-    } else {
-      finishedPolls.value = apiPolls;
-    }
   } catch (error) {
     console.error("Failed to fetch finished polls:", error);
-    // Use mock data on error if enabled
-    if (mockEnabled.value) {
-      finishedPolls.value = mockPollInstances.value;
-    } else {
-      finishedPolls.value = [];
-    }
+    finishedPolls.value = [];
   } finally {
     loading.value = false;
   }
@@ -93,36 +78,6 @@ const formatPollDate = (dateStr: string | null): string => {
     minute: "2-digit",
   });
 };
-
-// Load mock data and fetch polls
-onMounted(async () => {
-  // Load mock poll instances for fallback
-  const mockData = await loadMockData();
-  if (mockData?.mockPolls) {
-    // Create mock PollInstances from mock Polls
-    mockPollInstances.value = mockData.mockPolls
-      .filter((p) => p.campaignId === props.campaignId && p.lastLaunchedAt)
-      .map((poll) => ({
-        id: `instance-${poll.id}`,
-        pollId: poll.id,
-        templateId: null,
-        campaignId: poll.campaignId,
-        createdBy: "mock-user-gm-001",
-        title: poll.question,
-        options: poll.options,
-        durationSeconds: poll.durationSeconds,
-        status: "ENDED" as const,
-        startedAt: poll.lastLaunchedAt,
-        endedAt: poll.lastLaunchedAt
-          ? new Date(
-              new Date(poll.lastLaunchedAt).getTime() + poll.durationSeconds * 1000
-            ).toISOString()
-          : null,
-        createdAt: poll.createdAt,
-        updatedAt: poll.updatedAt,
-      }));
-  }
-});
 
 // Charger les sondages au changement de campagne
 watch(() => props.campaignId, fetchFinishedPolls, { immediate: true });

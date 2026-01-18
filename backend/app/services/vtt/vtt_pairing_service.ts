@@ -86,19 +86,6 @@ export default class VttPairingService {
    */
   async validatePairingToken(token: string): Promise<PairingClaims> {
     try {
-      // DEV MODE: Accept mock tokens for testing
-      if (env.get('NODE_ENV') === 'development' && token.startsWith('eyJ')) {
-        try {
-          const decoded = JSON.parse(atob(token)) as PairingClaims
-          // Validate it has the mock structure
-          if (decoded.world_id?.startsWith('mock-world')) {
-            return decoded
-          }
-        } catch {
-          // Not a valid mock token, continue with normal validation
-        }
-      }
-
       // Verify JWT signature and decode
       const decoded = jwt.verify(token, this.jwtSecret, {
         algorithms: ['HS256'],

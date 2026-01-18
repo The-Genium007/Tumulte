@@ -71,7 +71,6 @@ export default [
         useSupportTrigger: 'readonly',
         useSelectedCampaign: 'readonly',
         useOfflineFirst: 'readonly',
-        useMockData: 'readonly',
         useDevice: 'readonly',
         usePwaInstall: 'readonly',
         useLoadingScreen: 'readonly',

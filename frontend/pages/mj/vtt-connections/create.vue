@@ -68,33 +68,6 @@
             </template>
           </UAlert>
 
-          <!-- Dev Mode Helper -->
-          <UAlert
-            v-if="isDev"
-            color="primary"
-            variant="soft"
-            icon="i-lucide-code"
-            title="Mode Développement"
-          >
-            <template #description>
-              <p class="text-xs mb-2">
-                URL de test à copier-coller pour simuler une connexion VTT :
-              </p>
-              <div class="flex items-center gap-2">
-                <code class="text-xs bg-primary-200 px-2 py-1 rounded font-mono break-all flex-1">
-                  {{ mockPairingUrl }}
-                </code>
-                <UButton
-                  icon="i-lucide-copy"
-                  color="primary"
-                  variant="soft"
-                  size="xs"
-                  @click="copyMockUrl"
-                />
-              </div>
-            </template>
-          </UAlert>
-
           <!-- URL Input -->
           <div class="w-full lg:w-2/3">
             <label class="block text-sm font-bold text-secondary ml-4 uppercase mb-2">
@@ -356,37 +329,6 @@ const pairingSuccess = ref<{
 } | null>(null);
 const urlError = ref("");
 
-// Dev mode detection
-const isDev = import.meta.dev;
-
-// Mock JWT token for development testing
-const mockPairingUrl = computed(() => {
-  // Mock JWT payload (header.payload.signature format)
-  // This is a simplified mock - in reality, the backend generates this with proper signing
-  /* eslint-disable camelcase -- JWT standard claims use snake_case */
-  const mockPayload = {
-    sub: "vtt:foundry",
-    aud: "tumulte:api",
-    iss: "foundry-module:tumulte",
-    pairing_code: "DEV-TEST-123",
-    world_id: "mock-world-dev-123",
-    world_name: "Monde de Test DEV",
-    gm_user_id: "mock-gm-456",
-    module_version: "2.0.0-dev",
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 300, // 5 minutes
-    nonce: "mock-nonce-789",
-    jti: "mock-jti-abc",
-  };
-  /* eslint-enable camelcase */
-
-  // Base64 encode (simplified for mock purposes)
-  const mockToken = btoa(JSON.stringify(mockPayload));
-  const mockState = "mock-csrf-state-xyz";
-
-  return `foundry://connect?token=${mockToken}&state=${mockState}`;
-});
-
 const isUrlValid = computed(() => {
   const url = pairingUrl.value.trim();
   return url.startsWith("foundry://connect?") && url.includes("token=");
@@ -494,23 +436,5 @@ const handlePairing = async () => {
 const resetForm = () => {
   testResult.value = null;
   urlError.value = "";
-};
-
-const copyMockUrl = async () => {
-  try {
-    await navigator.clipboard.writeText(mockPairingUrl.value);
-    toast.add({
-      title: "URL copiée",
-      description: "L'URL de test a été copiée dans le presse-papier",
-      color: "success",
-    });
-  } catch (error) {
-    console.error("Failed to copy URL:", error);
-    toast.add({
-      title: "Erreur",
-      description: "Impossible de copier l'URL",
-      color: "error",
-    });
-  }
 };
 </script>

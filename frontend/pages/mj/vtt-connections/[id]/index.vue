@@ -366,9 +366,7 @@ const { getConnectionDetails, deleteConnection, regenerateApiKey } =
   useVttConnections();
 const toast = useToast();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- VTT connection has dynamic properties
 const connection = ref<VttConnection | null>(null);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Campaign structure from API
 const campaigns = ref<Array<{ id: string; name: string; createdAt: string }>>([]);
 const loading = ref(false);
 const showToken = ref(false);

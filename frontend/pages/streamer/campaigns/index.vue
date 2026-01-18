@@ -34,14 +34,6 @@
             <div class="flex items-center gap-3">
               <h2 class="text-xl font-semibold text-primary">Invitations en attente</h2>
               <UBadge color="primary" variant="soft">{{ invitations.length }}</UBadge>
-              <UBadge
-                v-if="showMockBadge"
-                color="info"
-                variant="soft"
-                size="xs"
-              >
-                Données de test
-              </UBadge>
             </div>
           </template>
 
@@ -239,14 +231,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 import AuthorizationCard from "@/components/AuthorizationCard.vue";
 import CharacterSelectionModal from "@/components/streamer/CharacterSelectionModal.vue";
 import { useCampaigns } from "@/composables/useCampaigns";
 import { useCampaignCharacters } from "@/composables/useCampaignCharacters";
-import { useMockData } from "@/composables/useMockData";
 import type { Campaign, CampaignInvitation, AuthorizationStatus } from "@/types";
-import type { MockDataModule } from "@/composables/useMockData";
 
 definePageMeta({
   layout: "authenticated" as const,
@@ -271,32 +261,18 @@ const {
   acceptInvitationWithCharacter,
 } = useCampaignCharacters();
 
-const { enabled: mockEnabled, loadMockData, withMockFallback, isMockData } = useMockData();
-
 const invitations = ref<CampaignInvitation[]>([]);
 const activeCampaigns = ref<Campaign[]>([]);
 const authorizationStatuses = ref<AuthorizationStatus[]>([]);
 const loading = ref(false);
 const loadingAuth = ref(false);
-const mockData = ref<MockDataModule | null>(null);
 
 // Character selection modal state
 const showCharacterModal = ref(false);
 const selectedInvitation = ref<CampaignInvitation | null>(null);
 const acceptLoading = ref(false);
 
-// Mode développement
-const isDev = computed(() => import.meta.env.DEV);
-
-// Vérifie si les données affichées sont mockées
-const showMockBadge = computed(() => {
-  return isDev.value && invitations.value.length > 0 && isMockData(invitations.value[0]?.id);
-});
-
 onMounted(async () => {
-  // Charger les données mockées si disponibles
-  mockData.value = await loadMockData();
-
   await loadData();
   await loadAuthorizationStatus();
 });
@@ -308,16 +284,11 @@ const loadData = async () => {
       fetchInvitations(),
       fetchActiveCampaigns(),
     ]);
-
-    // Utiliser le système centralisé de mock data
-    invitations.value = withMockFallback(invitationsData, mockData.value?.mockInvitations ?? []);
-    activeCampaigns.value = withMockFallback(campaignsData, mockData.value?.mockCampaigns ?? []);
+    invitations.value = invitationsData;
+    activeCampaigns.value = campaignsData;
   } catch {
-    // En cas d'erreur, utiliser les mock data si disponibles
-    if (mockEnabled.value && mockData.value) {
-      invitations.value = mockData.value.mockInvitations;
-      activeCampaigns.value = mockData.value.mockCampaigns;
-    }
+    invitations.value = [];
+    activeCampaigns.value = [];
   } finally {
     loading.value = false;
   }
@@ -328,19 +299,15 @@ const loadAuthorizationStatus = async () => {
   try {
     const data = await getAuthorizationStatus();
     // Transform snake_case API response to camelCase
-    const apiStatuses: AuthorizationStatus[] = data.map((item) => ({
+    authorizationStatuses.value = data.map((item): AuthorizationStatus => ({
       campaignId: item.campaign_id,
       campaignName: item.campaign_name,
       isAuthorized: item.is_authorized,
       expiresAt: item.expires_at,
       remainingSeconds: item.remaining_seconds,
     }));
-    authorizationStatuses.value = withMockFallback(apiStatuses, mockData.value?.mockAuthorizationStatuses ?? []);
   } catch {
-    // En cas d'erreur, utiliser les mock data si disponibles
-    if (mockEnabled.value && mockData.value) {
-      authorizationStatuses.value = mockData.value.mockAuthorizationStatuses;
-    }
+    authorizationStatuses.value = [];
   } finally {
     loadingAuth.value = false;
   }

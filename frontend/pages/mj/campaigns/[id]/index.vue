@@ -480,20 +480,16 @@
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useCampaigns } from "@/composables/useCampaigns";
-import { useMockData } from "@/composables/useMockData";
 import type { Campaign, CampaignMembership, StreamerSearchResult, LiveStatusMap } from "@/types";
-import type { MockDataModule } from "@/composables/useMockData";
 
 const _router = useRouter();
 const route = useRoute();
 const campaignId = route.params.id as string;
 
 const { getCampaignDetails, inviteStreamer, removeMember, searchTwitchStreamers, deleteCampaign, getLiveStatus } = useCampaigns();
-const { enabled: mockEnabled, loadMockData, withMockFallback } = useMockData();
 
 const campaign = ref<Campaign | null>(null);
 const liveStatus = ref<LiveStatusMap>({});
-const mockData = ref<MockDataModule | null>(null);
 
 definePageMeta({
   layout: "authenticated" as const,
@@ -578,9 +574,6 @@ const filteredSearchResults = computed(() => {
 
 // Load campaign and members
 onMounted(async () => {
-  // Charger les mock data si disponibles
-  mockData.value = await loadMockData();
-
   await loadMembers();
   startAutoRefresh();
 });
@@ -625,18 +618,10 @@ const fetchLiveStatus = async () => {
     console.log("[LiveStatus] Fetching live status for campaign:", campaignId);
     const status = await getLiveStatus(campaignId);
     console.log("[LiveStatus] Response:", JSON.stringify(status));
-    // Utiliser mock data si vide et mock activé
-    if (mockEnabled.value && Object.keys(status).length === 0 && mockData.value) {
-      liveStatus.value = mockData.value.mockLiveStatus;
-    } else {
-      liveStatus.value = status;
-    }
+    liveStatus.value = status;
   } catch (error) {
     console.error("[LiveStatus] Error fetching live status:", error);
-    // Fallback sur mock data en cas d'erreur
-    if (mockEnabled.value && mockData.value) {
-      liveStatus.value = mockData.value.mockLiveStatus;
-    }
+    liveStatus.value = {};
   }
 };
 
@@ -667,15 +652,11 @@ const loadMembers = async () => {
       fetchLiveStatus(),
     ]);
     campaign.value = data.campaign;
-    // Utiliser mock data si vide
-    members.value = withMockFallback(data.members, mockData.value?.mockMembers ?? []);
+    members.value = data.members;
   } catch (error) {
     console.error("Error loading campaign:", error);
-    // Fallback sur mock data en cas d'erreur
-    if (mockEnabled.value && mockData.value) {
-      campaign.value = mockData.value.mockCampaigns[0] ?? null;
-      members.value = mockData.value.mockMembers;
-    }
+    campaign.value = null;
+    members.value = [];
   } finally {
     loadingMembers.value = false;
   }

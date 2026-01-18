@@ -512,6 +512,9 @@ export default class VttConnectionsController {
         connection.tokenVersion
       )
 
+      // Build API URL - use API_URL env var if set, otherwise construct from HOST:PORT
+      const apiUrl = env.get('API_URL') || `http://${env.get('HOST')}:${env.get('PORT')}`
+
       // Store completed pairing for the module to pick up
       const completedData = {
         connectionId: connection.id,
@@ -519,6 +522,7 @@ export default class VttConnectionsController {
         sessionToken: tokens.sessionToken,
         refreshToken: tokens.refreshToken,
         expiresIn: tokens.expiresIn,
+        serverUrl: apiUrl,
       }
 
       await redis.setex(

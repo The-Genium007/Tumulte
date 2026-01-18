@@ -3,9 +3,9 @@
     <div class="space-y-6">
         <!-- Carte 1: Sélecteur de campagne -->
         <MjCampaignSelectorCard
-          v-if="campaignsLoaded && effectiveCampaigns.length > 0"
+          v-if="campaignsLoaded && campaigns.length > 0"
           v-model="selectedCampaignId"
-          :campaigns="effectiveCampaigns"
+          :campaigns="campaigns"
         />
 
         <!-- Carte 2: Dashboard de la campagne sélectionnée -->
@@ -18,7 +18,7 @@
         />
 
         <!-- No Campaign Message -->
-        <UCard v-else-if="campaignsLoaded && effectiveCampaigns.length === 0">
+        <UCard v-else-if="campaignsLoaded && campaigns.length === 0">
           <div class="text-center py-12">
             <div class="bg-yellow-light rounded-2xl mb-6 inline-block">
               <UIcon name="i-lucide-alert-circle" class="size-16 text-yellow-500" />
@@ -159,9 +159,7 @@ import { usePollControlStore } from "@/stores/pollControl";
 import { useWebSocket } from "@/composables/useWebSocket";
 import { useSupportTrigger } from "@/composables/useSupportTrigger";
 import { useActionButton } from "@/composables/useActionButton";
-import { useMockData } from "@/composables/useMockData";
 import { loggers } from "@/utils/logger";
-import type { MockDataModule } from "@/composables/useMockData";
 
 definePageMeta({
   layout: "authenticated" as const,
@@ -179,13 +177,6 @@ const {
 } = usePollTemplates();
 const { campaigns, fetchCampaigns, getCampaignMembers, getLiveStatus } = useCampaigns();
 const { triggerSupportForError } = useSupportTrigger();
-const { enabled: mockEnabled, loadMockData, withMockFallback } = useMockData();
-
-// Mock data
-const mockData = ref<MockDataModule | null>(null);
-
-// Local ref pour les campagnes effectives (permet le mock data fallback)
-const effectiveCampaigns = ref<typeof campaigns.value>([]);
 
 // WebSocket setup
 const { subscribeToPoll } = useWebSocket();
@@ -231,7 +222,7 @@ const { selectedCampaignId, loadFromStorage } = useSelectedCampaign();
 
 // Computed pour la campagne actuellement sélectionnée
 const currentCampaign = computed(() =>
-  effectiveCampaigns.value.find((c) => c.id === selectedCampaignId.value) || null
+  campaigns.value.find((c) => c.id === selectedCampaignId.value) || null
 );
 
 
@@ -280,18 +271,10 @@ const _formatAuthTime = (seconds: number | null): string => {
 const fetchLiveStatus = async (campaignId: string) => {
   try {
     const status = await getLiveStatus(campaignId);
-    // Utiliser mock data si vide et mock activé
-    if (mockEnabled.value && Object.keys(status).length === 0 && mockData.value) {
-      liveStatus.value = mockData.value.mockLiveStatus;
-    } else {
-      liveStatus.value = status;
-    }
+    liveStatus.value = status;
   } catch (error) {
     loggers.campaign.error("Error fetching live status:", error);
-    // Fallback sur mock data en cas d'erreur
-    if (mockEnabled.value && mockData.value) {
-      liveStatus.value = mockData.value.mockLiveStatus;
-    }
+    liveStatus.value = {};
   }
 };
 
@@ -303,22 +286,13 @@ const loadCampaignMembers = async (campaignId: string) => {
       getCampaignMembers(campaignId),
       fetchLiveStatus(campaignId),
     ]);
-    // Utiliser mock data si vide
     // Cast nécessaire car getCampaignMembers retourne un type légèrement différent de CampaignMembership
-    campaignMembers.value = withMockFallback(
-      members as unknown as CampaignMembership[],
-      mockData.value?.mockMembers ?? []
-    );
+    campaignMembers.value = members as unknown as CampaignMembership[];
     loggers.campaign.debug('Campaign members loaded:', campaignMembers.value);
     loggers.campaign.debug('Streamers with images:', selectedCampaignStreamers.value);
   } catch (error) {
     loggers.campaign.error('Failed to load campaign members:', error);
-    // Fallback sur mock data en cas d'erreur
-    if (mockEnabled.value && mockData.value) {
-      campaignMembers.value = mockData.value.mockMembers;
-    } else {
-      campaignMembers.value = [];
-    }
+    campaignMembers.value = [];
   } finally {
     streamersLoading.value = false;
   }
@@ -782,17 +756,8 @@ const startCountdown = () => {
 
 // Reprendre le countdown si un sondage était en cours lors du chargement
 onMounted(async () => {
-  // 0. Charger les mock data si disponibles
-  mockData.value = await loadMockData();
-
   // 1. Charger les campagnes d'abord
   await fetchCampaigns();
-  // Utiliser mock data si vide, sinon utiliser les campagnes de l'API
-  if (mockEnabled.value && campaigns.value.length === 0 && mockData.value) {
-    effectiveCampaigns.value = mockData.value.mockCampaigns;
-  } else {
-    effectiveCampaigns.value = [...campaigns.value];
-  }
   campaignsLoaded.value = true;
 
   // Charger la campagne depuis localStorage d'abord
@@ -800,11 +765,11 @@ onMounted(async () => {
 
   // Check if campaign is specified in URL (priorité sur localStorage)
   const campaignFromUrl = route.query.campaign as string | undefined;
-  if (campaignFromUrl && effectiveCampaigns.value.some((c) => c.id === campaignFromUrl)) {
+  if (campaignFromUrl && campaigns.value.some((c) => c.id === campaignFromUrl)) {
     selectedCampaignId.value = campaignFromUrl;
-  } else if (!selectedCampaignId.value || !effectiveCampaigns.value.some((c) => c.id === selectedCampaignId.value)) {
+  } else if (!selectedCampaignId.value || !campaigns.value.some((c) => c.id === selectedCampaignId.value)) {
     // Si pas de campagne valide dans localStorage, sélectionner la première
-    selectedCampaignId.value = effectiveCampaigns.value[0]?.id ?? null;
+    selectedCampaignId.value = campaigns.value[0]?.id ?? null;
   }
 
   // 2. Forcer le rechargement de l'état depuis localStorage côté client
