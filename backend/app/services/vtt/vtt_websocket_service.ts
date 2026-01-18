@@ -217,7 +217,19 @@ export default class VttWebSocketService {
   private async handleDiceRoll(socket: VttSocket, data: any): Promise<void> {
     try {
       const connectionId = socket.vttConnectionId!
-      logger.debug('Dice roll received', { connectionId, data })
+      logger.info('Dice roll received from VTT', {
+        connectionId,
+        characterName: data.characterName,
+        characterId: data.characterId,
+        campaignId: data.campaignId,
+        rollFormula: data.rollFormula,
+        result: data.result,
+        rollType: data.rollType,
+        isCritical: data.isCritical,
+        criticalType: data.criticalType,
+        diceResults: data.diceResults,
+        metadata: data.metadata,
+      })
 
       // Get the VTT connection
       const connection = await VttConnection.findOrFail(connectionId)

@@ -110,7 +110,8 @@ export default class DiceRollService {
         .preload('streamer')
 
       for (const assignment of allAssignments) {
-        transmit.broadcast(`streamer/${assignment.streamerId}/dice-rolls`, {
+        // Use same channel as polls (streamer:${id}:polls) so overlay receives it
+        transmit.broadcast(`streamer:${assignment.streamerId}:polls`, {
           event: 'dice-roll:critical',
           data: {
             ...basePayload,
@@ -121,7 +122,8 @@ export default class DiceRollService {
       }
     } else if (characterAssignment) {
       // Sinon, notifier uniquement le streamer assigné au personnage
-      transmit.broadcast(`streamer/${characterAssignment.streamerId}/dice-rolls`, {
+      // Use same channel as polls (streamer:${id}:polls) so overlay receives it
+      transmit.broadcast(`streamer:${characterAssignment.streamerId}:polls`, {
         event: 'dice-roll:new',
         data: {
           ...basePayload,
