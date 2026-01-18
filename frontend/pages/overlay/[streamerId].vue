@@ -17,18 +17,41 @@
         :is-ending="isEnding"
         @state-change="handlePollStateChange"
       />
+      <!-- DiceBox pour les éléments de type dice -->
+      <div
+        v-else-if="element.type === 'dice'"
+        class="dice-element"
+        :class="{ 'dice-visible': isDice3DVisible, 'dice-hidden': !isDice3DVisible }"
+        :style="getDiceContainerStyle(element)"
+      >
+        <DiceBox
+          :notation="currentDiceNotation"
+          :sounds="true"
+          :volume="50"
+          @roll-complete="handleDiceRollComplete"
+        />
+      </div>
     </template>
+
+    <!-- Dice Roll Overlay (VTT Integration) - Visibilité contrôlée par la queue -->
+    <DiceRollOverlay
+      :dice-roll="currentDiceRoll"
+      :visible="isPopup2DVisible"
+      @hidden="handleDiceRollHidden"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import LivePollElement from "@/overlay-studio/components/LivePollElement.vue";
+import DiceRollOverlay from "@/components/overlay/DiceRollOverlay.vue";
+// Note: LiveDiceElement a été remplacé par DiceBox - voir DiceBox.client.vue
 import { useWebSocket } from "@/composables/useWebSocket";
 import { useOverlayConfig } from "@/composables/useOverlayConfig";
 import { useWorkerTimer } from "@/composables/useWorkerTimer";
 import { useOBSEvents } from "@/composables/useOBSEvents";
-import type { PollStartEvent } from "@/types";
+import type { PollStartEvent, DiceRollEvent } from "@/types";
 
 // State pour l'indicateur de connexion
 const isWsConnected = ref(true);
@@ -49,6 +72,9 @@ definePageMeta({
 // Récupérer le streamerId depuis les paramètres de route
 const route = useRoute();
 const streamerId = computed(() => route.params.streamerId as string);
+
+// Mode preview activé via query param ?preview=true
+const _isPreviewMode = computed(() => route.query.preview === "true");
 
 // Charger la configuration de l'overlay
 const { visibleElements, fetchConfig } = useOverlayConfig(streamerId);
@@ -77,7 +103,60 @@ const activePoll = ref<
 const percentages = ref<Record<number, number>>({});
 const isEnding = ref(false);
 
+// =============================================
+// Système de queue unifiée pour les dice rolls
+// Synchronise les dés 3D (DiceBox) et pop-ups 2D
+// =============================================
+
+// Queue unifiée des dice rolls à afficher
+const diceRollQueue = ref<DiceRollEvent[]>([]);
+
+// Roll actuellement affiché (3D + 2D synchronisés)
+const currentDiceRoll = ref<DiceRollEvent | null>(null);
+
+// Notation actuelle pour DiceBox (format: "2d20@5,15" pour résultats forcés)
+const currentDiceNotation = ref("");
+
+// État de visibilité des dés 3D (pour le fade out)
+const isDice3DVisible = ref(false);
+
+// État de visibilité de la pop-up 2D
+const isPopup2DVisible = ref(false);
+
+// Flag indiquant si un roll est en cours de traitement
+const isProcessingRoll = ref(false);
+
+// Timer pour la durée d'affichage du roll
+const rollDisplayTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
+
+// Constantes de timing
+const ROLL_DISPLAY_DURATION = 5000; // 5s d'affichage après animation 3D
+const ROLL_FADE_DURATION = 1500; // 1.5s de fade out (doit correspondre au CSS)
+const ROLL_DELAY_BETWEEN = 500; // 0.5s entre deux rolls
+
 const { subscribeToStreamerPolls } = useWebSocket();
+
+// Style du container de dés basé sur la position de l'élément
+// Note: DiceBox occupe tout l'espace disponible, la position définit le coin supérieur gauche
+const getDiceContainerStyle = (element: { position: { x: number; y: number }; scale: { x: number; y: number } }) => {
+  // Taille par défaut pour le DiceBox (1920x1080 = format overlay standard)
+  const baseWidth = 1920;
+  const baseHeight = 1080;
+  return {
+    position: 'absolute' as const,
+    left: `${element.position.x}px`,
+    top: `${element.position.y}px`,
+    width: `${baseWidth * element.scale.x}px`,
+    height: `${baseHeight * element.scale.y}px`,
+  };
+};
+
+// Handler pour quand DiceBox termine un lancer (animation 3D terminée)
+const handleDiceRollComplete = (results: unknown) => {
+  console.log("[Overlay] DiceBox 3D animation complete:", results);
+  // L'animation 3D est terminée, maintenant on attend ROLL_DISPLAY_DURATION
+  // avant de lancer le fade out (le timer est déjà programmé dans processNextRoll)
+};
 
 // Handler pour les changements d'état du poll (émis par LivePollElement)
 const handlePollStateChange = (newState: string) => {
@@ -92,6 +171,93 @@ const handlePollStateChange = (newState: string) => {
       console.log("[Overlay] Poll state cleared, ready for next poll");
     }, 100);
   }
+};
+
+/**
+ * Ajoute un dice roll à la queue unifiée
+ * Si aucun roll n'est en cours, lance immédiatement le traitement
+ */
+const handleDiceRoll = (data: DiceRollEvent) => {
+  console.log("[Overlay] Dice roll received:", data);
+
+  // SECURITY: Never display hidden rolls on overlay (GM secret rolls)
+  if (data.isHidden) {
+    console.log("[Overlay] Ignoring hidden roll (GM secret)");
+    return;
+  }
+
+  // Ajouter à la queue
+  diceRollQueue.value.push(data);
+  console.log("[Overlay] Dice roll added to queue, queue size:", diceRollQueue.value.length);
+
+  // Si aucun roll n'est en cours, lancer le traitement
+  if (!isProcessingRoll.value) {
+    processNextRoll();
+  }
+};
+
+/**
+ * Traite le prochain roll dans la queue
+ * Lance simultanément l'animation 3D et affiche la pop-up 2D
+ */
+const processNextRoll = () => {
+  // Vérifier s'il y a des rolls en attente
+  if (diceRollQueue.value.length === 0) {
+    console.log("[Overlay] Queue empty, nothing to process");
+    isProcessingRoll.value = false;
+    return;
+  }
+
+  isProcessingRoll.value = true;
+
+  // Récupérer le prochain roll
+  const roll = diceRollQueue.value.shift()!;
+  console.log("[Overlay] Processing roll:", roll.rollFormula, "- Queue remaining:", diceRollQueue.value.length);
+
+  // 1. Définir le roll actuel (utilisé par la pop-up 2D)
+  currentDiceRoll.value = roll;
+
+  // 2. Construire la notation DiceBox avec résultats forcés
+  let notation = roll.rollFormula;
+  if (roll.diceResults && roll.diceResults.length > 0) {
+    notation += "@" + roll.diceResults.join(",");
+  }
+  currentDiceNotation.value = notation;
+
+  // 3. Afficher les deux éléments simultanément (3D + 2D)
+  isDice3DVisible.value = true;
+  isPopup2DVisible.value = true;
+
+  // 4. Programmer la fin d'affichage
+  // On attend ROLL_DISPLAY_DURATION puis on lance le fade out
+  if (rollDisplayTimeout.value) {
+    clearTimeout(rollDisplayTimeout.value);
+  }
+
+  rollDisplayTimeout.value = setTimeout(() => {
+    // Lancer le fade out
+    isDice3DVisible.value = false;
+    isPopup2DVisible.value = false;
+
+    // Après le fade, passer au roll suivant
+    setTimeout(() => {
+      currentDiceRoll.value = null;
+      currentDiceNotation.value = "";
+
+      // Traiter le prochain roll après un petit délai
+      setTimeout(() => {
+        processNextRoll();
+      }, ROLL_DELAY_BETWEEN);
+    }, ROLL_FADE_DURATION);
+  }, ROLL_DISPLAY_DURATION);
+};
+
+/**
+ * Handler appelé quand la pop-up 2D a fini sa transition de sortie
+ * (Non utilisé dans le nouveau système mais gardé pour compatibilité)
+ */
+const handleDiceRollHidden = () => {
+  console.log("[Overlay] Dice roll popup transition complete");
 };
 
 // Variable pour stocker la fonction de désabonnement
@@ -240,6 +406,26 @@ const setupWebSocketSubscription = () => {
         isEnding.value = false;
       }
     },
+
+    // VTT Integration - Dice Rolls
+    onDiceRoll: (data) => {
+      handleDiceRoll(data);
+    },
+
+    onDiceRollCritical: (data) => {
+      // SECURITY: Never display hidden rolls on overlay (GM secret rolls)
+      if (data.isHidden) {
+        console.log("[Overlay] Ignoring hidden critical roll (GM secret)");
+        return;
+      }
+
+      // Les rolls critiques passent devant la queue
+      if (currentDiceRoll.value) {
+        diceRollQueue.value.unshift(data); // Ajouter au début de la queue
+      } else {
+        currentDiceRoll.value = data;
+      }
+    },
   });
 
   isWsConnected.value = true;
@@ -326,6 +512,11 @@ onUnmounted(() => {
   // Arrêter le worker timer (cleanup automatique via le composable)
   workerTimer.stop();
 
+  // Nettoyer le timer d'affichage des rolls
+  if (rollDisplayTimeout.value) {
+    clearTimeout(rollDisplayTimeout.value);
+  }
+
   // Retirer le listener de visibilité
   document.removeEventListener("visibilitychange", handleVisibilityChange);
 });
@@ -373,5 +564,21 @@ html, body, #__nuxt {
     transform: scale(1.2);
     opacity: 1;
   }
+}
+
+/* Container pour DiceBox */
+.dice-element {
+  z-index: 10;
+  transition: opacity 1.5s ease-out;
+}
+
+/* États de visibilité des dés 3D */
+.dice-visible {
+  opacity: 1;
+}
+
+.dice-hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 </style>

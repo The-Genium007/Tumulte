@@ -3,7 +3,6 @@ import type { Poll } from "~/types";
 import { storeToRefs } from "pinia";
 import { usePollsStore } from "~/stores/polls";
 import { usePollControlStore } from "~/stores/pollControl";
-import { useMockData } from "@/composables/useMockData";
 import { useWebSocket } from "@/composables/useWebSocket";
 
 const props = defineProps<{
@@ -15,7 +14,6 @@ const toast = useToast();
 const pollsStore = usePollsStore();
 const pollControlStore = usePollControlStore();
 const { pollStatus: _pollStatus } = storeToRefs(pollControlStore);
-const { enabled: mockEnabled, loadMockData } = useMockData();
 const { subscribeToPoll } = useWebSocket();
 
 // State
@@ -27,21 +25,11 @@ const cancelling = ref(false);
 // WebSocket subscription cleanup function
 let wsUnsubscribe: (() => Promise<void>) | null = null;
 
-// Computed - use mock data as fallback when enabled and store is empty
-const polls = computed(() => {
-  const storePolls = pollsStore.sortedPolls;
-  if (mockEnabled.value && storePolls.length === 0) {
-    // Filter mock polls by campaign ID
-    return mockPolls.value.filter((p) => p.campaignId === props.campaignId);
-  }
-  return storePolls;
-});
+// Computed
+const polls = computed(() => pollsStore.sortedPolls);
 const loading = computed(() => pollsStore.loading);
 const activePollInstance = computed(() => pollsStore.activePollInstance);
 const lastLaunchedPollId = computed(() => pollsStore.lastLaunchedPollId);
-
-// Mock polls data
-const mockPolls = ref<Poll[]>([]);
 
 /**
  * Check if a poll is the active one
@@ -181,13 +169,6 @@ const handleDeleteConfirm = async (pollId: string) => {
 
 // Fetch polls on mount
 onMounted(async () => {
-  // Load mock data first
-  const mockData = await loadMockData();
-  if (mockData?.mockPolls) {
-    mockPolls.value = mockData.mockPolls as Poll[];
-  }
-
-  // Then fetch from API
   await pollsStore.fetchPolls(props.campaignId);
 
   // If there's an active poll from backend, subscribe to its WebSocket events

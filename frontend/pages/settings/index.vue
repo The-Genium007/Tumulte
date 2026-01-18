@@ -341,13 +341,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useSettings } from '@/composables/useSettings'
-import { useMockData } from '@/composables/useMockData'
-import type { MockDataModule } from '@/composables/useMockData'
-import type { User } from '@/types'
 
 definePageMeta({
   layout: "authenticated" as const,
@@ -355,23 +352,8 @@ definePageMeta({
 });
 
 const _router = useRouter()
-const { user: authUser, logout } = useAuth()
+const { user, logout } = useAuth()
 const { revokeTwitchAccess, deleteAccount } = useSettings()
-const { enabled: mockEnabled, loadMockData } = useMockData()
-
-const mockData = ref<MockDataModule | null>(null)
-
-// User avec fallback sur mock data
-const user = computed<User | null>(() => {
-  if (mockEnabled.value && !authUser.value && mockData.value) {
-    return mockData.value.mockUsers.streamerUser
-  }
-  return authUser.value
-})
-
-onMounted(async () => {
-  mockData.value = await loadMockData()
-})
 
 const showDeleteModal = ref(false)
 const deleteConfirmation = ref('')

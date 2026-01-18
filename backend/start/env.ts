@@ -91,6 +91,13 @@ export default await Env.create(new URL('../', import.meta.url), {
 
   /*
   |----------------------------------------------------------
+  | API URL (public URL for VTT modules to connect)
+  |----------------------------------------------------------
+  */
+  API_URL: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
   | Push Notifications (VAPID)
   |----------------------------------------------------------
   */

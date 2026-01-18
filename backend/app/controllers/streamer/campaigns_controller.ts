@@ -5,6 +5,14 @@ import { MembershipService } from '#services/campaigns/membership_service'
 import { StreamerRepository } from '#repositories/streamer_repository'
 import { CampaignDto } from '#dtos/campaigns/campaign_dto'
 import { CampaignInvitationDto } from '#dtos/campaigns/campaign_invitation_dto'
+import { CharacterDto } from '#dtos/characters/character_dto'
+import { campaignMembership as CampaignMembership } from '#models/campaign_membership'
+import { campaign as Campaign } from '#models/campaign'
+import CharacterAssignment from '#models/character_assignment'
+import Character from '#models/character'
+import { pollInstance as PollInstance } from '#models/poll_instance'
+import { acceptInvitationSchema } from '#validators/streamer/accept_invitation_validator'
+import { updateCharacterSchema } from '#validators/streamer/update_character_validator'
 
 /**
  * Contrôleur pour la gestion des campagnes (Streamer)
@@ -36,10 +44,11 @@ export default class CampaignsController {
   }
 
   /**
-   * Accepte une invitation
+   * Accepte une invitation avec choix de personnage
    * POST /api/v2/streamer/invitations/:id/accept
+   * Body: { characterId: string }
    */
-  async acceptInvitation({ auth, params, response }: HttpContext) {
+  async acceptInvitation({ auth, params, request, response }: HttpContext) {
     const streamer = await this.streamerRepository.findByUserId(auth.user!.id)
 
     if (!streamer) {
@@ -47,9 +56,16 @@ export default class CampaignsController {
     }
 
     try {
-      await this.membershipService.acceptInvitation(params.id, streamer.id)
+      // Valider le body avec le characterId requis
+      const { characterId } = acceptInvitationSchema.parse(request.body())
 
-      return response.ok({ message: 'Invitation accepted' })
+      await this.membershipService.acceptInvitationWithCharacter(
+        params.id,
+        streamer.id,
+        characterId
+      )
+
+      return response.ok({ message: 'Invitation accepted and character assigned' })
     } catch (error) {
       return response.badRequest({
         error: error instanceof Error ? error.message : 'Failed to accept invitation',
@@ -80,20 +96,56 @@ export default class CampaignsController {
   }
 
   /**
-   * Liste les campagnes actives du streamer
+   * Liste les campagnes actives du streamer (membre OU propriétaire)
    * GET /api/v2/streamer/campaigns
    */
   async index({ auth, response }: HttpContext) {
-    const streamer = await this.streamerRepository.findByUserId(auth.user!.id)
+    const user = auth.user!
+    const streamer = await this.streamerRepository.findByUserId(user.id)
 
     if (!streamer) {
       return response.notFound({ error: 'Streamer profile not found' })
     }
 
+    // Récupérer les campagnes où l'utilisateur est membre actif
     const memberships = await this.membershipService.listActiveCampaigns(streamer.id)
+    const memberCampaigns = memberships.map((m) => ({
+      ...CampaignDto.fromModel(m.campaign),
+      isOwner: false,
+    }))
+
+    // Récupérer les campagnes où l'utilisateur est propriétaire
+    const ownedCampaigns = await Campaign.query()
+      .where('ownerId', user.id)
+      .orderBy('created_at', 'desc')
+
+    const ownerCampaigns = ownedCampaigns.map((c) => ({
+      ...CampaignDto.fromModel(c),
+      isOwner: true,
+    }))
+
+    // Fusionner et dédupliquer (un MJ pourrait théoriquement être aussi membre)
+    const allCampaignIds = new Set<string>()
+    const allCampaigns = []
+
+    // Ajouter d'abord les campagnes possédées (priorité)
+    for (const campaign of ownerCampaigns) {
+      if (!allCampaignIds.has(campaign.id)) {
+        allCampaignIds.add(campaign.id)
+        allCampaigns.push(campaign)
+      }
+    }
+
+    // Ajouter les campagnes où on est membre
+    for (const campaign of memberCampaigns) {
+      if (!allCampaignIds.has(campaign.id)) {
+        allCampaignIds.add(campaign.id)
+        allCampaigns.push(campaign)
+      }
+    }
 
     return response.ok({
-      data: memberships.map((m) => CampaignDto.fromModel(m.campaign)),
+      data: allCampaigns,
     })
   }
 
@@ -138,5 +190,140 @@ export default class CampaignsController {
       // eslint-disable-next-line camelcase -- API response format
       data: { overlay_url: overlayUrl },
     })
+  }
+
+  /**
+   * Récupère les paramètres de campagne pour le streamer ou le MJ (propriétaire)
+   * GET /api/v2/streamer/campaigns/:campaignId/settings
+   */
+  async getSettings({ auth, params, response }: HttpContext) {
+    const user = auth.user!
+    const streamer = await this.streamerRepository.findByUserId(user.id)
+
+    if (!streamer) {
+      return response.notFound({ error: 'Streamer profile not found' })
+    }
+
+    // Vérifier que le streamer est membre actif OU propriétaire de la campagne
+    const membership = await CampaignMembership.query()
+      .where('campaignId', params.campaignId)
+      .where('streamerId', streamer.id)
+      .where('status', 'ACTIVE')
+      .preload('campaign')
+      .first()
+
+    const ownedCampaign = await Campaign.query()
+      .where('id', params.campaignId)
+      .where('ownerId', user.id)
+      .first()
+
+    if (!membership && !ownedCampaign) {
+      return response.notFound({ error: 'Campaign not found or not a member' })
+    }
+
+    // Utiliser la campagne du membership ou celle possédée
+    const campaign = membership?.campaign || ownedCampaign!
+
+    // Récupérer l'assignation de personnage actuelle
+    const assignment = await CharacterAssignment.query()
+      .where('campaignId', params.campaignId)
+      .where('streamerId', streamer.id)
+      .preload('character')
+      .first()
+
+    // Vérifier s'il y a un poll actif (bloque le changement de personnage)
+    const activePoll = await PollInstance.query()
+      .where('campaignId', params.campaignId)
+      .where('status', 'RUNNING')
+      .first()
+
+    return response.ok({
+      campaign: CampaignDto.fromModel(campaign),
+      assignedCharacter: assignment ? CharacterDto.fromModel(assignment.character) : null,
+      canChangeCharacter: !activePoll,
+      isOwner: !!ownedCampaign,
+    })
+  }
+
+  /**
+   * Modifie le personnage assigné au streamer ou MJ pour une campagne
+   * PUT /api/v2/streamer/campaigns/:campaignId/character
+   * Body: { characterId: string }
+   */
+  async updateCharacter({ auth, params, request, response }: HttpContext) {
+    const user = auth.user!
+    const streamer = await this.streamerRepository.findByUserId(user.id)
+
+    if (!streamer) {
+      return response.notFound({ error: 'Streamer profile not found' })
+    }
+
+    // Vérifier que le streamer est membre actif OU propriétaire de la campagne
+    const membership = await CampaignMembership.query()
+      .where('campaignId', params.campaignId)
+      .where('streamerId', streamer.id)
+      .where('status', 'ACTIVE')
+      .first()
+
+    const ownedCampaign = await Campaign.query()
+      .where('id', params.campaignId)
+      .where('ownerId', user.id)
+      .first()
+
+    if (!membership && !ownedCampaign) {
+      return response.notFound({ error: 'Campaign not found or not a member' })
+    }
+
+    // Vérifier qu'aucun poll n'est actif
+    const activePoll = await PollInstance.query()
+      .where('campaignId', params.campaignId)
+      .where('status', 'RUNNING')
+      .first()
+
+    if (activePoll) {
+      return response.badRequest({
+        error: 'Cannot change character while a poll is active',
+        pollId: activePoll.id,
+      })
+    }
+
+    try {
+      // Valider le body
+      const { characterId } = updateCharacterSchema.parse(request.body())
+
+      // Vérifier que le personnage existe et est un PJ de cette campagne
+      const character = await Character.query()
+        .where('id', characterId)
+        .where('campaignId', params.campaignId)
+        .where('characterType', 'pc')
+        .first()
+
+      if (!character) {
+        return response.notFound({ error: 'Character not found or not available' })
+      }
+
+      // Mettre à jour ou créer l'assignation
+      const existingAssignment = await CharacterAssignment.query()
+        .where('campaignId', params.campaignId)
+        .where('streamerId', streamer.id)
+        .first()
+
+      if (existingAssignment) {
+        existingAssignment.characterId = characterId
+        await existingAssignment.save()
+      } else {
+        await CharacterAssignment.create({
+          characterId,
+          streamerId: streamer.id,
+          campaignId: params.campaignId,
+        })
+      }
+
+      return response.ok({ message: 'Character updated successfully' })
+    } catch (error) {
+      return response.badRequest({
+        error: error instanceof Error ? error.message : 'Failed to update character',
+      })
+    }
   }
 }

@@ -71,7 +71,6 @@ export default [
         useSupportTrigger: 'readonly',
         useSelectedCampaign: 'readonly',
         useOfflineFirst: 'readonly',
-        useMockData: 'readonly',
         useDevice: 'readonly',
         usePwaInstall: 'readonly',
         useLoadingScreen: 'readonly',
@@ -195,12 +194,21 @@ export default [
         {
           "selector": "objectLiteralProperty",
           "format": null
+        },
+        {
+          // Allow Vue emit convention "update:*"
+          "selector": "typeProperty",
+          "format": null,
+          "filter": {
+            "regex": "^update:",
+            "match": true
+          }
         }
       ],
 
       // Allow single-word component names for UI components and pages
       "vue/multi-word-component-names": ["error", {
-        "ignores": ["Button", "Card", "Modal", "default", "authenticated", "index", "home", "about", "login", "create", "edit", "callback", "campaigns", "[id]", "[pollId]", "[sessionId]", "studio"]
+        "ignores": ["Button", "Card", "Modal", "default", "authenticated", "index", "home", "about", "login", "create", "edit", "callback", "campaigns", "[id]", "[pollId]", "[sessionId]", "studio", "import", "character", "settings"]
       }],
 
       // Allow unused vars with underscore prefix
@@ -218,7 +226,9 @@ export default [
       ".output/**",
       "coverage/**",
       "nuxt.config.ts",
-      "tailwind.config.ts"
+      "tailwind.config.ts",
+      // DiceBox - code externe copié tel quel (voir ~/Downloads/dice-box-threejs-main)
+      "lib/dicebox/**"
     ]
   }
 ];

@@ -26,6 +26,7 @@ export interface Campaign {
   ownerName?: string;
   joinedAt?: string;
   createdAt: string;
+  isOwner?: boolean;
 }
 
 export interface CampaignMembership {
@@ -277,4 +278,42 @@ export interface PreviewCommandEvent {
   command: PreviewCommand;
   duration?: number;
   mockData?: PreviewMockData;
+}
+
+// Character types (VTT Integration)
+export interface Character {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  characterType: "pc" | "npc";
+  vttCharacterId: string;
+}
+
+export interface CampaignSettings {
+  campaign: Campaign;
+  assignedCharacter: Character | null;
+  canChangeCharacter: boolean;
+}
+
+// Dice Roll types (VTT Integration)
+export interface DiceRollEvent {
+  id: string;
+  characterId: string;
+  characterName: string;
+  characterAvatar: string | null;
+  rollFormula: string;
+  result: number;
+  diceResults: number[];
+  isCritical: boolean;
+  criticalType: "success" | "failure" | null;
+  isHidden: boolean;
+  rollType: string | null;
+  rolledAt: string;
+  isOwnCharacter?: boolean;
+  // Enriched flavor data from FlavorParser
+  skill: string | null; // Normalized skill key (e.g., "perception")
+  skillRaw: string | null; // Raw skill name for display (e.g., "Perception")
+  ability: string | null; // Normalized ability key (e.g., "dexterity")
+  abilityRaw: string | null; // Raw ability name for display (e.g., "Dextérité")
+  modifiers: string[] | null; // Detected modifiers (e.g., ["+2", "-1"])
 }

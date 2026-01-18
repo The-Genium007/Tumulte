@@ -28,6 +28,16 @@
         <h1 class="toolbar-title">Overlay Studio</h1>
         <UBadge color="warning" variant="soft">Beta</UBadge>
 
+        <!-- Bouton Nouveau -->
+        <UButton
+          color="neutral"
+          variant="ghost"
+          icon="i-lucide-file-plus"
+          size="sm"
+          title="Nouvelle configuration (vider le canvas)"
+          @click="handleNewCanvas"
+        />
+
         <!-- Undo/Redo buttons -->
         <div class="undo-redo-buttons">
           <UButton
@@ -140,6 +150,18 @@
           size="sm"
           to="/streamer/overlay-preview"
         />
+        <!-- Indicateur de sauvegarde -->
+        <div v-if="isDirty || isAutoSaving" class="save-indicator">
+          <template v-if="isAutoSaving">
+            <UIcon name="i-lucide-loader-2" class="size-4 animate-spin text-primary-500" />
+            <span class="save-indicator-text">Sauvegarde...</span>
+          </template>
+          <template v-else>
+            <span class="save-indicator-dot" />
+            <span class="save-indicator-text">Non sauvegardé</span>
+          </template>
+        </div>
+
         <UButton
           color="primary"
           icon="i-lucide-save"
@@ -151,13 +173,67 @@
       </div>
     </header>
 
+    <!-- Modal: Modifications non sauvegardées -->
+    <UnsavedChangesModal
+      v-model:open="showUnsavedModal"
+      @confirm="confirmLeave"
+      @cancel="cancelLeave"
+    />
+
+    <!-- Modal: Prévisualisation des dés -->
+    <UModal v-model:open="showDicePreview" :ui="{ content: 'sm:max-w-2xl' }">
+      <template #header>
+        <div class="flex items-center gap-2">
+          <UIcon name="i-lucide-dice-5" class="size-5 text-primary-500" />
+          <h3 class="text-lg font-semibold">Prévisualisation des dés</h3>
+        </div>
+      </template>
+
+      <template #body>
+        <div class="dice-preview-container">
+          <ClientOnly>
+            <DiceBox
+              ref="diceBoxRef"
+              :sounds="true"
+              :volume="50"
+              @roll-complete="handleDiceRollComplete"
+              @ready="handleDiceBoxReady"
+            />
+          </ClientOnly>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex justify-between items-center w-full">
+          <div class="text-sm text-muted">
+            <span v-if="dicePreviewNotation">{{ dicePreviewNotation }}</span>
+          </div>
+          <div class="flex gap-2">
+            <UButton
+              color="primary"
+              icon="i-lucide-dice-5"
+              label="Relancer"
+              :disabled="!diceBoxReady"
+              @click="rollDiceAgain"
+            />
+            <UButton
+              color="neutral"
+              variant="ghost"
+              label="Fermer"
+              @click="showDicePreview = false"
+            />
+          </div>
+        </div>
+      </template>
+    </UModal>
+
     <!-- Modal: Nouvelle configuration -->
     <UModal v-model:open="showNewConfigModal">
       <template #header>
         <h3 class="text-lg font-semibold">Nouvelle configuration</h3>
       </template>
 
-      <div class="p-4">
+      <template #body>
         <UFormField label="Nom de la configuration">
           <UInput
             v-model="newConfigName"
@@ -170,7 +246,7 @@
             @keyup.enter="createNewConfig"
           />
         </UFormField>
-      </div>
+      </template>
 
       <template #footer>
         <div class="flex justify-end gap-2">
@@ -268,113 +344,65 @@
       <!-- Sidebar droite - Inspecteur -->
       <aside class="studio-inspector" :class="{ collapsed: !showInspector }">
         <div v-if="selectedElement" class="inspector-content">
+          <!-- Header avec nom du calque et bouton supprimer -->
+          <div class="inspector-header">
+            <div class="inspector-header-info">
+              <UIcon :name="getElementIcon(selectedElement.type)" class="size-5 text-primary-500" />
+              <h2 class="inspector-element-name">{{ selectedElement.name }}</h2>
+            </div>
+            <button
+              class="inspector-delete-btn"
+              title="Supprimer"
+              @click="deleteSelected"
+            >
+              <UIcon name="i-lucide-trash-2" class="size-4" />
+            </button>
+          </div>
+
           <h3 class="sidebar-title">Propriétés</h3>
 
-          <!-- Nom -->
-          <div class="inspector-field">
-            <label>Nom</label>
-            <UInput
-              :model-value="selectedElement.name"
-              size="sm"
-              :ui="{
-                root: 'ring-0 border-0 rounded-lg overflow-hidden',
-                base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
-              }"
-              @update:model-value="updateName"
+          <!-- Inspecteur spécifique au type d'élément -->
+          <template v-if="selectedElement.type === 'dice'">
+            <DiceInspector
+              :colors="(selectedElement.properties as DiceProperties).colors"
+              :animations="(selectedElement.properties as DiceProperties).animations"
+              :audio="(selectedElement.properties as DiceProperties).audio"
+              :result-text="(selectedElement.properties as DiceProperties).resultText"
+              :mock-data="(selectedElement.properties as DiceProperties).mockData"
+              @update-colors="updateDiceColors"
+              @update-animations="updateDiceAnimations"
+              @update-audio="updateDiceAudio"
+              @update-result-text="updateDiceResultText"
+              @update-mock-data="updateDiceMockData"
+              @play-preview="playDicePreview"
             />
-          </div>
+          </template>
 
-          <!-- Position -->
-          <div class="inspector-group">
-            <label>Position</label>
-            <div class="vector-inputs">
-              <div class="vector-input">
-                <span>X</span>
-                <UInput
-                  type="number"
-                  :model-value="selectedElement.position.x"
-                  size="sm"
-                  step="0.1"
-                  :ui="{
-                    root: 'ring-0 border-0 rounded-lg overflow-hidden',
-                    base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
-                  }"
-                  @update:model-value="(v: string | number) => updatePosition('x', Number(v))"
-                />
-              </div>
-              <div class="vector-input">
-                <span>Y</span>
-                <UInput
-                  type="number"
-                  :model-value="selectedElement.position.y"
-                  size="sm"
-                  step="0.1"
-                  :ui="{
-                    root: 'ring-0 border-0 rounded-lg overflow-hidden',
-                    base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
-                  }"
-                  @update:model-value="(v: string | number) => updatePosition('y', Number(v))"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Scale -->
-          <div class="inspector-group">
-            <label>Échelle</label>
-            <div class="vector-inputs">
-              <div class="vector-input">
-                <span>X</span>
-                <UInput
-                  type="number"
-                  :model-value="selectedElement.scale.x"
-                  size="sm"
-                  step="0.1"
-                  :ui="{
-                    root: 'ring-0 border-0 rounded-lg overflow-hidden',
-                    base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
-                  }"
-                  @update:model-value="(v: string | number) => updateScale('x', Number(v))"
-                />
-              </div>
-              <div class="vector-input">
-                <span>Y</span>
-                <UInput
-                  type="number"
-                  :model-value="selectedElement.scale.y"
-                  size="sm"
-                  step="0.1"
-                  :ui="{
-                    root: 'ring-0 border-0 rounded-lg overflow-hidden',
-                    base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
-                  }"
-                  @update:model-value="(v: string | number) => updateScale('y', Number(v))"
-                />
-              </div>
-            </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="inspector-actions">
-            <UButton
-              color="neutral"
-              variant="soft"
-              icon="i-lucide-copy"
-              label="Dupliquer"
-              size="sm"
-              block
-              @click="duplicateSelected"
+          <template v-else-if="selectedElement.type === 'poll'">
+            <PollInspector
+              :question-style="(selectedElement.properties as PollProperties).questionStyle"
+              :option-box-style="(selectedElement.properties as PollProperties).optionBoxStyle"
+              :option-text-style="(selectedElement.properties as PollProperties).optionTextStyle"
+              :option-percentage-style="(selectedElement.properties as PollProperties).optionPercentageStyle"
+              :option-spacing="(selectedElement.properties as PollProperties).optionSpacing"
+              :medal-colors="(selectedElement.properties as PollProperties).medalColors"
+              :progress-bar="(selectedElement.properties as PollProperties).progressBar"
+              :animations="(selectedElement.properties as PollProperties).animations"
+              :layout="(selectedElement.properties as PollProperties).layout"
+              :mock-data="(selectedElement.properties as PollProperties).mockData"
+              @update-question-style="updatePollQuestionStyle"
+              @update-option-box-style="updatePollOptionBoxStyle"
+              @update-option-text-style="updatePollOptionTextStyle"
+              @update-percentage-style="updatePollPercentageStyle"
+              @update-option-spacing="updatePollOptionSpacing"
+              @update-medal-colors="updatePollMedalColors"
+              @update-progress-bar="updatePollProgressBar"
+              @update-animations="updatePollAnimations"
+              @update-layout="updatePollLayout"
+              @update-mock-data="updatePollMockData"
+              @play-preview="playPollPreview"
             />
-            <UButton
-              color="error"
-              variant="soft"
-              icon="i-lucide-trash-2"
-              label="Supprimer"
-              size="sm"
-              block
-              @click="deleteSelected"
-            />
-          </div>
+          </template>
         </div>
 
         <div v-else class="inspector-empty">
@@ -387,13 +415,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, provide, ref } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from "vue";
 import { useOverlayStudioStore } from "~/overlay-studio/stores/overlayStudio";
 import { useOverlayStudioApi } from "~/overlay-studio/composables/useOverlayStudioApi";
 import { useUndoRedo, UNDO_REDO_KEY } from "~/overlay-studio/composables/useUndoRedo";
+import { useUnsavedChangesGuard } from "~/overlay-studio/composables/useUnsavedChangesGuard";
 import { useDevice } from "~/composables/useDevice";
 import StudioCanvas from "~/overlay-studio/components/StudioCanvas.vue";
-import type { OverlayElementType } from "~/overlay-studio/types";
+import DiceInspector from "~/overlay-studio/components/inspector/DiceInspector.vue";
+import PollInspector from "~/overlay-studio/components/inspector/PollInspector.vue";
+import UnsavedChangesModal from "~/overlay-studio/components/UnsavedChangesModal.vue";
+import type { OverlayElementType, DiceProperties, PollProperties } from "~/overlay-studio/types";
 
 definePageMeta({
   layout: "studio" as const,
@@ -410,6 +442,13 @@ const toast = useToast();
 const undoRedo = useUndoRedo(store);
 provide(UNDO_REDO_KEY, undoRedo);
 const { canUndo, canRedo, undoLabel, redoLabel, undo, redo, pushSnapshot, initialize: initializeHistory } = undoRedo;
+
+// Guard pour les modifications non sauvegardées
+const { showUnsavedModal, confirmLeave, cancelLeave } = useUnsavedChangesGuard();
+
+// État dirty du store
+const isDirty = computed(() => store.isDirty);
+const isAutoSaving = computed(() => api.autoSaving.value);
 
 // Undo/Redo handlers
 const handleUndo = () => {
@@ -428,6 +467,12 @@ const showNewConfigModal = ref(false);
 const newConfigName = ref("");
 const showInspector = ref(false);
 
+// État pour la prévisualisation des dés
+const showDicePreview = ref(false);
+const diceBoxRef = ref<{ roll: (notation: string) => Promise<void>; clear: () => void } | null>(null);
+const diceBoxReady = ref(false);
+const dicePreviewNotation = ref("");
+
 // État du store
 const elements = computed(() => store.elements);
 const selectedElementId = computed(() => store.selectedElementId);
@@ -439,7 +484,19 @@ const loading = computed(() => api.loading.value);
 // NOTE: Ajouter de nouveaux types ici
 const elementTypes = [
   { type: "poll" as const, label: "Sondage", icon: "i-lucide-bar-chart-3" },
+  { type: "dice" as const, label: "Dés 3D", icon: "i-lucide-dice-5" },
 ];
+
+// Auto-save: surveiller les modifications et sauvegarder automatiquement
+watch(
+  () => store.isDirty,
+  (dirty) => {
+    if (dirty && currentConfigId.value) {
+      // Déclencher l'auto-save (debounced dans le composable API)
+      api.autoSave(currentConfigId.value, store.getCurrentConfig());
+    }
+  },
+);
 
 // Icône selon le type
 const getElementIcon = (type: OverlayElementType): string => {
@@ -484,29 +541,211 @@ const deleteSelected = () => {
   }
 };
 
-// Mise à jour des propriétés
-const updateName = (value: string | number) => {
-  if (selectedElementId.value) {
-    store.updateElement(selectedElementId.value, { name: String(value) });
+// Mise à jour des propriétés de dice
+const updateDiceProperty = (path: string, value: unknown) => {
+  if (!selectedElement.value || selectedElement.value.type !== "dice") return;
+
+  const props = selectedElement.value.properties as DiceProperties;
+  const keys = path.split(".");
+  const newProps = JSON.parse(JSON.stringify(props));
+
+  let current: Record<string, unknown> = newProps;
+  for (let i = 0; i < keys.length - 1; i++) {
+    current = current[keys[i]] as Record<string, unknown>;
+  }
+  current[keys[keys.length - 1]] = value;
+
+  store.updateElement(selectedElement.value.id, { properties: newProps });
+  pushSnapshot(`Modifier ${path}`);
+};
+
+const updateDiceColors = (colors: Partial<DiceProperties["colors"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as DiceProperties;
+  updateDiceProperty("colors", { ...props.colors, ...colors });
+};
+
+const updateDiceAnimations = (animations: Partial<DiceProperties["animations"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as DiceProperties;
+  updateDiceProperty("animations", { ...props.animations, ...animations });
+};
+
+const updateDiceAudio = (audio: Partial<DiceProperties["audio"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as DiceProperties;
+  updateDiceProperty("audio", { ...props.audio, ...audio });
+};
+
+const updateDiceResultText = (resultText: Partial<DiceProperties["resultText"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as DiceProperties;
+  updateDiceProperty("resultText", { ...props.resultText, ...resultText });
+};
+
+const updateDiceMockData = (mockData: Partial<DiceProperties["mockData"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as DiceProperties;
+  updateDiceProperty("mockData", { ...props.mockData, ...mockData });
+};
+
+// Mise à jour des propriétés de poll
+const updatePollProperty = (path: string, value: unknown) => {
+  if (!selectedElement.value || selectedElement.value.type !== "poll") return;
+
+  const props = selectedElement.value.properties as PollProperties;
+  const keys = path.split(".");
+  const newProps = JSON.parse(JSON.stringify(props));
+
+  let current: Record<string, unknown> = newProps;
+  for (let i = 0; i < keys.length - 1; i++) {
+    current = current[keys[i]] as Record<string, unknown>;
+  }
+  current[keys[keys.length - 1]] = value;
+
+  store.updateElement(selectedElement.value.id, { properties: newProps });
+  pushSnapshot(`Modifier ${path}`);
+};
+
+const updatePollQuestionStyle = (style: Partial<PollProperties["questionStyle"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as PollProperties;
+  updatePollProperty("questionStyle", { ...props.questionStyle, ...style });
+};
+
+const updatePollOptionBoxStyle = (style: Partial<PollProperties["optionBoxStyle"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as PollProperties;
+  updatePollProperty("optionBoxStyle", { ...props.optionBoxStyle, ...style });
+};
+
+const updatePollOptionTextStyle = (style: Partial<PollProperties["optionTextStyle"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as PollProperties;
+  updatePollProperty("optionTextStyle", { ...props.optionTextStyle, ...style });
+};
+
+const updatePollPercentageStyle = (style: Partial<PollProperties["optionPercentageStyle"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as PollProperties;
+  updatePollProperty("optionPercentageStyle", { ...props.optionPercentageStyle, ...style });
+};
+
+const updatePollOptionSpacing = (spacing: number) => {
+  updatePollProperty("optionSpacing", spacing);
+};
+
+const updatePollMedalColors = (colors: Partial<PollProperties["medalColors"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as PollProperties;
+  updatePollProperty("medalColors", { ...props.medalColors, ...colors });
+};
+
+const updatePollProgressBar = (config: Partial<PollProperties["progressBar"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as PollProperties;
+  updatePollProperty("progressBar", { ...props.progressBar, ...config });
+};
+
+const updatePollAnimations = (animations: Partial<PollProperties["animations"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as PollProperties;
+  // Deep merge pour les animations imbriquées
+  const merged = JSON.parse(JSON.stringify(props.animations));
+  for (const key of Object.keys(animations) as (keyof typeof animations)[]) {
+    if (animations[key] && typeof animations[key] === "object") {
+      merged[key] = { ...merged[key], ...animations[key] };
+    } else {
+      merged[key] = animations[key];
+    }
+  }
+  updatePollProperty("animations", merged);
+};
+
+const updatePollLayout = (layout: Partial<PollProperties["layout"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as PollProperties;
+  updatePollProperty("layout", { ...props.layout, ...layout });
+};
+
+const updatePollMockData = (mockData: Partial<PollProperties["mockData"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as PollProperties;
+  updatePollProperty("mockData", { ...props.mockData, ...mockData });
+};
+
+// Prévisualisation du sondage
+const playPollPreview = () => {
+  // TODO: Implémenter la prévisualisation du sondage
+  console.log("[Studio] Poll preview requested");
+};
+
+// Prévisualisation des dés
+const playDicePreview = async () => {
+  if (!selectedElement.value || selectedElement.value.type !== "dice") return;
+
+  const props = selectedElement.value.properties as DiceProperties;
+  const mockData = props.mockData;
+
+  // Construire la notation avec les résultats forcés
+  // Format DiceBox: "2d20@5,15" pour forcer les résultats à 5 et 15
+  let notation = mockData.rollFormula;
+  if (mockData.diceValues && mockData.diceValues.length > 0) {
+    notation += "@" + mockData.diceValues.join(",");
+  }
+
+  dicePreviewNotation.value = notation;
+  showDicePreview.value = true;
+
+  // Attendre que la modale soit ouverte et le DiceBox prêt
+  await nextTick();
+
+  // Si le DiceBox est déjà prêt, lancer immédiatement
+  if (diceBoxReady.value && diceBoxRef.value) {
+    await rollDice(notation);
   }
 };
 
-const updatePosition = (axis: "x" | "y" | "z", value: number) => {
-  if (selectedElement.value) {
-    store.updateElementPosition(selectedElement.value.id, {
-      ...selectedElement.value.position,
-      [axis]: value,
-    });
+const handleDiceBoxReady = () => {
+  diceBoxReady.value = true;
+  // Si on a une notation en attente, lancer les dés
+  if (dicePreviewNotation.value && diceBoxRef.value) {
+    rollDice(dicePreviewNotation.value);
   }
 };
 
-const updateScale = (axis: "x" | "y" | "z", value: number) => {
-  if (selectedElement.value) {
-    store.updateElementScale(selectedElement.value.id, {
-      ...selectedElement.value.scale,
-      [axis]: value,
-    });
+const handleDiceRollComplete = (results: unknown) => {
+  console.log("[Studio] Dice roll complete:", results);
+};
+
+const rollDice = async (notation: string) => {
+  if (!diceBoxRef.value) return;
+
+  // Clear les dés précédents avant de lancer
+  if (diceBoxRef.value.clear) {
+    diceBoxRef.value.clear();
   }
+
+  try {
+    await diceBoxRef.value.roll(notation);
+  } catch (error) {
+    console.error("[Studio] Error rolling dice:", error);
+  }
+};
+
+const rollDiceAgain = () => {
+  if (dicePreviewNotation.value) {
+    rollDice(dicePreviewNotation.value);
+  }
+};
+
+// Nouvelle configuration vierge (bouton "Nouveau" dans la toolbar)
+const handleNewCanvas = () => {
+  store.resetEditor();
+  currentConfigId.value = null;
+  currentConfigName.value = "";
+  // Réinitialiser l'historique undo/redo
+  initializeHistory();
 };
 
 // Sauvegarde
@@ -515,18 +754,21 @@ const handleSave = async () => {
     const configData = store.getCurrentConfig();
 
     if (currentConfigId.value) {
-      // Mise à jour d'une configuration existante
+      // Mode modification : sauvegarde directe
       await api.updateConfig(currentConfigId.value, {
         name: currentConfigName.value,
         config: configData,
       });
+      // Marquer comme sauvegardé (reset du dirty state)
+      store.markAsSaved();
       toast.add({
-        title: "Configuration sauvegardée",
+        title: "Sauvegardé",
         color: "success",
         icon: "i-lucide-check",
       });
     } else {
-      // Nouvelle configuration - ouvrir le modal pour le nom
+      // Nouvelle config : ouvrir modale pour nommer
+      newConfigName.value = "";
       showNewConfigModal.value = true;
     }
   } catch (error) {
@@ -552,10 +794,24 @@ const createNewConfig = async () => {
     return;
   }
 
+  const name = newConfigName.value.trim();
+
+  // Vérifier si une config avec ce nom existe déjà
+  const existingConfig = api.configs.value.find((c) => c.name === name);
+  if (existingConfig) {
+    toast.add({
+      title: "Nom déjà utilisé",
+      description: "Une configuration avec ce nom existe déjà. Veuillez choisir un autre nom.",
+      color: "error",
+      icon: "i-lucide-alert-circle",
+    });
+    return;
+  }
+
   try {
     const configData = store.getCurrentConfig();
     const newConfig = await api.createConfig({
-      name: newConfigName.value.trim(),
+      name,
       config: configData,
     });
 
@@ -563,6 +819,9 @@ const createNewConfig = async () => {
     currentConfigName.value = newConfig.name;
     showNewConfigModal.value = false;
     newConfigName.value = "";
+
+    // Marquer comme sauvegardé (la config vient d'être créée)
+    store.markAsSaved();
 
     toast.add({
       title: "Configuration créée",
@@ -767,6 +1026,36 @@ onUnmounted(() => {
   gap: 0.75rem;
 }
 
+/* Indicateur de sauvegarde */
+.save-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  background: var(--color-warning-50);
+  border: 1px solid var(--color-warning-200);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: var(--color-warning-700);
+}
+
+.save-indicator-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--color-warning-500);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.save-indicator-text {
+  font-weight: 500;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 .back-link {
   display: flex;
   align-items: center;
@@ -811,7 +1100,11 @@ onUnmounted(() => {
 .studio-inspector {
   background: var(--color-bg-muted);
   border-right: 1px solid var(--color-neutral-200);
+}
+
+.studio-sidebar {
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .studio-inspector {
@@ -820,7 +1113,8 @@ onUnmounted(() => {
   border-left: 1px solid var(--color-neutral-200);
   width: 280px;
   transition: width 0.3s ease;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .studio-inspector.collapsed {
@@ -985,6 +1279,53 @@ onUnmounted(() => {
   padding: 1rem;
 }
 
+.inspector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-neutral-200);
+}
+
+.inspector-header-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.inspector-element-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inspector-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--color-error-500);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.inspector-delete-btn:hover {
+  background: var(--color-error-100);
+  color: var(--color-error-600);
+}
+
 .inspector-empty {
   display: flex;
   flex-direction: column;
@@ -995,55 +1336,6 @@ onUnmounted(() => {
   text-align: center;
   color: var(--color-text-disabled);
   gap: 1rem;
-}
-
-.inspector-field {
-  margin-bottom: 1rem;
-}
-
-.inspector-field label {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  margin-bottom: 0.25rem;
-}
-
-.inspector-group {
-  margin-bottom: 1rem;
-}
-
-.inspector-group > label {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  margin-bottom: 0.5rem;
-}
-
-.vector-inputs {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.vector-input {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.vector-input span {
-  font-size: 0.75rem;
-  color: var(--color-text-disabled);
-  width: 16px;
-}
-
-.inspector-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--color-neutral-200);
 }
 
 /* Config list items */
@@ -1138,5 +1430,15 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+}
+
+/* Dice Preview Container */
+.dice-preview-container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 8px;
+  overflow: hidden;
 }
 </style>

@@ -19,9 +19,14 @@
           </UButton>
           <div class="preview-title-section">
             <h2 class="preview-title">Prévisualisation Overlay</h2>
-            <UBadge v-if="configName" color="primary" variant="soft">
-              {{ configName }}
-            </UBadge>
+            <USelect
+              v-model="selectedConfigId"
+              :items="configOptions"
+              placeholder="Sélectionner une configuration"
+              size="sm"
+              class="config-selector"
+              @update:model-value="loadSelectedConfig"
+            />
           </div>
         </div>
         <div v-if="isDev" class="preview-actions">
@@ -53,9 +58,14 @@
           <h2 class="preview-title">Prévisualisation</h2>
         </div>
         <div class="mobile-bottom-row">
-          <UBadge v-if="configName" color="primary" variant="soft" size="lg">
-            {{ configName }}
-          </UBadge>
+          <USelect
+            v-model="selectedConfigId"
+            :items="configOptions"
+            placeholder="Configuration"
+            size="sm"
+            class="config-selector-mobile"
+            @update:model-value="loadSelectedConfig"
+          />
           <UButton
             v-if="isDev"
             color="primary"
@@ -96,6 +106,21 @@
               :external-state="elementStates[element.id]"
               :show-debug="true"
             />
+            <!-- DiceBox pour les éléments de type dice -->
+            <div
+              v-else-if="element.type === 'dice'"
+              class="dice-container"
+              :style="getDiceContainerStyle(element)"
+            >
+              <DiceBox
+                :ref="(el: unknown) => setDiceBoxRef(element.id, el)"
+                :notation="selectedElementId === element.id ? currentDiceNotation : ''"
+                :sounds="true"
+                :volume="50"
+                @roll-complete="handleDiceRollComplete"
+                @ready="() => handleDiceBoxReady(element.id)"
+              />
+            </div>
           </template>
 
           <!-- Message si aucune configuration -->
@@ -124,6 +149,7 @@
           @play-exit="handlePlayExit"
           @play-full-sequence="handlePlayFullSequence"
           @reset="handleReset"
+          @roll-dice="handleRollDice"
         />
       </div>
     </div>
@@ -136,7 +162,7 @@ import PreviewPollElement from "@/overlay-studio/components/PreviewPollElement.v
 import PreviewControls from "@/overlay-studio/components/PreviewControls.vue";
 import { useOverlayStudioStore } from "@/overlay-studio/stores/overlayStudio";
 import { useOverlayStudioApi } from "@/overlay-studio/composables/useOverlayStudioApi";
-import type { PollProperties } from "@/overlay-studio/types";
+import type { PollProperties, DiceRollEvent, OverlayElement } from "@/overlay-studio/types";
 import type { AnimationState } from "@/overlay-studio/composables/useAnimationController";
 
 definePageMeta({
@@ -155,8 +181,36 @@ const CANVAS_HEIGHT = 1080;
 
 // État local
 const loading = ref(true);
-const configName = ref<string | null>(null);
+const selectedConfigId = ref<string | undefined>(undefined);
 const selectedElementId = ref<string | null>(null);
+
+// Options pour le sélecteur de configuration
+const configOptions = computed(() =>
+  api.configs.value.map((c) => ({
+    label: c.name + (c.isActive ? " (Active)" : ""),
+    value: c.id,
+  })),
+);
+
+// Charger une configuration sélectionnée
+const loadSelectedConfig = async (configId: string | undefined) => {
+  if (!configId) return;
+
+  try {
+    loading.value = true;
+    const fullConfig = await api.fetchConfig(configId);
+    store.loadConfig(fullConfig.config);
+
+    // Réinitialiser les états des éléments
+    for (const element of store.elements) {
+      elementStates.value[element.id] = "hidden";
+    }
+  } catch (error) {
+    console.error("Failed to load config:", error);
+  } finally {
+    loading.value = false;
+  }
+};
 const canvasWrapper = ref<HTMLElement | null>(null);
 const canvasContainer = ref<HTMLElement | null>(null);
 
@@ -167,6 +221,12 @@ const canvasScale = ref(1);
 const elementStates = ref<Record<string, AnimationState>>({});
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const elementRefs = ref<Record<string, any>>({});
+
+// DiceBox refs par élément ID
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const diceBoxRefs = ref<Record<string, any>>({});
+const currentDiceNotation = ref("");
+const diceBoxReady = ref(false);
 
 // Éléments de la configuration
 const elements = computed(() => store.elements);
@@ -189,6 +249,21 @@ const canvasStyle = computed(() => {
   };
 });
 
+// Style du container de dés basé sur la position de l'élément
+// Note: DiceBox occupe tout l'espace disponible, la position définit le coin supérieur gauche
+const getDiceContainerStyle = (element: OverlayElement) => {
+  // Taille par défaut pour le DiceBox (1920x1080 = format overlay standard)
+  const baseWidth = 1920;
+  const baseHeight = 1080;
+  return {
+    position: 'absolute' as const,
+    left: `${element.position.x}px`,
+    top: `${element.position.y}px`,
+    width: `${baseWidth * element.scale.x}px`,
+    height: `${baseHeight * element.scale.y}px`,
+  };
+};
+
 /**
  * Calcule l'échelle du canvas en fonction de l'espace disponible.
  * Le wrapper utilise aspect-ratio: 16/9, donc on calcule uniquement sur la largeur.
@@ -207,13 +282,15 @@ let resizeObserver: ResizeObserver | null = null;
 // Charger la configuration au montage
 onMounted(async () => {
   try {
-    // Toujours charger les configs pour récupérer le nom de la config active
+    // Charger la liste des configs
     const configs = await api.fetchConfigs();
+
+    // Trouver la config active par défaut
     const activeConfig = configs.find((c) => c.isActive);
 
     if (activeConfig) {
-      // Définir le nom de la config
-      configName.value = activeConfig.name;
+      // Sélectionner la config active
+      selectedConfigId.value = activeConfig.id;
 
       // Si le store est vide (on ne vient pas du Studio), charger les éléments
       if (store.elements.length === 0) {
@@ -402,6 +479,82 @@ const handleReset = () => {
 
   component.reset();
   elementStates.value[selectedElementId.value] = "hidden";
+
+  // Reset dice notation
+  currentDiceNotation.value = "";
+};
+
+// DiceBox handlers
+const setDiceBoxRef = (id: string, el: unknown) => {
+  if (el) {
+    diceBoxRefs.value[id] = el;
+  }
+};
+
+const handleDiceBoxReady = (elementId: string) => {
+  console.log("[Preview] DiceBox ready for element:", elementId);
+  diceBoxReady.value = true;
+};
+
+const handleDiceRollComplete = (results: unknown) => {
+  console.log("[Preview] Dice roll complete:", results);
+  if (selectedElementId.value) {
+    elementStates.value[selectedElementId.value] = "result";
+  }
+};
+
+// Handler pour le lancer de dés manuel (depuis PreviewControls)
+const handleRollDice = async (data: DiceRollEvent) => {
+  console.log("[Preview] Manual dice roll triggered:", data);
+
+  if (!selectedElementId.value) {
+    console.warn("[Preview] No element selected for dice roll");
+    return;
+  }
+
+  // Vérifier que l'élément sélectionné est bien un élément dice
+  const selectedElement = elements.value.find((el) => el.id === selectedElementId.value);
+  if (!selectedElement || selectedElement.type !== "dice") {
+    console.warn("[Preview] Selected element is not a dice element");
+    return;
+  }
+
+  // Vérifier que le DiceBox est prêt
+  const diceBox = diceBoxRefs.value[selectedElementId.value];
+  if (!diceBox) {
+    console.warn("[Preview] DiceBox not found for element:", selectedElementId.value);
+    return;
+  }
+
+  // Mettre à jour l'état
+  elementStates.value[selectedElementId.value] = "active";
+
+  // Construire la notation avec les résultats forcés si disponibles
+  // Format DiceBox: "2d20@5,15" pour forcer les résultats à 5 et 15
+  let notation = data.rollFormula;
+  if (data.diceResults && data.diceResults.length > 0) {
+    notation += "@" + data.diceResults.join(",");
+  }
+
+  console.log("[Preview] Rolling dice with notation:", notation);
+
+  // Clear les dés précédents avant de lancer
+  if (diceBox.clear) {
+    diceBox.clear();
+  }
+
+  // Appeler directement la méthode roll du composant au lieu d'utiliser la prop notation
+  // Cela évite les problèmes de watch qui ne se déclenche pas si la valeur est identique
+  if (diceBox.roll) {
+    try {
+      await diceBox.roll(notation);
+    } catch (error) {
+      console.error("[Preview] Error rolling dice:", error);
+    }
+  } else {
+    // Fallback: utiliser la prop notation
+    currentDiceNotation.value = notation;
+  }
 };
 </script>
 
@@ -435,6 +588,15 @@ const handleReset = () => {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+.config-selector {
+  min-width: 200px;
+}
+
+.config-selector-mobile {
+  flex: 1;
+  min-width: 0;
 }
 
 .preview-title {
@@ -510,6 +672,11 @@ const handleReset = () => {
     10px -10px,
     -10px 0px;
   background-color: #e8e8e8;
+}
+
+/* Dice container */
+.dice-container {
+  z-index: 10;
 }
 
 .no-config-message {

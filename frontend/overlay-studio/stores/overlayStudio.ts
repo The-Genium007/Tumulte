@@ -9,6 +9,7 @@ import type {
   OverlayElementType,
   ElementProperties,
   PollProperties,
+  DiceProperties,
 } from "../types";
 
 /**
@@ -29,6 +30,10 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
   const gridSnap = ref(0.1);
   const showGrid = ref(true);
   const isDragging = ref(false);
+
+  // ===== État de sauvegarde =====
+  const isDirty = ref(false);
+  const lastSavedSnapshot = ref<string | null>(null);
 
   // ===== Canvas =====
   const canvasWidth = ref(1920);
@@ -160,6 +165,80 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
             totalDuration: 60,
           },
         } as PollProperties;
+
+      case "dice":
+        return {
+          colors: {
+            baseColor: "#1a1a2e",
+            numberColor: "#ffffff",
+            criticalSuccessGlow: "#ffd700",
+            criticalFailureGlow: "#ff4444",
+          },
+          textures: {
+            enabled: false,
+            textureUrl: null,
+          },
+          physics: {
+            gravity: -30,
+            bounciness: 0.4,
+            friction: 0.3,
+            rollForce: 1,
+            spinForce: 1,
+          },
+          resultText: {
+            enabled: true,
+            typography: {
+              fontFamily: "Inter",
+              fontSize: 64,
+              fontWeight: 800,
+              color: "#ffffff",
+              textShadow: {
+                enabled: true,
+                color: "rgba(0, 0, 0, 0.8)",
+                blur: 8,
+                offsetX: 0,
+                offsetY: 4,
+              },
+            },
+            offsetY: 50,
+            fadeInDelay: 0.3,
+            persistDuration: 3,
+          },
+          audio: {
+            rollSound: { enabled: true, volume: 0.7 },
+            criticalSuccessSound: { enabled: true, volume: 0.9 },
+            criticalFailureSound: { enabled: true, volume: 0.9 },
+          },
+          animations: {
+            entry: {
+              type: "throw",
+              duration: 0.5,
+            },
+            settle: {
+              timeout: 5,
+            },
+            result: {
+              glowIntensity: 1.5,
+              glowDuration: 0.5,
+            },
+            exit: {
+              type: "fade",
+              duration: 0.5,
+              delay: 2,
+            },
+          },
+          layout: {
+            maxDice: 10,
+            diceSize: 1,
+          },
+          mockData: {
+            rollFormula: "2d20+5",
+            diceTypes: ["d20", "d20"],
+            diceValues: [18, 7],
+            isCritical: false,
+            criticalType: null,
+          },
+        } as DiceProperties;
     }
   }
 
@@ -184,6 +263,7 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
 
     elements.value.push(element);
     selectedElementId.value = element.id;
+    isDirty.value = true;
 
     return element;
   }
@@ -198,16 +278,24 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
       if (selectedElementId.value === id) {
         selectedElementId.value = null;
       }
+      isDirty.value = true;
     }
   }
 
   /**
    * Met à jour un élément
+   * Remplace l'élément entier pour garantir la réactivité Vue sur les propriétés imbriquées
    */
   function updateElement(id: string, updates: Partial<OverlayElement>): void {
-    const element = elements.value.find((el) => el.id === id);
-    if (element) {
-      Object.assign(element, updates);
+    const index = elements.value.findIndex((el) => el.id === id);
+    if (index !== -1) {
+      const element = elements.value[index];
+      // Remplacer l'élément entier pour garantir la réactivité
+      elements.value[index] = {
+        ...element,
+        ...updates,
+      };
+      isDirty.value = true;
     }
   }
 
@@ -312,6 +400,9 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
     canvasHeight.value = config.canvas.height;
     elements.value = config.elements;
     selectedElementId.value = null;
+    // Sauvegarder le snapshot initial et marquer comme propre
+    lastSavedSnapshot.value = JSON.stringify(config);
+    isDirty.value = false;
   }
 
   /**
@@ -323,6 +414,16 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
     editMode.value = "translate";
     canvasWidth.value = 1920;
     canvasHeight.value = 1080;
+    lastSavedSnapshot.value = null;
+    isDirty.value = false;
+  }
+
+  /**
+   * Marque la configuration actuelle comme sauvegardée
+   */
+  function markAsSaved(): void {
+    lastSavedSnapshot.value = JSON.stringify(getCurrentConfig());
+    isDirty.value = false;
   }
 
   /**
@@ -350,6 +451,7 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
     isDragging,
     canvasWidth,
     canvasHeight,
+    isDirty,
 
     // Computed
     selectedElement,
@@ -378,5 +480,6 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
     loadConfig,
     resetEditor,
     restoreSnapshot,
+    markAsSaved,
   };
 });
