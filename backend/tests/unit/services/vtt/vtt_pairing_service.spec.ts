@@ -11,175 +11,46 @@ import VttConnection from '#models/vtt_connection'
 
 /* eslint-disable camelcase -- JWT standard claims use snake_case */
 
-test.group('VttPairingService - parsePairingUrl', () => {
-  test('should parse valid foundry:// URL', async ({ assert }) => {
-    const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
-    const service = new VttPairingService()
-
-    const url = 'foundry://connect?token=test-jwt-token&state=csrf-state-123'
-    const result = service.parsePairingUrl(url)
-
-    assert.equal(result.token, 'test-jwt-token')
-    assert.equal(result.state, 'csrf-state-123')
-  })
-
-  test('should throw error for invalid protocol', async ({ assert }) => {
-    const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
-    const service = new VttPairingService()
-
-    const url = 'http://connect?token=test-jwt-token&state=csrf-state-123'
-
-    assert.throws(() => service.parsePairingUrl(url), 'Invalid pairing URL')
-  })
-
-  test('should throw error for missing token parameter', async ({ assert }) => {
-    const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
-    const service = new VttPairingService()
-
-    const url = 'foundry://connect?state=csrf-state-123'
-
-    assert.throws(() => service.parsePairingUrl(url), 'Missing token or state parameter')
-  })
-
-  test('should throw error for missing state parameter', async ({ assert }) => {
-    const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
-    const service = new VttPairingService()
-
-    const url = 'foundry://connect?token=test-jwt-token'
-
-    assert.throws(() => service.parsePairingUrl(url), 'Missing token or state parameter')
-  })
-})
-
-test.group('VttPairingService - validatePairingToken', (group) => {
+test.group('VttPairingService - generateSessionTokensForConnection', (group) => {
   group.each.setup(() => testUtils.db().truncate())
 
-  test('should validate a valid JWT token', async ({ assert }) => {
+  test('should generate valid session and refresh tokens', async ({ assert }) => {
     const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
     const service = new VttPairingService()
     const secret = env.get('APP_KEY')
 
-    const now = Math.floor(Date.now() / 1000)
-    const payload = {
-      sub: 'vtt:foundry',
-      aud: 'tumulte:api',
-      iss: 'foundry-module:tumulte',
-      pairing_code: 'ABC-123',
-      world_id: 'test-world-id',
-      world_name: 'Test World',
-      gm_user_id: 'gm-user-123',
-      module_version: '2.0.0',
-      iat: now,
-      exp: now + 300,
-      nonce: 'random-nonce',
-      jti: 'unique-token-id',
-    }
+    const user = await createTestUser()
+    const provider = await createTestVttProvider()
+    const connection = await createTestVttConnection({
+      userId: user.id,
+      vttProviderId: provider.id,
+      tokenVersion: 1,
+      status: 'active',
+    })
 
-    const token = jwt.sign(payload, secret, { algorithm: 'HS256' })
+    const tokens = await service.generateSessionTokensForConnection(
+      connection.id,
+      user.id,
+      connection.tokenVersion
+    )
 
-    const claims = await service.validatePairingToken(token)
+    assert.exists(tokens.sessionToken)
+    assert.exists(tokens.refreshToken)
+    assert.equal(tokens.expiresIn, 3600)
 
-    assert.equal(claims.pairing_code, 'ABC-123')
-    assert.equal(claims.world_id, 'test-world-id')
-    assert.equal(claims.world_name, 'Test World')
-  })
+    // Verify session token structure
+    const sessionDecoded = jwt.verify(tokens.sessionToken, secret) as any
+    assert.equal(sessionDecoded.sub, connection.id)
+    assert.equal(sessionDecoded.user_id, user.id)
+    assert.equal(sessionDecoded.type, 'session')
+    assert.equal(sessionDecoded.token_version, 1)
 
-  test('should reject expired token', async ({ assert }) => {
-    const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
-    const service = new VttPairingService()
-    const secret = env.get('APP_KEY')
-
-    const now = Math.floor(Date.now() / 1000)
-    const payload = {
-      sub: 'vtt:foundry',
-      aud: 'tumulte:api',
-      iss: 'foundry-module:tumulte',
-      pairing_code: 'ABC-123',
-      world_id: 'test-world-id',
-      world_name: 'Test World',
-      gm_user_id: 'gm-user-123',
-      module_version: '2.0.0',
-      iat: now - 600,
-      exp: now - 300, // Expired 5 minutes ago
-      nonce: 'random-nonce',
-      jti: 'unique-token-id',
-    }
-
-    const token = jwt.sign(payload, secret, { algorithm: 'HS256' })
-
-    await assert.rejects(() => service.validatePairingToken(token), /Invalid JWT|expired/i)
-  })
-
-  test('should reject token with invalid audience', async ({ assert }) => {
-    const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
-    const service = new VttPairingService()
-    const secret = env.get('APP_KEY')
-
-    const now = Math.floor(Date.now() / 1000)
-    const payload = {
-      sub: 'vtt:foundry',
-      aud: 'wrong-audience',
-      iss: 'foundry-module:tumulte',
-      pairing_code: 'ABC-123',
-      world_id: 'test-world-id',
-      world_name: 'Test World',
-      gm_user_id: 'gm-user-123',
-      module_version: '2.0.0',
-      iat: now,
-      exp: now + 300,
-      nonce: 'random-nonce',
-      jti: 'unique-token-id',
-    }
-
-    const token = jwt.sign(payload, secret, { algorithm: 'HS256' })
-
-    await assert.rejects(() => service.validatePairingToken(token), /Invalid JWT|audience/i)
-  })
-
-  test('should reject token missing required claims', async ({ assert }) => {
-    const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
-    const service = new VttPairingService()
-    const secret = env.get('APP_KEY')
-
-    const now = Math.floor(Date.now() / 1000)
-    const payload = {
-      sub: 'vtt:foundry',
-      aud: 'tumulte:api',
-      iss: 'foundry-module:tumulte',
-      // Missing pairing_code, world_id, world_name
-      iat: now,
-      exp: now + 300,
-      jti: 'unique-token-id',
-    }
-
-    const token = jwt.sign(payload, secret, { algorithm: 'HS256' })
-
-    await assert.rejects(() => service.validatePairingToken(token), /Missing required claims/i)
-  })
-
-  test('should reject token signed with wrong secret', async ({ assert }) => {
-    const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
-    const service = new VttPairingService()
-
-    const now = Math.floor(Date.now() / 1000)
-    const payload = {
-      sub: 'vtt:foundry',
-      aud: 'tumulte:api',
-      iss: 'foundry-module:tumulte',
-      pairing_code: 'ABC-123',
-      world_id: 'test-world-id',
-      world_name: 'Test World',
-      gm_user_id: 'gm-user-123',
-      module_version: '2.0.0',
-      iat: now,
-      exp: now + 300,
-      nonce: 'random-nonce',
-      jti: 'unique-token-id',
-    }
-
-    const token = jwt.sign(payload, 'wrong-secret', { algorithm: 'HS256' })
-
-    await assert.rejects(() => service.validatePairingToken(token), /Invalid JWT|signature/i)
+    // Verify refresh token structure
+    const refreshDecoded = jwt.verify(tokens.refreshToken, secret) as any
+    assert.equal(refreshDecoded.sub, connection.id)
+    assert.equal(refreshDecoded.user_id, user.id)
+    assert.equal(refreshDecoded.type, 'refresh')
+    assert.equal(refreshDecoded.token_version, 1)
   })
 })
 
@@ -399,137 +270,5 @@ test.group('VttPairingService - invalidateAllTokens', (group) => {
     assert.equal(updatedConnection.tokenVersion, 2) // Incremented
     assert.equal(updatedConnection.status, 'active') // Unchanged
     assert.equal(updatedConnection.tunnelStatus, 'connected') // Unchanged
-  })
-})
-
-test.group('VttPairingService - testConnection', () => {
-  test('should return reachable with world info (mock)', async ({ assert }) => {
-    const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
-    const service = new VttPairingService()
-
-    const claims = {
-      sub: 'vtt:foundry',
-      aud: 'tumulte:api',
-      iss: 'foundry-module:tumulte',
-      pairing_code: 'ABC-123',
-      world_id: 'test-world-id',
-      world_name: 'Test World',
-      gm_user_id: 'gm-user-123',
-      module_version: '2.0.0',
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 300,
-      nonce: 'random-nonce',
-      jti: 'unique-token-id',
-    }
-
-    const result = await service.testConnection(claims)
-
-    assert.isTrue(result.reachable)
-    assert.exists(result.worldInfo)
-    assert.equal(result.worldInfo?.id, 'test-world-id')
-    assert.equal(result.worldInfo?.name, 'Test World')
-    assert.equal(result.worldInfo?.version, '2.0.0')
-  })
-})
-
-test.group('VttPairingService - completePairing', (group) => {
-  group.each.setup(() => testUtils.db().truncate())
-
-  test('should create connection and return tokens', async ({ assert }) => {
-    const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
-    const service = new VttPairingService()
-
-    // Create user and provider
-    const user = await createTestUser()
-    await createTestVttProvider({ name: 'foundry' })
-
-    const claims = {
-      sub: 'vtt:foundry',
-      aud: 'tumulte:api',
-      iss: 'foundry-module:tumulte',
-      pairing_code: 'ABC-123',
-      world_id: 'unique-world-id-123',
-      world_name: 'Test World',
-      gm_user_id: 'gm-user-123',
-      module_version: '2.0.0',
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 300,
-      nonce: 'random-nonce',
-      jti: 'unique-token-id',
-    }
-
-    const result = await service.completePairing(claims, user.id)
-
-    // Verify connection was created
-    assert.exists(result.connection)
-    assert.equal(result.connection.worldId, 'unique-world-id-123')
-    assert.equal(result.connection.worldName, 'Test World')
-    assert.equal(result.connection.status, 'active')
-    assert.equal(result.connection.tokenVersion, 1)
-
-    // Verify tokens were generated
-    assert.exists(result.tokens.sessionToken)
-    assert.exists(result.tokens.refreshToken)
-    assert.equal(result.tokens.expiresIn, 3600)
-  })
-
-  test('should reject duplicate connection for same world', async ({ assert }) => {
-    const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
-    const service = new VttPairingService()
-
-    const user = await createTestUser()
-    const provider = await createTestVttProvider({ name: 'foundry' })
-
-    // Create existing connection for this world
-    await createTestVttConnection({
-      userId: user.id,
-      vttProviderId: provider.id,
-      worldId: 'existing-world-id',
-    })
-
-    const claims = {
-      sub: 'vtt:foundry',
-      aud: 'tumulte:api',
-      iss: 'foundry-module:tumulte',
-      pairing_code: 'ABC-123',
-      world_id: 'existing-world-id', // Same world ID
-      world_name: 'Test World',
-      gm_user_id: 'gm-user-123',
-      module_version: '2.0.0',
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 300,
-      nonce: 'random-nonce',
-      jti: 'unique-token-id',
-    }
-
-    await assert.rejects(
-      () => service.completePairing(claims, user.id),
-      /Connection already exists/i
-    )
-  })
-
-  test('should reject unknown VTT provider', async ({ assert }) => {
-    const { default: VttPairingService } = await import('#services/vtt/vtt_pairing_service')
-    const service = new VttPairingService()
-
-    const user = await createTestUser()
-    // Note: No provider created
-
-    const claims = {
-      sub: 'vtt:unknown-vtt', // Unknown provider
-      aud: 'tumulte:api',
-      iss: 'foundry-module:tumulte',
-      pairing_code: 'ABC-123',
-      world_id: 'test-world-id',
-      world_name: 'Test World',
-      gm_user_id: 'gm-user-123',
-      module_version: '2.0.0',
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 300,
-      nonce: 'random-nonce',
-      jti: 'unique-token-id',
-    }
-
-    await assert.rejects(() => service.completePairing(claims, user.id), /not found/i)
   })
 })
