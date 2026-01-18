@@ -210,14 +210,9 @@
     <!-- Modal: Add VTT Connection -->
     <UModal v-model:open="showAddVttModal">
       <template #header>
-        <div class="flex items-center gap-3">
-          <div class="bg-primary-light p-2 rounded-lg">
-            <UIcon name="i-lucide-plug" class="size-6 text-primary-500" />
-          </div>
-          <h3 class="text-xl font-bold text-primary">
-            Ajouter une connexion VTT
-          </h3>
-        </div>
+        <h3 class="text-xl font-bold text-primary">
+          Ajouter une connexion VTT
+        </h3>
       </template>
 
       <template #body>
@@ -261,8 +256,8 @@
       <template #footer>
         <div class="flex justify-end">
           <UButton
-            color="neutral"
-            variant="soft"
+            color="primary"
+            variant="solid"
             label="Annuler"
             @click="showAddVttModal = false"
           />
