@@ -4,31 +4,13 @@
     @after-leave="handleTransitionComplete"
   >
     <div
-      v-if="visible"
+      v-if="visible && diceRoll"
       class="dice-roll-container"
       :class="[
         criticalClass,
         { 'own-character': diceRoll?.isOwnCharacter }
       ]"
     >
-      <!-- Character Avatar & Name -->
-      <div class="character-info">
-        <div class="avatar-wrapper">
-          <img
-            v-if="diceRoll?.characterAvatar"
-            :src="diceRoll.characterAvatar"
-            :alt="diceRoll.characterName"
-            class="avatar"
-          />
-          <div v-else class="avatar-placeholder">
-            <UIcon name="i-lucide-user" class="avatar-icon" />
-          </div>
-        </div>
-        <div class="character-name">
-          {{ diceRoll?.characterName }}
-        </div>
-      </div>
-
       <!-- Dice Roll Content -->
       <div class="roll-content">
         <!-- Critical Badge (if critical) -->
@@ -88,20 +70,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { computed } from "vue";
 import type { DiceRollEvent } from "@/types";
 
 const props = defineProps<{
   diceRoll: DiceRollEvent | null;
-  autoHideDelay?: number; // Délai en ms avant masquage automatique (défaut: 5000ms)
+  visible: boolean; // Visibilité contrôlée par le parent (queue unifiée)
 }>();
 
 const emit = defineEmits<{
   hidden: [];
 }>();
-
-const visible = ref(false);
-const hideTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
 
 const criticalClass = computed(() => {
   if (!props.diceRoll?.isCritical) return "";
@@ -119,43 +98,9 @@ const formatRollType = (rollType: string): string => {
   return types[rollType] || rollType;
 };
 
-const show = () => {
-  visible.value = true;
-
-  // Masquer automatiquement après le délai
-  if (hideTimeout.value) {
-    clearTimeout(hideTimeout.value);
-  }
-
-  hideTimeout.value = setTimeout(() => {
-    hide();
-  }, props.autoHideDelay || 5000);
-};
-
-const hide = () => {
-  visible.value = false;
-};
-
 const handleTransitionComplete = () => {
   emit("hidden");
 };
-
-// Watch for new dice rolls
-watch(
-  () => props.diceRoll,
-  (newRoll) => {
-    if (newRoll) {
-      show();
-    }
-  },
-  { immediate: true }
-);
-
-// Cleanup timeout on unmount
-defineExpose({
-  show,
-  hide,
-});
 </script>
 
 <style scoped>
@@ -195,51 +140,6 @@ defineExpose({
 .own-character {
   border-width: 3px;
   border-color: rgb(59, 130, 246);
-}
-
-/* Character Info */
-.character-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.avatar-wrapper {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid rgba(148, 163, 184, 0.5);
-}
-
-.avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.avatar-placeholder {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.3));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatar-icon {
-  width: 24px;
-  height: 24px;
-  color: rgb(148, 163, 184);
-}
-
-.character-name {
-  font-size: 18px;
-  font-weight: 700;
-  color: rgb(226, 232, 240);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 /* Roll Content */

@@ -21,6 +21,7 @@
       <div
         v-else-if="element.type === 'dice'"
         class="dice-element"
+        :class="{ 'dice-visible': isDice3DVisible, 'dice-hidden': !isDice3DVisible }"
         :style="getDiceContainerStyle(element)"
       >
         <DiceBox
@@ -32,10 +33,10 @@
       </div>
     </template>
 
-    <!-- Dice Roll Overlay (VTT Integration) -->
+    <!-- Dice Roll Overlay (VTT Integration) - Visibilité contrôlée par la queue -->
     <DiceRollOverlay
       :dice-roll="currentDiceRoll"
-      :auto-hide-delay="5000"
+      :visible="isPopup2DVisible"
       @hidden="handleDiceRollHidden"
     />
   </div>
@@ -102,16 +103,36 @@ const activePoll = ref<
 const percentages = ref<Record<number, number>>({});
 const isEnding = ref(false);
 
-// État du dice roll actif (VTT Integration)
-const currentDiceRoll = ref<DiceRollEvent | null>(null);
+// =============================================
+// Système de queue unifiée pour les dice rolls
+// Synchronise les dés 3D (DiceBox) et pop-ups 2D
+// =============================================
+
+// Queue unifiée des dice rolls à afficher
 const diceRollQueue = ref<DiceRollEvent[]>([]);
 
-// État séparé pour les dés 3D configurés dans l'overlay studio
-// Les dice rolls sont envoyés aux deux systèmes (2D simple et 3D configuré)
-const currentDiceRollFor3D = ref<DiceRollEvent | null>(null);
+// Roll actuellement affiché (3D + 2D synchronisés)
+const currentDiceRoll = ref<DiceRollEvent | null>(null);
 
 // Notation actuelle pour DiceBox (format: "2d20@5,15" pour résultats forcés)
 const currentDiceNotation = ref("");
+
+// État de visibilité des dés 3D (pour le fade out)
+const isDice3DVisible = ref(false);
+
+// État de visibilité de la pop-up 2D
+const isPopup2DVisible = ref(false);
+
+// Flag indiquant si un roll est en cours de traitement
+const isProcessingRoll = ref(false);
+
+// Timer pour la durée d'affichage du roll
+const rollDisplayTimeout = ref<ReturnType<typeof setTimeout> | null>(null);
+
+// Constantes de timing
+const ROLL_DISPLAY_DURATION = 5000; // 5s d'affichage après animation 3D
+const ROLL_FADE_DURATION = 1500; // 1.5s de fade out (doit correspondre au CSS)
+const ROLL_DELAY_BETWEEN = 500; // 0.5s entre deux rolls
 
 const { subscribeToStreamerPolls } = useWebSocket();
 
@@ -130,11 +151,11 @@ const getDiceContainerStyle = (element: { position: { x: number; y: number }; sc
   };
 };
 
-// Handler pour quand DiceBox termine un lancer
+// Handler pour quand DiceBox termine un lancer (animation 3D terminée)
 const handleDiceRollComplete = (results: unknown) => {
-  console.log("[Overlay] DiceBox roll complete:", results);
-  // Nettoyer la notation après le lancer
-  currentDiceNotation.value = "";
+  console.log("[Overlay] DiceBox 3D animation complete:", results);
+  // L'animation 3D est terminée, maintenant on attend ROLL_DISPLAY_DURATION
+  // avant de lancer le fade out (le timer est déjà programmé dans processNextRoll)
 };
 
 // Handler pour les changements d'état du poll (émis par LivePollElement)
@@ -152,7 +173,10 @@ const handlePollStateChange = (newState: string) => {
   }
 };
 
-// Handler pour les dice rolls (VTT Integration)
+/**
+ * Ajoute un dice roll à la queue unifiée
+ * Si aucun roll n'est en cours, lance immédiatement le traitement
+ */
 const handleDiceRoll = (data: DiceRollEvent) => {
   console.log("[Overlay] Dice roll received:", data);
 
@@ -162,40 +186,78 @@ const handleDiceRoll = (data: DiceRollEvent) => {
     return;
   }
 
-  // Envoyer aux dés 3D configurés dans l'overlay studio (si présents)
-  // Les dés 3D gèrent leur propre état et queue en interne
-  currentDiceRollFor3D.value = data;
+  // Ajouter à la queue
+  diceRollQueue.value.push(data);
+  console.log("[Overlay] Dice roll added to queue, queue size:", diceRollQueue.value.length);
 
-  // Construire la notation DiceBox avec résultats forcés si disponibles
-  // Format: "2d20@5,15" pour forcer les résultats à 5 et 15
-  let notation = data.rollFormula;
-  if (data.diceResults && data.diceResults.length > 0) {
-    notation += "@" + data.diceResults.join(",");
-  }
-  currentDiceNotation.value = notation;
-
-  // Si un dice roll est déjà affiché (overlay 2D simple), ajouter à la queue
-  if (currentDiceRoll.value) {
-    diceRollQueue.value.push(data);
-    console.log("[Overlay] Dice roll queued, queue size:", diceRollQueue.value.length);
-  } else {
-    currentDiceRoll.value = data;
+  // Si aucun roll n'est en cours, lancer le traitement
+  if (!isProcessingRoll.value) {
+    processNextRoll();
   }
 };
 
-const handleDiceRollHidden = () => {
-  console.log("[Overlay] Dice roll hidden");
-  currentDiceRoll.value = null;
-
-  // Afficher le prochain dice roll de la queue
-  if (diceRollQueue.value.length > 0) {
-    const nextRoll = diceRollQueue.value.shift();
-    if (nextRoll) {
-      setTimeout(() => {
-        currentDiceRoll.value = nextRoll;
-      }, 500); // Petit délai entre les rolls
-    }
+/**
+ * Traite le prochain roll dans la queue
+ * Lance simultanément l'animation 3D et affiche la pop-up 2D
+ */
+const processNextRoll = () => {
+  // Vérifier s'il y a des rolls en attente
+  if (diceRollQueue.value.length === 0) {
+    console.log("[Overlay] Queue empty, nothing to process");
+    isProcessingRoll.value = false;
+    return;
   }
+
+  isProcessingRoll.value = true;
+
+  // Récupérer le prochain roll
+  const roll = diceRollQueue.value.shift()!;
+  console.log("[Overlay] Processing roll:", roll.rollFormula, "- Queue remaining:", diceRollQueue.value.length);
+
+  // 1. Définir le roll actuel (utilisé par la pop-up 2D)
+  currentDiceRoll.value = roll;
+
+  // 2. Construire la notation DiceBox avec résultats forcés
+  let notation = roll.rollFormula;
+  if (roll.diceResults && roll.diceResults.length > 0) {
+    notation += "@" + roll.diceResults.join(",");
+  }
+  currentDiceNotation.value = notation;
+
+  // 3. Afficher les deux éléments simultanément (3D + 2D)
+  isDice3DVisible.value = true;
+  isPopup2DVisible.value = true;
+
+  // 4. Programmer la fin d'affichage
+  // On attend ROLL_DISPLAY_DURATION puis on lance le fade out
+  if (rollDisplayTimeout.value) {
+    clearTimeout(rollDisplayTimeout.value);
+  }
+
+  rollDisplayTimeout.value = setTimeout(() => {
+    // Lancer le fade out
+    isDice3DVisible.value = false;
+    isPopup2DVisible.value = false;
+
+    // Après le fade, passer au roll suivant
+    setTimeout(() => {
+      currentDiceRoll.value = null;
+      currentDiceNotation.value = "";
+
+      // Traiter le prochain roll après un petit délai
+      setTimeout(() => {
+        processNextRoll();
+      }, ROLL_DELAY_BETWEEN);
+    }, ROLL_FADE_DURATION);
+  }, ROLL_DISPLAY_DURATION);
+};
+
+/**
+ * Handler appelé quand la pop-up 2D a fini sa transition de sortie
+ * (Non utilisé dans le nouveau système mais gardé pour compatibilité)
+ */
+const handleDiceRollHidden = () => {
+  console.log("[Overlay] Dice roll popup transition complete");
 };
 
 // Variable pour stocker la fonction de désabonnement
@@ -450,6 +512,11 @@ onUnmounted(() => {
   // Arrêter le worker timer (cleanup automatique via le composable)
   workerTimer.stop();
 
+  // Nettoyer le timer d'affichage des rolls
+  if (rollDisplayTimeout.value) {
+    clearTimeout(rollDisplayTimeout.value);
+  }
+
   // Retirer le listener de visibilité
   document.removeEventListener("visibilitychange", handleVisibilityChange);
 });
@@ -502,5 +569,16 @@ html, body, #__nuxt {
 /* Container pour DiceBox */
 .dice-element {
   z-index: 10;
+  transition: opacity 1.5s ease-out;
+}
+
+/* États de visibilité des dés 3D */
+.dice-visible {
+  opacity: 1;
+}
+
+.dice-hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 </style>

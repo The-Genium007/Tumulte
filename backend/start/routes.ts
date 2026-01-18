@@ -125,10 +125,7 @@ router
       '/vtt-connections/pair-with-code',
       '#controllers/mj/vtt_connections_controller.pairWithCode'
     )
-    router.post(
-      '/vtt-connections/refresh-token',
-      '#controllers/mj/vtt_connections_controller.refreshToken'
-    )
+    // Note: refresh-token is now outside this authenticated group (see below)
 
     // VTT Connections - Dynamic :id routes AFTER static routes
     router.get('/vtt-connections/:id', '#controllers/mj/vtt_connections_controller.show')
@@ -151,6 +148,15 @@ router
   .prefix('/mj')
   .use(middleware.auth({ guards: ['web', 'api'] }))
   .use(middleware.validateUuid())
+
+// ==========================================
+// Routes VTT Publiques (sans authentification utilisateur)
+// Ces routes utilisent leur propre validation JWT via refresh token
+// ==========================================
+router.post(
+  '/mj/vtt-connections/refresh-token',
+  '#controllers/mj/vtt_connections_controller.refreshToken'
+)
 
 // ==========================================
 // Routes Streamer - Architecture modulaire
