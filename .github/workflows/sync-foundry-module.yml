@@ -1,0 +1,68 @@
+name: Sync Foundry Module
+
+# Ce workflow synchronise le contenu de modules-vtt/foundry
+# vers le repo externe Tumulte-Foundry-module
+# Il se déclenche APRÈS les CI staging/production (sur push, pas sur PR)
+
+on:
+  push:
+    branches:
+      - staging
+      - main
+    paths:
+      - 'modules-vtt/foundry/**'
+
+jobs:
+  sync-to-foundry-repo:
+    name: Sync to Tumulte-Foundry-module
+    runs-on: ubuntu-latest
+    # Ne se lance que si c'est un push (donc après merge d'une PR validée)
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout Tumulte (full history for subtree)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Nécessaire pour git subtree (besoin de tout l'historique)
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Extract and push Foundry module
+        env:
+          FOUNDRY_REPO_TOKEN: ${{ secrets.FOUNDRY_MODULE_PAT }}
+        run: |
+          # Déterminer la branche cible (même nom que la branche actuelle)
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          echo "📦 Syncing modules-vtt/foundry to branch: ${BRANCH_NAME}"
+
+          # Extraire le subtree dans une branche temporaire
+          echo "🔄 Extracting subtree..."
+          git subtree split --prefix=modules-vtt/foundry -b temp-foundry-sync
+
+          # Pousser vers le repo du module Foundry
+          echo "🚀 Pushing to Tumulte-Foundry-module..."
+          git push --force \
+            https://x-access-token:${FOUNDRY_REPO_TOKEN}@github.com/The-Genium007/Tumulte-Foundry-module.git \
+            temp-foundry-sync:${BRANCH_NAME}
+
+          # Nettoyer la branche temporaire
+          git branch -D temp-foundry-sync
+
+          echo "✅ Successfully synced to ${BRANCH_NAME}"
+
+      - name: Summary
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          echo "## 🎮 Foundry Module Sync Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Source**: \`modules-vtt/foundry\` in Tumulte" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target**: \`${BRANCH_NAME}\` branch in [Tumulte-Foundry-module](https://github.com/The-Genium007/Tumulte-Foundry-module)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${BRANCH_NAME}" = "main" ]; then
+            echo "🏷️ **Production release** - Ready for Foundry VTT users!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🧪 **Staging release** - Available for testing" >> $GITHUB_STEP_SUMMARY
+          fi
