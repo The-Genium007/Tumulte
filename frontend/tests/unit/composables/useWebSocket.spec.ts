@@ -589,4 +589,387 @@ describe("useWebSocket Composable", () => {
 
     consoleErrorSpy.mockRestore();
   });
+
+  describe("subscribeToCampaignReadiness", () => {
+    test("should subscribe to readiness channel", async () => {
+      const { subscribeToCampaignReadiness } = useWebSocket();
+
+      let eventSourceInstance: MockEventSource;
+      global.EventSource = class extends MockEventSource {
+        constructor(url: string) {
+          super(url);
+          eventSourceInstance = this;
+        }
+      } as unknown as typeof EventSource;
+
+      subscribeToCampaignReadiness("campaign-123", {
+        onStreamerReady: vi.fn(),
+        onStreamerNotReady: vi.fn(),
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      eventSourceInstance!.simulateOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/__transmit/subscribe",
+        expect.objectContaining({
+          body: JSON.stringify({
+            uid: "mock-uuid-123",
+            channel: "campaign:campaign-123:readiness",
+          }),
+        }),
+      );
+    });
+
+    test("should handle streamer:ready events", async () => {
+      const { subscribeToCampaignReadiness } = useWebSocket();
+
+      const onStreamerReady = vi.fn();
+
+      let eventSourceInstance: MockEventSource;
+      global.EventSource = class extends MockEventSource {
+        constructor(url: string) {
+          super(url);
+          eventSourceInstance = this;
+        }
+      } as unknown as typeof EventSource;
+
+      subscribeToCampaignReadiness("campaign-ready-1", {
+        onStreamerReady,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      eventSourceInstance!.simulateOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const readyData = {
+        streamerId: "streamer-123",
+        displayName: "TestStreamer",
+        isReady: true,
+      };
+
+      eventSourceInstance!.simulateMessage(
+        JSON.stringify({
+          channel: "campaign:campaign-ready-1:readiness",
+          payload: {
+            event: "streamer:ready",
+            data: readyData,
+          },
+        }),
+      );
+
+      expect(onStreamerReady).toHaveBeenCalledWith(readyData);
+    });
+
+    test("should handle streamer:not-ready events", async () => {
+      const { subscribeToCampaignReadiness } = useWebSocket();
+
+      const onStreamerNotReady = vi.fn();
+
+      let eventSourceInstance: MockEventSource;
+      global.EventSource = class extends MockEventSource {
+        constructor(url: string) {
+          super(url);
+          eventSourceInstance = this;
+        }
+      } as unknown as typeof EventSource;
+
+      subscribeToCampaignReadiness("campaign-not-ready-1", {
+        onStreamerNotReady,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      eventSourceInstance!.simulateOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const notReadyData = {
+        streamerId: "streamer-456",
+        displayName: "AnotherStreamer",
+        isReady: false,
+      };
+
+      eventSourceInstance!.simulateMessage(
+        JSON.stringify({
+          channel: "campaign:campaign-not-ready-1:readiness",
+          payload: {
+            event: "streamer:not-ready",
+            data: notReadyData,
+          },
+        }),
+      );
+
+      expect(onStreamerNotReady).toHaveBeenCalledWith(notReadyData);
+    });
+  });
+
+  describe("subscribeToStreamerPolls - additional events", () => {
+    test("should handle streamer:left-campaign events", async () => {
+      const { subscribeToStreamerPolls } = useWebSocket();
+
+      const onLeftCampaign = vi.fn();
+
+      let eventSourceInstance: MockEventSource;
+      global.EventSource = class extends MockEventSource {
+        constructor(url: string) {
+          super(url);
+          eventSourceInstance = this;
+        }
+      } as unknown as typeof EventSource;
+
+      subscribeToStreamerPolls("streamer-left-1", {
+        onLeftCampaign,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      eventSourceInstance!.simulateOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      eventSourceInstance!.simulateMessage(
+        JSON.stringify({
+          channel: "streamer:streamer-left-1:polls",
+          payload: {
+            event: "streamer:left-campaign",
+            data: { campaign_id: "campaign-xyz" },
+          },
+        }),
+      );
+
+      expect(onLeftCampaign).toHaveBeenCalledWith({
+        campaign_id: "campaign-xyz",
+      });
+    });
+
+    test("should handle poll:update events", async () => {
+      const { subscribeToStreamerPolls } = useWebSocket();
+
+      const onPollUpdate = vi.fn();
+
+      let eventSourceInstance: MockEventSource;
+      global.EventSource = class extends MockEventSource {
+        constructor(url: string) {
+          super(url);
+          eventSourceInstance = this;
+        }
+      } as unknown as typeof EventSource;
+
+      subscribeToStreamerPolls("streamer-update-1", {
+        onPollUpdate,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      eventSourceInstance!.simulateOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const updateData = {
+        pollInstanceId: "poll-abc",
+        votesByOption: { "0": 5 },
+        totalVotes: 5,
+      };
+
+      eventSourceInstance!.simulateMessage(
+        JSON.stringify({
+          channel: "streamer:streamer-update-1:polls",
+          payload: {
+            event: "poll:update",
+            data: updateData,
+          },
+        }),
+      );
+
+      expect(onPollUpdate).toHaveBeenCalledWith(updateData);
+    });
+
+    test("should handle poll:end events", async () => {
+      const { subscribeToStreamerPolls } = useWebSocket();
+
+      const onPollEnd = vi.fn();
+
+      let eventSourceInstance: MockEventSource;
+      global.EventSource = class extends MockEventSource {
+        constructor(url: string) {
+          super(url);
+          eventSourceInstance = this;
+        }
+      } as unknown as typeof EventSource;
+
+      subscribeToStreamerPolls("streamer-end-1", {
+        onPollEnd,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      eventSourceInstance!.simulateOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const endData = {
+        pollInstanceId: "poll-ended",
+        finalVotes: { "0": 10 },
+        totalVotes: 10,
+      };
+
+      eventSourceInstance!.simulateMessage(
+        JSON.stringify({
+          channel: "streamer:streamer-end-1:polls",
+          payload: {
+            event: "poll:end",
+            data: endData,
+          },
+        }),
+      );
+
+      expect(onPollEnd).toHaveBeenCalledWith(endData);
+    });
+
+    test("should handle preview:command events", async () => {
+      const { subscribeToStreamerPolls } = useWebSocket();
+
+      const onPreviewCommand = vi.fn();
+
+      let eventSourceInstance: MockEventSource;
+      global.EventSource = class extends MockEventSource {
+        constructor(url: string) {
+          super(url);
+          eventSourceInstance = this;
+        }
+      } as unknown as typeof EventSource;
+
+      subscribeToStreamerPolls("streamer-preview-1", {
+        onPreviewCommand,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      eventSourceInstance!.simulateOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const previewData = {
+        command: "overlay:show",
+        params: { elementId: "test" },
+      };
+
+      eventSourceInstance!.simulateMessage(
+        JSON.stringify({
+          channel: "streamer:streamer-preview-1:polls",
+          payload: {
+            event: "preview:command",
+            data: previewData,
+          },
+        }),
+      );
+
+      expect(onPreviewCommand).toHaveBeenCalledWith(previewData);
+    });
+
+    test("should handle dice-roll:new events", async () => {
+      const { subscribeToStreamerPolls } = useWebSocket();
+
+      const onDiceRoll = vi.fn();
+
+      let eventSourceInstance: MockEventSource;
+      global.EventSource = class extends MockEventSource {
+        constructor(url: string) {
+          super(url);
+          eventSourceInstance = this;
+        }
+      } as unknown as typeof EventSource;
+
+      subscribeToStreamerPolls("streamer-dice-1", {
+        onDiceRoll,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      eventSourceInstance!.simulateOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const diceData = {
+        formula: "2d6+3",
+        result: 12,
+        rolls: [4, 5],
+      };
+
+      eventSourceInstance!.simulateMessage(
+        JSON.stringify({
+          channel: "streamer:streamer-dice-1:polls",
+          payload: {
+            event: "dice-roll:new",
+            data: diceData,
+          },
+        }),
+      );
+
+      expect(onDiceRoll).toHaveBeenCalledWith(diceData);
+    });
+
+    test("should handle dice-roll:critical events", async () => {
+      const { subscribeToStreamerPolls } = useWebSocket();
+
+      const onDiceRollCritical = vi.fn();
+
+      let eventSourceInstance: MockEventSource;
+      global.EventSource = class extends MockEventSource {
+        constructor(url: string) {
+          super(url);
+          eventSourceInstance = this;
+        }
+      } as unknown as typeof EventSource;
+
+      subscribeToStreamerPolls("streamer-crit-1", {
+        onDiceRollCritical,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      eventSourceInstance!.simulateOpen();
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const critData = {
+        formula: "1d20",
+        result: 20,
+        rolls: [20],
+        isCritical: true,
+      };
+
+      eventSourceInstance!.simulateMessage(
+        JSON.stringify({
+          channel: "streamer:streamer-crit-1:polls",
+          payload: {
+            event: "dice-roll:critical",
+            data: critData,
+          },
+        }),
+      );
+
+      expect(onDiceRollCritical).toHaveBeenCalledWith(critData);
+    });
+  });
+
+  describe("connection state", () => {
+    test("getConnectionState should return disconnected state when no client", () => {
+      const { getConnectionState } = useWebSocket();
+
+      const state = getConnectionState();
+
+      expect(state).toEqual({
+        connected: false,
+        reconnecting: false,
+        attempts: 0,
+      });
+    });
+
+    test("reconnecting and reconnectAttempts refs should be accessible", () => {
+      const { reconnecting, reconnectAttempts } = useWebSocket();
+
+      expect(reconnecting.value).toBe(false);
+      expect(reconnectAttempts.value).toBe(0);
+    });
+  });
+
+  describe("forceReconnect", () => {
+    test("should do nothing when no client exists", async () => {
+      const { forceReconnect, connected } = useWebSocket();
+
+      // Should not throw
+      await forceReconnect();
+
+      expect(connected.value).toBe(false);
+    });
+  });
 });
