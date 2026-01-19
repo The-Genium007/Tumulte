@@ -51,7 +51,7 @@
           <div class="space-y-4">
             <header>
               <h2 class="text-xl font-semibold">Support & Feedback</h2>
-              <p class="text-sm text-muted mt-1">
+              <p class="text-sm text-neutral-400 mt-1">
                 Signalez un bug ou proposez une amélioration.
               </p>
             </header>
@@ -69,7 +69,7 @@
             <!-- Bug Tab Content -->
             <div v-if="activeTab === 'bug'" class="space-y-3">
               <div class="space-y-2">
-                <label class="text-sm font-semibold text-secondary">
+                <label class="text-sm font-semibold text-secondary pl-2">
                   Titre du bug <span class="text-error-400">*</span>
                 </label>
                 <UInput
@@ -84,7 +84,7 @@
               </div>
 
               <div class="space-y-2">
-                <label class="text-sm font-semibold text-secondary">
+                <label class="text-sm font-semibold text-secondary pl-2">
                   Description <span class="text-error-400">*</span>
                 </label>
                 <UTextarea
@@ -104,7 +104,7 @@
                   v-model="includeDiagnostics"
                   label="Joindre les données techniques (logs, session)"
                 />
-                <p class="text-xs text-muted pl-8">
+                <p class="text-xs text-neutral-400 pl-8">
                   Aide à diagnostiquer le problème plus rapidement.
                 </p>
               </div>
@@ -114,14 +114,14 @@
                   <UIcon name="i-lucide-link" class="text-brand-500 size-4" />
                   <p class="text-sm font-medium">Session ID pour corrélation Sentry</p>
                 </div>
-                <code class="text-xs text-muted block truncate">{{ sessionId }}</code>
+                <code class="text-xs text-neutral-400 block truncate">{{ sessionId }}</code>
               </div>
             </div>
 
             <!-- Suggestion Tab Content -->
             <div v-if="activeTab === 'suggestion'" class="space-y-3">
               <div class="space-y-2">
-                <label class="text-sm font-semibold text-secondary">
+                <label class="text-sm font-semibold text-secondary pl-2">
                   Titre de la suggestion <span class="text-error-400">*</span>
                 </label>
                 <UInput
@@ -136,7 +136,7 @@
               </div>
 
               <div class="space-y-2">
-                <label class="text-sm font-semibold text-secondary">
+                <label class="text-sm font-semibold text-secondary pl-2">
                   Description <span class="text-error-400">*</span>
                 </label>
                 <UTextarea
@@ -162,13 +162,13 @@
             </div>
 
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
-              <span class="text-xs text-muted order-2 sm:order-1 text-center sm:text-left">
+              <span class="text-xs text-neutral-400 order-2 sm:order-1 text-center sm:text-left">
                 Les tokens/mots de passe ne sont jamais inclus.
               </span>
               <div class="flex gap-2 order-1 sm:order-2">
                 <UButton
-                  color="neutral"
-                  variant="ghost"
+                  color="primary"
+                  variant="solid"
                   label="Annuler"
                   class="flex-1 sm:flex-none"
                   @click="closeSupport"
