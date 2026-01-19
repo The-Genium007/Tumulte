@@ -1,10 +1,10 @@
 <template>
   <div class="audio-module">
-    <!-- Enable Toggle -->
-    <div class="inline-field">
-      <div class="enable-label">
+    <!-- Header with label and toggle -->
+    <div class="audio-header">
+      <div class="audio-label">
         <UIcon name="i-lucide-volume-2" class="size-4" />
-        <label>{{ label }}</label>
+        <span>{{ label }}</span>
       </div>
       <USwitch
         :model-value="modelValue.enabled"
@@ -13,61 +13,58 @@
       />
     </div>
 
-    <template v-if="modelValue.enabled">
-      <!-- Sound Selection -->
-      <div v-if="soundOptions.length > 0" class="field">
-        <label>Son</label>
-        <USelect
-          :model-value="modelValue.soundFile"
-          :items="soundOptions"
-          size="xs"
-          @update:model-value="(v: string) => updateField('soundFile', v)"
+    <!-- Sound Selection (if options provided) -->
+    <div v-if="soundOptions.length > 0 && modelValue.enabled" class="field">
+      <label>Son</label>
+      <USelect
+        :model-value="modelValue.soundFile"
+        :items="soundOptions"
+        size="xs"
+        @update:model-value="(v: string) => updateField('soundFile', v)"
+      />
+    </div>
+
+    <!-- Volume Control - Only when enabled -->
+    <div v-if="modelValue.enabled" class="volume-control">
+      <button
+        class="volume-button"
+        title="Muet"
+        @click="updateField('volume', 0)"
+      >
+        <UIcon name="i-lucide-volume-x" class="size-4" />
+      </button>
+      <div class="volume-slider-wrapper">
+        <input
+          type="range"
+          class="volume-range"
+          :value="modelValue.volume"
+          min="0"
+          max="1"
+          step="0.05"
+          @input="(e) => updateField('volume', parseFloat((e.target as HTMLInputElement).value))"
         />
       </div>
+      <button
+        class="volume-button"
+        title="Volume max"
+        @click="updateField('volume', 1)"
+      >
+        <UIcon name="i-lucide-volume-2" class="size-4" />
+      </button>
+      <span class="volume-value">{{ Math.round(modelValue.volume * 100) }}%</span>
+    </div>
 
-      <!-- Volume -->
-      <div class="slider-field">
-        <div class="slider-header">
-          <label>Volume</label>
-          <span class="slider-value">{{ Math.round(modelValue.volume * 100) }}%</span>
-        </div>
-        <div class="volume-control">
-          <button
-            class="volume-button"
-            @click="updateField('volume', 0)"
-          >
-            <UIcon name="i-lucide-volume-x" class="size-4" />
-          </button>
-          <URange
-            :model-value="modelValue.volume"
-            :min="0"
-            :max="1"
-            :step="0.05"
-            size="sm"
-            class="volume-slider"
-            @update:model-value="(v: number) => updateField('volume', v)"
-          />
-          <button
-            class="volume-button"
-            @click="updateField('volume', 1)"
-          >
-            <UIcon name="i-lucide-volume-2" class="size-4" />
-          </button>
-        </div>
-      </div>
-
-      <!-- Preview Button -->
-      <UButton
-        v-if="showPreview"
-        color="neutral"
-        variant="soft"
-        :icon="isPlaying ? 'i-lucide-square' : 'i-lucide-play'"
-        :label="isPlaying ? 'Arrêter' : 'Tester le son'"
-        size="xs"
-        block
-        @click="togglePreview"
-      />
-    </template>
+    <!-- Preview Button -->
+    <UButton
+      v-if="showPreview && modelValue.enabled"
+      color="primary"
+      variant="solid"
+      :icon="isPlaying ? 'i-lucide-square' : 'i-lucide-play'"
+      :label="isPlaying ? 'Arrêter' : 'Tester le son'"
+      size="xs"
+      block
+      @click="togglePreview"
+    />
   </div>
 </template>
 
@@ -161,26 +158,26 @@ onUnmounted(() => {
 .audio-module {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: var(--color-neutral-100);
+  border-radius: 8px;
 }
 
-.inline-field {
+.audio-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
 }
 
-.enable-label {
+.audio-label {
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  color: var(--color-text-muted);
-}
-
-.enable-label label {
   font-size: 0.75rem;
   font-weight: 500;
+  color: var(--color-neutral-500);
 }
 
 .field {
@@ -191,31 +188,7 @@ onUnmounted(() => {
 
 .field label {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.slider-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.slider-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.slider-header label {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.slider-value {
-  font-size: 0.75rem;
-  color: var(--color-text-primary);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  color: var(--color-neutral-400);
 }
 
 .volume-control {
@@ -231,20 +204,36 @@ onUnmounted(() => {
   width: 28px;
   height: 28px;
   border: none;
-  background: var(--color-neutral-100);
-  border-radius: 4px;
+  background: var(--color-white);
+  border-radius: 6px;
   cursor: pointer;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
   transition: all 0.15s ease;
   flex-shrink: 0;
 }
 
-.volume-button:hover {
+.volume-button:hover:not(:disabled) {
   background: var(--color-neutral-200);
   color: var(--color-text-primary);
 }
 
-.volume-slider {
+.volume-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.volume-slider-wrapper {
   flex: 1;
+  min-width: 60px;
+}
+
+.volume-value {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  min-width: 36px;
+  text-align: right;
+  flex-shrink: 0;
 }
 </style>

@@ -173,12 +173,35 @@ const innerWrapperStyle = computed(() => {
   } as Record<string, string | number>;
 });
 
-const contentStyle = computed(() => ({
-  width: `${config.value.layout.maxWidth}px`,
-}));
+// Helper to convert borderRadius to CSS string
+const getBorderRadiusStyle = (br: number | { topLeft: number; topRight: number; bottomRight: number; bottomLeft: number } | undefined): string => {
+  if (br === undefined) return "0px";
+  if (typeof br === "number") return `${br}px`;
+  return `${br.topLeft}px ${br.topRight}px ${br.bottomRight}px ${br.bottomLeft}px`;
+};
 
+// Content style applies questionBoxStyle to the entire card
+const contentStyle = computed(() => {
+  const qbs = config.value.questionBoxStyle;
+
+  return {
+    width: `${config.value.layout.maxWidth}px`,
+    // Card background and border from questionBoxStyle
+    backgroundColor: qbs?.backgroundColor ?? "rgba(17, 17, 17, 0.9)",
+    borderColor: qbs?.borderColor ?? "transparent",
+    borderWidth: `${qbs?.borderWidth ?? 0}px`,
+    borderStyle: (qbs?.borderWidth ?? 0) > 0 ? "solid" : "none",
+    borderRadius: getBorderRadiusStyle(qbs?.borderRadius ?? 24),
+    padding: qbs?.padding
+      ? `${qbs.padding.top}px ${qbs.padding.right}px ${qbs.padding.bottom}px ${qbs.padding.left}px`
+      : "32px",
+  };
+});
+
+// Question style is now typography only
 const questionStyle = computed(() => {
   const qs = config.value.questionStyle;
+
   return {
     fontFamily: qs.fontFamily,
     fontSize: `${qs.fontSize}px`,
@@ -219,7 +242,7 @@ const getOptionStyle = (index: number) => {
     backgroundColor: box.backgroundColor,
     borderColor: medalColor,
     borderWidth: `${box.borderWidth}px`,
-    borderRadius: `${box.borderRadius}px`,
+    borderRadius: getBorderRadiusStyle(box.borderRadius),
     borderStyle: "solid",
     opacity: box.opacity,
     padding: `${box.padding.top}px ${box.padding.right}px ${box.padding.bottom}px ${box.padding.left}px`,
@@ -643,22 +666,14 @@ onUnmounted(() => {
 }
 
 .poll-content {
-  background: linear-gradient(
-    145deg,
-    var(--color-overlay-bg-dark),
-    var(--color-overlay-bg-dark-alt)
-  );
+  /* background, border-radius, padding sont maintenant gérés par contentStyle via inline styles */
   backdrop-filter: blur(16px);
-  border-radius: 24px;
-  padding: 32px;
   box-shadow: 0 20px 60px var(--color-overlay-shadow-brand);
 }
 
 .poll-question {
   text-align: center;
   margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid var(--color-overlay-border-brand);
 }
 
 .poll-options {

@@ -1,19 +1,18 @@
 <template>
   <div class="border-module">
     <!-- Border Width -->
-    <div class="slider-field">
-      <div class="slider-header">
-        <label>Épaisseur</label>
-        <span class="slider-value">{{ modelValue.width }}px</span>
+    <div class="inline-field">
+      <label>Épaisseur</label>
+      <div class="input-with-unit">
+        <NumberInput
+          :model-value="modelValue.width"
+          :min="0"
+          :max="20"
+          :step="1"
+          @update:model-value="(v) => updateField('width', v)"
+        />
+        <span class="unit">px</span>
       </div>
-      <URange
-        :model-value="modelValue.width"
-        :min="0"
-        :max="20"
-        :step="1"
-        size="sm"
-        @update:model-value="(v: number) => updateField('width', v)"
-      />
     </div>
 
     <!-- Border Style -->
@@ -23,28 +22,18 @@
         :model-value="modelValue.style"
         :items="borderStyleOptions"
         size="xs"
+        :ui="selectUi"
         @update:model-value="(v: string) => updateField('style', v as BorderStyle)"
       />
     </div>
 
     <!-- Border Color -->
-    <div v-if="modelValue.width > 0" class="field">
-      <label>Couleur</label>
-      <div class="color-input-wrapper">
-        <input
-          type="color"
-          :value="modelValue.color"
-          class="color-picker"
-          @input="handleColorInput"
-        />
-        <UInput
-          :model-value="modelValue.color"
-          size="xs"
-          class="color-text"
-          :ui="inputUi"
-          @update:model-value="(v: string | number) => updateField('color', String(v))"
-        />
-      </div>
+    <div v-if="modelValue.width > 0">
+      <ColorModule
+        :model-value="modelValue.color"
+        label="Couleur"
+        @update:model-value="(v) => updateField('color', v)"
+      />
     </div>
 
     <!-- Individual Sides Toggle -->
@@ -64,14 +53,16 @@
           <UIcon :name="side.icon" class="size-3" />
           <span>{{ side.label }}</span>
         </div>
-        <URange
-          :model-value="modelValue[side.key as keyof BorderConfig] as number || modelValue.width"
-          :min="0"
-          :max="20"
-          :step="1"
-          size="sm"
-          @update:model-value="(v: number) => updateField(side.key as keyof BorderConfig, v)"
-        />
+        <div class="input-with-unit">
+          <NumberInput
+            :model-value="(modelValue[side.key as keyof BorderConfig] as number) || modelValue.width"
+            :min="0"
+            :max="20"
+            :step="1"
+            @update:model-value="(v) => updateField(side.key as keyof BorderConfig, v)"
+          />
+          <span class="unit">px</span>
+        </div>
       </div>
     </div>
 
@@ -87,6 +78,8 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import NumberInput from "../shared/NumberInput.vue";
+import ColorModule from "../appearance/ColorModule.vue";
 
 type BorderStyle = "solid" | "dashed" | "dotted" | "double" | "none";
 
@@ -116,11 +109,6 @@ const emit = defineEmits<{
   "update:modelValue": [value: BorderConfig];
 }>();
 
-const inputUi = {
-  root: "ring-0 border-0 rounded-lg overflow-hidden",
-  base: "px-2 py-1.5 bg-neutral-100 text-neutral-700 placeholder:text-neutral-400 rounded-lg text-xs",
-};
-
 const individualSidesEnabled = ref(false);
 
 const borderStyleOptions = [
@@ -129,6 +117,11 @@ const borderStyleOptions = [
   { label: "Dotted", value: "dotted" },
   { label: "Double", value: "double" },
 ];
+
+// UI customization for select to make it more visible
+const selectUi = {
+  base: "bg-neutral-100 text-neutral-600",
+};
 
 const sides = [
   { key: "topWidth", label: "Haut", icon: "i-lucide-arrow-up" },
@@ -157,11 +150,6 @@ const previewStyle = computed(() => {
     borderColor: color,
   };
 });
-
-const handleColorInput = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  updateField("color", target.value);
-};
 
 const toggleIndividualSides = (enabled: boolean) => {
   individualSidesEnabled.value = enabled;
@@ -203,31 +191,7 @@ const updateField = <K extends keyof BorderConfig>(
 
 .field label {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.slider-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.slider-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.slider-header label {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.slider-value {
-  font-size: 0.75rem;
-  color: var(--color-text-primary);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  color: var(--color-neutral-400);
 }
 
 .inline-field {
@@ -239,37 +203,18 @@ const updateField = <K extends keyof BorderConfig>(
 
 .inline-field label {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
 }
 
-.color-input-wrapper {
+.input-with-unit {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
-.color-picker {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid var(--color-neutral-300);
-  border-radius: 6px;
-  cursor: pointer;
-  flex-shrink: 0;
-  background: transparent;
-}
-
-.color-picker::-webkit-color-swatch-wrapper {
-  padding: 2px;
-}
-
-.color-picker::-webkit-color-swatch {
-  border-radius: 4px;
-  border: none;
-}
-
-.color-text {
-  flex: 1;
+.unit {
+  font-size: 0.75rem;
+  color: var(--color-neutral-400);
 }
 
 .individual-sides {
@@ -292,7 +237,7 @@ const updateField = <K extends keyof BorderConfig>(
   align-items: center;
   gap: 0.25rem;
   font-size: 0.625rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }

@@ -359,7 +359,7 @@
             </button>
           </div>
 
-          <h3 class="sidebar-title">Propriétés</h3>
+          <h3 class="sidebar-title inspector-title">Propriétés</h3>
 
           <!-- Inspecteur spécifique au type d'élément -->
           <template v-if="selectedElement.type === 'dice'">
@@ -381,6 +381,7 @@
           <template v-else-if="selectedElement.type === 'poll'">
             <PollInspector
               :question-style="(selectedElement.properties as PollProperties).questionStyle"
+              :question-box-style="(selectedElement.properties as PollProperties).questionBoxStyle"
               :option-box-style="(selectedElement.properties as PollProperties).optionBoxStyle"
               :option-text-style="(selectedElement.properties as PollProperties).optionTextStyle"
               :option-percentage-style="(selectedElement.properties as PollProperties).optionPercentageStyle"
@@ -391,6 +392,7 @@
               :layout="(selectedElement.properties as PollProperties).layout"
               :mock-data="(selectedElement.properties as PollProperties).mockData"
               @update-question-style="updatePollQuestionStyle"
+              @update-question-box-style="updatePollQuestionBoxStyle"
               @update-option-box-style="updatePollOptionBoxStyle"
               @update-option-text-style="updatePollOptionTextStyle"
               @update-percentage-style="updatePollPercentageStyle"
@@ -442,6 +444,26 @@ const toast = useToast();
 const undoRedo = useUndoRedo(store);
 provide(UNDO_REDO_KEY, undoRedo);
 const { canUndo, canRedo, undoLabel, redoLabel, undo, redo, pushSnapshot, initialize: initializeHistory } = undoRedo;
+
+// Debounced pushSnapshot pour éviter de créer trop de snapshots lors des changements rapides (sliders, color pickers)
+const pendingSnapshots = new Map<string, ReturnType<typeof setTimeout>>();
+const SNAPSHOT_DEBOUNCE_MS = 500;
+
+const debouncedPushSnapshot = (label: string, debounceKey: string) => {
+  // Annuler le timer précédent pour cette clé
+  const existing = pendingSnapshots.get(debounceKey);
+  if (existing) {
+    clearTimeout(existing);
+  }
+
+  // Créer un nouveau timer
+  const timer = setTimeout(() => {
+    pushSnapshot(label);
+    pendingSnapshots.delete(debounceKey);
+  }, SNAPSHOT_DEBOUNCE_MS);
+
+  pendingSnapshots.set(debounceKey, timer);
+};
 
 // Guard pour les modifications non sauvegardées
 const { showUnsavedModal, confirmLeave, cancelLeave } = useUnsavedChangesGuard();
@@ -556,7 +578,8 @@ const updateDiceProperty = (path: string, value: unknown) => {
   current[keys[keys.length - 1]] = value;
 
   store.updateElement(selectedElement.value.id, { properties: newProps });
-  pushSnapshot(`Modifier ${path}`);
+  // Utiliser le debounce pour regrouper les changements rapides (sliders, color pickers)
+  debouncedPushSnapshot(`Modifier ${path}`, `dice.${path}`);
 };
 
 const updateDiceColors = (colors: Partial<DiceProperties["colors"]>) => {
@@ -604,25 +627,78 @@ const updatePollProperty = (path: string, value: unknown) => {
   current[keys[keys.length - 1]] = value;
 
   store.updateElement(selectedElement.value.id, { properties: newProps });
-  pushSnapshot(`Modifier ${path}`);
+  // Utiliser le debounce pour regrouper les changements rapides (sliders, color pickers)
+  debouncedPushSnapshot(`Modifier ${path}`, path);
 };
 
 const updatePollQuestionStyle = (style: Partial<PollProperties["questionStyle"]>) => {
   if (!selectedElement.value) return;
   const props = selectedElement.value.properties as PollProperties;
-  updatePollProperty("questionStyle", { ...props.questionStyle, ...style });
+  // Deep merge pour textShadow
+  const merged = { ...props.questionStyle };
+  for (const key of Object.keys(style) as (keyof typeof style)[]) {
+    if (key === "textShadow" && style.textShadow) {
+      merged.textShadow = { ...merged.textShadow, ...style.textShadow };
+    } else {
+      (merged as Record<string, unknown>)[key] = style[key];
+    }
+  }
+  updatePollProperty("questionStyle", merged);
+};
+
+const updatePollQuestionBoxStyle = (style: Partial<PollProperties["questionBoxStyle"]>) => {
+  if (!selectedElement.value) return;
+  const props = selectedElement.value.properties as PollProperties;
+  // Default values for backwards compatibility
+  const defaultQuestionBoxStyle = {
+    backgroundColor: "transparent",
+    borderColor: "transparent",
+    borderWidth: 0,
+    borderRadius: 0,
+    opacity: 1,
+    padding: { top: 0, right: 0, bottom: 16, left: 0 },
+  };
+  // Deep merge pour padding
+  const base = { ...defaultQuestionBoxStyle, ...props.questionBoxStyle };
+  const merged = { ...base };
+  for (const key of Object.keys(style) as (keyof typeof style)[]) {
+    if (key === "padding" && style.padding) {
+      merged.padding = { ...merged.padding, ...style.padding };
+    } else {
+      (merged as Record<string, unknown>)[key] = style[key];
+    }
+  }
+  updatePollProperty("questionBoxStyle", merged);
 };
 
 const updatePollOptionBoxStyle = (style: Partial<PollProperties["optionBoxStyle"]>) => {
   if (!selectedElement.value) return;
   const props = selectedElement.value.properties as PollProperties;
-  updatePollProperty("optionBoxStyle", { ...props.optionBoxStyle, ...style });
+  // Deep merge pour padding
+  const merged = { ...props.optionBoxStyle };
+  for (const key of Object.keys(style) as (keyof typeof style)[]) {
+    if (key === "padding" && style.padding) {
+      merged.padding = { ...merged.padding, ...style.padding };
+    } else {
+      (merged as Record<string, unknown>)[key] = style[key];
+    }
+  }
+  updatePollProperty("optionBoxStyle", merged);
 };
 
 const updatePollOptionTextStyle = (style: Partial<PollProperties["optionTextStyle"]>) => {
   if (!selectedElement.value) return;
   const props = selectedElement.value.properties as PollProperties;
-  updatePollProperty("optionTextStyle", { ...props.optionTextStyle, ...style });
+  // Deep merge pour textShadow
+  const merged = { ...props.optionTextStyle };
+  for (const key of Object.keys(style) as (keyof typeof style)[]) {
+    if (key === "textShadow" && style.textShadow) {
+      merged.textShadow = { ...merged.textShadow, ...style.textShadow };
+    } else {
+      (merged as Record<string, unknown>)[key] = style[key];
+    }
+  }
+  updatePollProperty("optionTextStyle", merged);
 };
 
 const updatePollPercentageStyle = (style: Partial<PollProperties["optionPercentageStyle"]>) => {
@@ -644,7 +720,16 @@ const updatePollMedalColors = (colors: Partial<PollProperties["medalColors"]>) =
 const updatePollProgressBar = (config: Partial<PollProperties["progressBar"]>) => {
   if (!selectedElement.value) return;
   const props = selectedElement.value.properties as PollProperties;
-  updatePollProperty("progressBar", { ...props.progressBar, ...config });
+  // Deep merge pour fillGradient et timeTextStyle
+  const merged = { ...props.progressBar };
+  for (const key of Object.keys(config) as (keyof typeof config)[]) {
+    if ((key === "fillGradient" || key === "timeTextStyle") && config[key]) {
+      (merged as Record<string, unknown>)[key] = { ...(merged as Record<string, unknown>)[key] as object, ...config[key] as object };
+    } else {
+      (merged as Record<string, unknown>)[key] = config[key];
+    }
+  }
+  updatePollProperty("progressBar", merged);
 };
 
 const updatePollAnimations = (animations: Partial<PollProperties["animations"]>) => {
@@ -1111,7 +1196,7 @@ onUnmounted(() => {
   position: relative;
   border-right: none;
   border-left: 1px solid var(--color-neutral-200);
-  width: 280px;
+  width: 350px;
   transition: width 0.3s ease;
   overflow-y: auto;
   overflow-x: hidden;
@@ -1130,7 +1215,7 @@ onUnmounted(() => {
 
 .inspector-toggle {
   position: absolute;
-  right: 280px;
+  right: 350px;
   top: 50%;
   transform: translateY(-50%);
   width: 24px;
@@ -1167,7 +1252,7 @@ onUnmounted(() => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--color-text-muted);
+  color: var(--color-text-primary);
   margin-bottom: 0.75rem;
 }
 
@@ -1276,7 +1361,7 @@ onUnmounted(() => {
 
 /* Inspector */
 .inspector-content {
-  padding: 1rem;
+  padding: 0;
 }
 
 .inspector-header {
@@ -1284,7 +1369,8 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
+  padding: 1rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--color-neutral-200);
 }
@@ -1324,6 +1410,10 @@ onUnmounted(() => {
 .inspector-delete-btn:hover {
   background: var(--color-error-100);
   color: var(--color-error-600);
+}
+
+.inspector-title {
+  padding: 1rem 1rem 0 1rem;
 }
 
 .inspector-empty {

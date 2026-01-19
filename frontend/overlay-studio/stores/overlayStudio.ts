@@ -86,6 +86,14 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
               offsetY: 2,
             },
           },
+          questionBoxStyle: {
+            backgroundColor: "transparent",
+            borderColor: "transparent",
+            borderWidth: 0,
+            borderRadius: 0,
+            opacity: 1,
+            padding: { top: 0, right: 0, bottom: 16, left: 0 },
+          },
           optionBoxStyle: {
             backgroundColor: "rgba(17, 17, 17, 0.9)",
             borderColor: "#9333ea",
@@ -393,12 +401,33 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
   }
 
   /**
+   * Migre les propriétés d'un élément pour ajouter les valeurs par défaut manquantes
+   * Cela garantit la rétrocompatibilité avec les configurations créées avant l'ajout de nouvelles propriétés
+   */
+  function migrateElementProperties(element: OverlayElement): OverlayElement {
+    const defaults = getDefaultProperties(element.type);
+
+    // Pour les éléments poll, s'assurer que questionBoxStyle existe
+    if (element.type === "poll") {
+      const pollProps = element.properties as PollProperties;
+      const pollDefaults = defaults as PollProperties;
+
+      if (!pollProps.questionBoxStyle) {
+        pollProps.questionBoxStyle = pollDefaults.questionBoxStyle;
+      }
+    }
+
+    return element;
+  }
+
+  /**
    * Charge une configuration
    */
   function loadConfig(config: OverlayConfigData): void {
     canvasWidth.value = config.canvas.width;
     canvasHeight.value = config.canvas.height;
-    elements.value = config.elements;
+    // Migrer les éléments pour ajouter les propriétés manquantes
+    elements.value = config.elements.map(migrateElementProperties);
     selectedElementId.value = null;
     // Sauvegarder le snapshot initial et marquer comme propre
     lastSavedSnapshot.value = JSON.stringify(config);

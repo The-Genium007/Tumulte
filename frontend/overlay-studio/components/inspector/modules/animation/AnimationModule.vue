@@ -1,118 +1,134 @@
 <template>
   <div class="animation-module">
     <!-- Entry Animation -->
-    <div v-if="showEntry" class="animation-group">
-      <div class="group-header">
-        <UIcon name="i-lucide-log-in" class="size-4" />
-        <span>Animation d'entrée</span>
-      </div>
-
-      <div class="field">
-        <label>Type</label>
-        <USelect
-          :model-value="modelValue.entry.type"
-          :items="entryAnimationOptions"
-          size="xs"
-          @update:model-value="(v: string) => updateEntry('type', v)"
+    <div v-if="showEntry" class="sub-section">
+      <button class="sub-section-header" @click="toggleSection('entry')">
+        <div class="header-left">
+          <UIcon name="i-lucide-log-in" class="size-4" />
+          <span>Animation d'entrée</span>
+        </div>
+        <UIcon
+          :name="expandedSections.entry ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+          class="size-3"
         />
-      </div>
+      </button>
 
-      <div class="slider-field">
-        <div class="slider-header">
+      <div v-show="expandedSections.entry" class="sub-section-content">
+        <div class="field">
+          <label>Type</label>
+          <USelect
+            :model-value="modelValue.entry.type"
+            :items="entryAnimationOptions"
+            size="xs"
+            :ui="selectUi"
+            @update:model-value="(v: string) => updateEntry('type', v)"
+          />
+        </div>
+
+        <div class="inline-field">
           <label>Durée</label>
-          <span class="slider-value">{{ modelValue.entry.duration.toFixed(1) }}s</span>
+          <div class="input-with-unit">
+            <NumberInput
+              :model-value="modelValue.entry.duration"
+              :min="0.1"
+              :max="3"
+              :step="0.1"
+              @update:model-value="(v) => updateEntry('duration', v)"
+            />
+            <span class="unit">s</span>
+          </div>
         </div>
-        <URange
-          :model-value="modelValue.entry.duration"
-          :min="0.1"
-          :max="3"
-          :step="0.1"
-          size="sm"
-          @update:model-value="(v: number) => updateEntry('duration', v)"
-        />
-      </div>
 
-      <div v-if="showDelay" class="slider-field">
-        <div class="slider-header">
+        <div v-if="showDelay" class="inline-field">
           <label>Délai</label>
-          <span class="slider-value">{{ (modelValue.entry.delay || 0).toFixed(1) }}s</span>
+          <div class="input-with-unit">
+            <NumberInput
+              :model-value="modelValue.entry.delay || 0"
+              :min="0"
+              :max="5"
+              :step="0.1"
+              @update:model-value="(v) => updateEntry('delay', v)"
+            />
+            <span class="unit">s</span>
+          </div>
         </div>
-        <URange
-          :model-value="modelValue.entry.delay || 0"
-          :min="0"
-          :max="5"
-          :step="0.1"
-          size="sm"
-          @update:model-value="(v: number) => updateEntry('delay', v)"
-        />
-      </div>
 
-      <div v-if="showEasing" class="field">
-        <label>Easing</label>
-        <USelect
-          :model-value="modelValue.entry.easing || 'ease-out'"
-          :items="easingOptions"
-          size="xs"
-          @update:model-value="(v: string) => updateEntry('easing', v)"
-        />
+        <div v-if="showEasing" class="field">
+          <label>Easing</label>
+          <USelect
+            :model-value="modelValue.entry.easing || 'ease-out'"
+            :items="easingOptions"
+            size="xs"
+            :ui="selectUi"
+            @update:model-value="(v: string) => updateEntry('easing', v)"
+          />
+        </div>
       </div>
     </div>
 
     <!-- Exit Animation -->
-    <div v-if="showExit" class="animation-group">
-      <div class="group-header">
-        <UIcon name="i-lucide-log-out" class="size-4" />
-        <span>Animation de sortie</span>
-      </div>
-
-      <div class="field">
-        <label>Type</label>
-        <USelect
-          :model-value="modelValue.exit.type"
-          :items="exitAnimationOptions"
-          size="xs"
-          @update:model-value="(v: string) => updateExit('type', v)"
+    <div v-if="showExit" class="sub-section">
+      <button class="sub-section-header" @click="toggleSection('exit')">
+        <div class="header-left">
+          <UIcon name="i-lucide-log-out" class="size-4" />
+          <span>Animation de sortie</span>
+        </div>
+        <UIcon
+          :name="expandedSections.exit ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+          class="size-3"
         />
-      </div>
+      </button>
 
-      <div class="slider-field">
-        <div class="slider-header">
+      <div v-show="expandedSections.exit" class="sub-section-content">
+        <div class="field">
+          <label>Type</label>
+          <USelect
+            :model-value="modelValue.exit.type"
+            :items="exitAnimationOptions"
+            size="xs"
+            :ui="selectUi"
+            @update:model-value="(v: string) => updateExit('type', v)"
+          />
+        </div>
+
+        <div class="inline-field">
           <label>Durée</label>
-          <span class="slider-value">{{ modelValue.exit.duration.toFixed(1) }}s</span>
+          <div class="input-with-unit">
+            <NumberInput
+              :model-value="modelValue.exit.duration"
+              :min="0.1"
+              :max="3"
+              :step="0.1"
+              @update:model-value="(v) => updateExit('duration', v)"
+            />
+            <span class="unit">s</span>
+          </div>
         </div>
-        <URange
-          :model-value="modelValue.exit.duration"
-          :min="0.1"
-          :max="3"
-          :step="0.1"
-          size="sm"
-          @update:model-value="(v: number) => updateExit('duration', v)"
-        />
-      </div>
 
-      <div class="slider-field">
-        <div class="slider-header">
+        <div class="inline-field">
           <label>Délai avant sortie</label>
-          <span class="slider-value">{{ (modelValue.exit.delay || 0).toFixed(1) }}s</span>
+          <div class="input-with-unit">
+            <NumberInput
+              :model-value="modelValue.exit.delay || 0"
+              :min="0"
+              :max="10"
+              :step="0.5"
+              @update:model-value="(v) => updateExit('delay', v)"
+            />
+            <span class="unit">s</span>
+          </div>
         </div>
-        <URange
-          :model-value="modelValue.exit.delay || 0"
-          :min="0"
-          :max="10"
-          :step="0.5"
-          size="sm"
-          @update:model-value="(v: number) => updateExit('delay', v)"
-        />
-      </div>
 
-      <div v-if="showEasing" class="field">
-        <label>Easing</label>
-        <USelect
-          :model-value="modelValue.exit.easing || 'ease-in'"
-          :items="easingOptions"
-          size="xs"
-          @update:model-value="(v: string) => updateExit('easing', v)"
-        />
+        <div v-if="showEasing" class="field">
+          <label>Easing</label>
+          <USelect
+            :model-value="modelValue.exit.easing || 'ease-in'"
+            :items="easingOptions"
+            size="xs"
+            :ui="selectUi"
+            @update:model-value="(v: string) => updateExit('easing', v)"
+          />
+        </div>
       </div>
     </div>
 
@@ -131,6 +147,9 @@
 </template>
 
 <script setup lang="ts">
+import { reactive } from "vue";
+import NumberInput from "../shared/NumberInput.vue";
+
 export interface AnimationConfig {
   entry: {
     type: string;
@@ -212,6 +231,21 @@ const easingOptions = [
 const entryAnimationOptions = props.customEntryOptions || defaultEntryOptions;
 const exitAnimationOptions = props.customExitOptions || defaultExitOptions;
 
+// Expanded state for collapsible sections
+const expandedSections = reactive({
+  entry: true,
+  exit: false,
+});
+
+const toggleSection = (section: keyof typeof expandedSections) => {
+  expandedSections[section] = !expandedSections[section];
+};
+
+// UI customization for selects
+const selectUi = {
+  base: "bg-neutral-100 text-neutral-600",
+};
+
 const updateEntry = (key: string, value: string | number) => {
   emit("update:modelValue", {
     ...props.modelValue,
@@ -231,28 +265,49 @@ const updateExit = (key: string, value: string | number) => {
 .animation-module {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-}
-
-.animation-group {
-  background: var(--color-neutral-100);
-  border-radius: 8px;
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
   gap: 0.5rem;
 }
 
-.group-header {
+/* Sub-sections collapsibles */
+.sub-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.sub-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--color-neutral-500);
+  transition: color 0.15s ease;
+}
+
+.sub-section-header:hover {
+  color: var(--color-text-primary);
+}
+
+.sub-section-header .header-left {
   display: flex;
   align-items: center;
   gap: 0.375rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.25rem;
+}
+
+.sub-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-left: 2px solid var(--color-neutral-200);
+  margin-left: 0.5rem;
 }
 
 .field {
@@ -263,30 +318,29 @@ const updateExit = (key: string, value: string | number) => {
 
 .field label {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
 }
 
-.slider-field {
+.inline-field {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.inline-field label {
+  font-size: 0.75rem;
+  color: var(--color-neutral-400);
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
   gap: 0.25rem;
 }
 
-.slider-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.slider-header label {
+.unit {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.slider-value {
-  font-size: 0.75rem;
-  color: var(--color-text-primary);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  color: var(--color-neutral-400);
 }
 </style>

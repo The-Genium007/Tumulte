@@ -7,24 +7,24 @@
         :model-value="modelValue.fontFamily"
         :items="fontFamilyOptions"
         size="xs"
+        :ui="selectUi"
         @update:model-value="(v: string) => updateField('fontFamily', v)"
       />
     </div>
 
     <!-- Font Size -->
-    <div v-if="showFontSize" class="slider-field">
-      <div class="slider-header">
-        <label>Taille</label>
-        <span class="slider-value">{{ modelValue.fontSize }}{{ fontSizeUnit }}</span>
+    <div v-if="showFontSize" class="inline-field">
+      <label>Taille</label>
+      <div class="input-with-unit">
+        <NumberInput
+          :model-value="modelValue.fontSize || fontSizeMin"
+          :min="fontSizeMin"
+          :max="fontSizeMax"
+          :step="fontSizeStep"
+          @update:model-value="(v) => updateField('fontSize', v)"
+        />
+        <span class="unit">{{ fontSizeUnit }}</span>
       </div>
-      <URange
-        :model-value="modelValue.fontSize"
-        :min="fontSizeMin"
-        :max="fontSizeMax"
-        :step="fontSizeStep"
-        size="sm"
-        @update:model-value="(v: number) => updateField('fontSize', v)"
-      />
     </div>
 
     <!-- Font Weight -->
@@ -34,6 +34,7 @@
         :model-value="modelValue.fontWeight"
         :items="fontWeightOptions"
         size="xs"
+        :ui="selectUi"
         @update:model-value="(v: string | number) => updateField('fontWeight', Number(v))"
       />
     </div>
@@ -56,34 +57,29 @@
     </div>
 
     <!-- Letter Spacing -->
-    <div v-if="showLetterSpacing" class="slider-field">
-      <div class="slider-header">
-        <label>Espacement lettres</label>
-        <span class="slider-value">{{ modelValue.letterSpacing?.toFixed(2) || '0.00' }}em</span>
+    <div v-if="showLetterSpacing" class="inline-field">
+      <label>Espacement lettres</label>
+      <div class="input-with-unit">
+        <NumberInput
+          :model-value="modelValue.letterSpacing || 0"
+          :min="-0.1"
+          :max="0.5"
+          :step="0.01"
+          @update:model-value="(v) => updateField('letterSpacing', v)"
+        />
+        <span class="unit">em</span>
       </div>
-      <URange
-        :model-value="modelValue.letterSpacing || 0"
-        :min="-0.1"
-        :max="0.5"
-        :step="0.01"
-        size="sm"
-        @update:model-value="(v: number) => updateField('letterSpacing', v)"
-      />
     </div>
 
     <!-- Line Height -->
-    <div v-if="showLineHeight" class="slider-field">
-      <div class="slider-header">
-        <label>Hauteur de ligne</label>
-        <span class="slider-value">{{ modelValue.lineHeight?.toFixed(1) || '1.5' }}</span>
-      </div>
-      <URange
+    <div v-if="showLineHeight" class="inline-field">
+      <label>Hauteur de ligne</label>
+      <NumberInput
         :model-value="modelValue.lineHeight || 1.5"
         :min="0.8"
         :max="3"
         :step="0.1"
-        size="sm"
-        @update:model-value="(v: number) => updateField('lineHeight', v)"
+        @update:model-value="(v) => updateField('lineHeight', v)"
       />
     </div>
 
@@ -104,29 +100,33 @@
       </div>
     </div>
 
-    <!-- Font Style (italic) -->
-    <div v-if="showFontStyle" class="inline-field">
-      <label>Italique</label>
-      <USwitch
-        :model-value="modelValue.fontStyle === 'italic'"
-        size="sm"
-        @update:model-value="(v: boolean) => updateField('fontStyle', v ? 'italic' : 'normal')"
-      />
-    </div>
-
-    <!-- Text Decoration -->
+    <!-- Text Style (italic, underline, strikethrough) -->
     <div v-if="showTextDecoration" class="field">
-      <label>Décoration</label>
+      <label>Style</label>
       <div class="button-group">
         <button
-          v-for="option in textDecorationOptions"
-          :key="option.value"
           class="toggle-button"
-          :class="{ active: modelValue.textDecoration === option.value }"
-          :title="option.label"
-          @click="updateField('textDecoration', option.value)"
+          :class="{ active: modelValue.fontStyle === 'italic' }"
+          title="Italique"
+          @click="toggleFontStyle()"
         >
-          <UIcon :name="option.icon" class="size-4" />
+          <UIcon name="i-lucide-italic" class="size-4" />
+        </button>
+        <button
+          class="toggle-button"
+          :class="{ active: modelValue.textDecoration === 'underline' }"
+          title="Souligné"
+          @click="toggleTextDecoration('underline')"
+        >
+          <UIcon name="i-lucide-underline" class="size-4" />
+        </button>
+        <button
+          class="toggle-button"
+          :class="{ active: modelValue.textDecoration === 'line-through' }"
+          title="Barré"
+          @click="toggleTextDecoration('line-through')"
+        >
+          <UIcon name="i-lucide-strikethrough" class="size-4" />
         </button>
       </div>
     </div>
@@ -134,6 +134,8 @@
 </template>
 
 <script setup lang="ts">
+import NumberInput from "../shared/NumberInput.vue";
+
 export interface TextStyleConfig {
   fontFamily?: string;
   fontSize?: number;
@@ -156,7 +158,6 @@ const props = withDefaults(
     showLetterSpacing?: boolean;
     showLineHeight?: boolean;
     showTextAlign?: boolean;
-    showFontStyle?: boolean;
     showTextDecoration?: boolean;
     fontSizeMin?: number;
     fontSizeMax?: number;
@@ -171,7 +172,6 @@ const props = withDefaults(
     showLetterSpacing: false,
     showLineHeight: false,
     showTextAlign: true,
-    showFontStyle: false,
     showTextDecoration: false,
     fontSizeMin: 8,
     fontSizeMax: 72,
@@ -236,11 +236,10 @@ const textAlignOptions = [
   { label: "Justifié", value: "justify" as const, icon: "i-lucide-align-justify" },
 ];
 
-const textDecorationOptions = [
-  { label: "Aucune", value: "none" as const, icon: "i-lucide-minus" },
-  { label: "Souligné", value: "underline" as const, icon: "i-lucide-underline" },
-  { label: "Barré", value: "line-through" as const, icon: "i-lucide-strikethrough" },
-];
+// UI customization for selects to make them more visible
+const selectUi = {
+  base: "bg-neutral-100 text-neutral-600",
+};
 
 const updateField = <K extends keyof TextStyleConfig>(
   field: K,
@@ -250,6 +249,16 @@ const updateField = <K extends keyof TextStyleConfig>(
     ...props.modelValue,
     [field]: value,
   });
+};
+
+const toggleFontStyle = () => {
+  const newStyle = props.modelValue.fontStyle === "italic" ? "normal" : "italic";
+  updateField("fontStyle", newStyle);
+};
+
+const toggleTextDecoration = (decoration: "underline" | "line-through") => {
+  const newDecoration = props.modelValue.textDecoration === decoration ? "none" : decoration;
+  updateField("textDecoration", newDecoration);
 };
 </script>
 
@@ -268,31 +277,7 @@ const updateField = <K extends keyof TextStyleConfig>(
 
 .field label {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.slider-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.slider-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.slider-header label {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.slider-value {
-  font-size: 0.75rem;
-  color: var(--color-text-primary);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  color: var(--color-neutral-400);
 }
 
 .inline-field {
@@ -304,7 +289,18 @@ const updateField = <K extends keyof TextStyleConfig>(
 
 .inline-field label {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.unit {
+  font-size: 0.75rem;
+  color: var(--color-neutral-400);
 }
 
 .button-group {
@@ -323,9 +319,9 @@ const updateField = <K extends keyof TextStyleConfig>(
   height: 28px;
   border: none;
   background: transparent;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
   transition: all 0.15s ease;
 }
 

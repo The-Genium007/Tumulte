@@ -46,7 +46,14 @@ export interface BoxStyleSettings {
   backgroundColor: string;
   borderColor: string;
   borderWidth: number;
-  borderRadius: number;
+  borderRadius:
+    | number
+    | {
+        topLeft: number;
+        topRight: number;
+        bottomRight: number;
+        bottomLeft: number;
+      };
   opacity: number;
   padding: {
     top: number;
@@ -149,6 +156,7 @@ export interface PollMockData {
  */
 export interface PollProperties {
   questionStyle: TypographySettings;
+  questionBoxStyle: BoxStyleSettings;
   optionBoxStyle: BoxStyleSettings;
   optionTextStyle: TypographySettings;
   optionPercentageStyle: TypographySettings;

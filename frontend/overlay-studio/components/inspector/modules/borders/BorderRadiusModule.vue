@@ -21,43 +21,38 @@
     </div>
 
     <!-- Uniform Radius -->
-    <div v-if="!individualCornersEnabled" class="slider-field">
-      <div class="slider-header">
-        <label>Rayon</label>
-        <span class="slider-value">{{ uniformRadius }}px</span>
+    <div v-if="!individualCornersEnabled" class="inline-field">
+      <label>Rayon</label>
+      <div class="input-with-unit">
+        <NumberInput
+          :model-value="uniformRadius"
+          :min="0"
+          :max="maxRadius"
+          :step="1"
+          @update:model-value="updateUniformRadius"
+        />
+        <span class="unit">px</span>
       </div>
-      <URange
-        :model-value="uniformRadius"
-        :min="0"
-        :max="maxRadius"
-        :step="1"
-        size="sm"
-        @update:model-value="updateUniformRadius"
-      />
     </div>
 
     <!-- Individual Corners -->
     <div v-else class="corners-grid">
       <div class="corner-field top-left">
-        <UInput
+        <NumberInput
           :model-value="modelValue.topLeft"
-          type="number"
-          size="xs"
           :min="0"
           :max="maxRadius"
-          :ui="cornerInputUi"
-          @update:model-value="(v: string | number) => updateCorner('topLeft', Number(v))"
+          :step="1"
+          @update:model-value="(v) => updateCorner('topLeft', v)"
         />
       </div>
       <div class="corner-field top-right">
-        <UInput
+        <NumberInput
           :model-value="modelValue.topRight"
-          type="number"
-          size="xs"
           :min="0"
           :max="maxRadius"
-          :ui="cornerInputUi"
-          @update:model-value="(v: string | number) => updateCorner('topRight', Number(v))"
+          :step="1"
+          @update:model-value="(v) => updateCorner('topRight', v)"
         />
       </div>
       <div class="preview-center">
@@ -67,25 +62,21 @@
         />
       </div>
       <div class="corner-field bottom-left">
-        <UInput
+        <NumberInput
           :model-value="modelValue.bottomLeft"
-          type="number"
-          size="xs"
           :min="0"
           :max="maxRadius"
-          :ui="cornerInputUi"
-          @update:model-value="(v: string | number) => updateCorner('bottomLeft', Number(v))"
+          :step="1"
+          @update:model-value="(v) => updateCorner('bottomLeft', v)"
         />
       </div>
       <div class="corner-field bottom-right">
-        <UInput
+        <NumberInput
           :model-value="modelValue.bottomRight"
-          type="number"
-          size="xs"
           :min="0"
           :max="maxRadius"
-          :ui="cornerInputUi"
-          @update:model-value="(v: string | number) => updateCorner('bottomRight', Number(v))"
+          :step="1"
+          @update:model-value="(v) => updateCorner('bottomRight', v)"
         />
       </div>
     </div>
@@ -108,6 +99,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import NumberInput from "../shared/NumberInput.vue";
 
 export interface BorderRadiusConfig {
   topLeft: number;
@@ -139,11 +131,6 @@ const emit = defineEmits<{
 }>();
 
 const individualCornersEnabled = ref(false);
-
-const cornerInputUi = {
-  root: "w-14",
-  base: "text-center text-xs",
-};
 
 const presets: RadiusPreset[] = [
   {
@@ -247,7 +234,7 @@ const applyPreset = (preset: RadiusPreset) => {
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
   transition: all 0.15s ease;
 }
 
@@ -261,28 +248,27 @@ const applyPreset = (preset: RadiusPreset) => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.slider-field {
+.inline-field {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.inline-field label {
+  font-size: 0.75rem;
+  color: var(--color-neutral-400);
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
   gap: 0.25rem;
 }
 
-.slider-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.slider-header label {
+.unit {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.slider-value {
-  font-size: 0.75rem;
-  color: var(--color-text-primary);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
+  color: var(--color-neutral-400);
 }
 
 .corners-grid {
@@ -364,7 +350,7 @@ const applyPreset = (preset: RadiusPreset) => {
 
 .preset-button span {
   font-size: 0.625rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
 }
 
 .preset-button.active span {

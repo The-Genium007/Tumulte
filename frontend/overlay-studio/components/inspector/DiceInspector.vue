@@ -209,7 +209,10 @@
             :show-font-family="true"
             :show-font-size="true"
             :show-font-weight="true"
+            :show-text-transform="true"
+            :show-letter-spacing="true"
             :show-text-align="false"
+            :show-text-decoration="true"
             :font-size-min="12"
             :font-size-max="72"
             @update:model-value="updateResultTextFromModule"
@@ -335,12 +338,12 @@
 
         <UButton
           color="primary"
-          variant="soft"
+          variant="solid"
           icon="i-lucide-dice-5"
           label="Lancer les dés"
           size="sm"
           block
-          class="mt-3"
+          class="mt-4"
           @click="emit('playPreview')"
         />
       </div>
@@ -662,7 +665,7 @@ const updateResultTextTypography = (key: string, value: string | number) => {
 
 .slider-header label {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
 }
 
 .slider-value {
@@ -685,7 +688,7 @@ const updateResultTextTypography = (key: string, value: string | number) => {
 .group-label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-500);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -700,7 +703,7 @@ const updateResultTextTypography = (key: string, value: string | number) => {
 
 .inline-field label {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
 }
 
 /* Generic field */
@@ -712,7 +715,7 @@ const updateResultTextTypography = (key: string, value: string | number) => {
 
 .field label {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
 }
 
 /* Preview section - result range info */
@@ -720,7 +723,7 @@ const updateResultTextTypography = (key: string, value: string | number) => {
   display: flex;
   justify-content: space-between;
   font-size: 0.625rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
   margin-bottom: 0.25rem;
 }
 
