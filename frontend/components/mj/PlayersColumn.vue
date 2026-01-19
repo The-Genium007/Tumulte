@@ -67,11 +67,9 @@ const formatAuthTime = (seconds: number | null): string => {
     </div>
 
     <!-- Empty state -->
-    <div v-else-if="activeMembers.length === 0" class="text-center py-12">
-      <div class="bg-brand-light p-3 rounded-2xl mb-3 inline-block">
-        <UIcon name="i-lucide-user-plus" class="size-10 text-brand-500" />
-      </div>
-      <p class="text-muted text-sm">Aucun joueur dans cette campagne</p>
+    <div v-else-if="activeMembers.length === 0" class="flex flex-col items-center justify-center text-center py-12">
+      <UIcon name="i-lucide-user-plus" class="size-12 text-neutral-400 mb-4" />
+      <p class="text-base font-normal text-neutral-400">Aucun joueur dans cette campagne</p>
     </div>
 
     <!-- Liste des joueurs -->

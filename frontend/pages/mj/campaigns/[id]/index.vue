@@ -72,7 +72,7 @@
                   <UIcon name="i-lucide-users" class="size-5 text-primary-500" />
                 </div>
                 <div>
-                  <p class="text-xs text-muted">Total</p>
+                  <p class="text-xs text-primary-500 font-medium">Total</p>
                   <p class="text-lg font-bold text-primary">{{ members.length }}</p>
                 </div>
               </div>
@@ -83,7 +83,7 @@
                   <UIcon name="i-lucide-radio" class="size-5 text-error-500" />
                 </div>
                 <div>
-                  <p class="text-xs text-muted">En Live</p>
+                  <p class="text-xs text-primary-500 font-medium">En Live</p>
                   <p class="text-lg font-bold text-primary">{{ liveMembersCount }}</p>
                 </div>
               </div>
@@ -94,7 +94,7 @@
                   <UIcon name="i-lucide-user-check" class="size-5 text-success-500" />
                 </div>
                 <div>
-                  <p class="text-xs text-muted">Actifs</p>
+                  <p class="text-xs text-primary-500 font-medium">Actifs</p>
                   <p class="text-lg font-bold text-primary">{{ activeMembersCount }}</p>
                 </div>
               </div>
@@ -105,7 +105,7 @@
                   <UIcon name="i-lucide-shield-check" class="size-5 text-info-500" />
                 </div>
                 <div>
-                  <p class="text-xs text-muted">Autorisés</p>
+                  <p class="text-xs text-primary-500 font-medium">Autorisés</p>
                   <p class="text-lg font-bold text-primary">{{ authorizedMembersCount }}</p>
                 </div>
               </div>
@@ -116,7 +116,7 @@
                   <UIcon name="i-lucide-user-plus" class="size-5 text-warning-500" />
                 </div>
                 <div>
-                  <p class="text-xs text-muted">En Attente</p>
+                  <p class="text-xs text-primary-500 font-medium">En Attente</p>
                   <p class="text-lg font-bold text-primary">{{ pendingMembersCount }}</p>
                 </div>
               </div>
@@ -125,54 +125,44 @@
         </div>
 
         <!-- Stats Cards - Desktop: grid of 5 square cards -->
-        <div class="hidden lg:grid grid-cols-5 gap-16 mb-8">
-          <div class="aspect-square bg-white rounded-4xl flex flex-col items-center justify-center text-center gap-3">
-            <div class="bg-primary-light size-14 rounded-xl flex items-center justify-center">
-              <UIcon name="i-lucide-users" class="size-8 text-primary-500" />
-            </div>
+        <div class="hidden lg:flex justify-evenly mb-8">
+          <div class="size-32 bg-primary-light rounded-3xl flex flex-col items-center justify-center text-center gap-2">
+            <UIcon name="i-lucide-users" class="size-7 text-primary-500" />
             <div>
-              <p class="text-sm text-muted">Total Membres</p>
-              <p class="text-2xl font-bold text-primary">{{ members.length }}</p>
+              <p class="text-xs text-primary-500 font-medium">Total Membres</p>
+              <p class="text-xl font-bold text-primary">{{ members.length }}</p>
             </div>
           </div>
 
-          <div class="aspect-square bg-white rounded-4xl flex flex-col items-center justify-center text-center gap-3">
-            <div class="bg-error-light size-14 rounded-xl flex items-center justify-center">
-              <UIcon name="i-lucide-radio" class="size-8 text-error-500" />
-            </div>
+          <div class="size-32 bg-error-light rounded-3xl flex flex-col items-center justify-center text-center gap-2">
+            <UIcon name="i-lucide-radio" class="size-7 text-error-500" />
             <div>
-              <p class="text-sm text-muted">En Live</p>
-              <p class="text-2xl font-bold text-primary">{{ liveMembersCount }}</p>
+              <p class="text-xs text-primary-500 font-medium">En Live</p>
+              <p class="text-xl font-bold text-primary">{{ liveMembersCount }}</p>
             </div>
           </div>
 
-          <div class="aspect-square bg-white rounded-4xl flex flex-col items-center justify-center text-center gap-3">
-            <div class="bg-success-light size-14 rounded-xl flex items-center justify-center">
-              <UIcon name="i-lucide-user-check" class="size-8 text-success-500" />
-            </div>
+          <div class="size-32 bg-success-light rounded-3xl flex flex-col items-center justify-center text-center gap-2">
+            <UIcon name="i-lucide-user-check" class="size-7 text-success-500" />
             <div>
-              <p class="text-sm text-muted">Actifs</p>
-              <p class="text-2xl font-bold text-primary">{{ activeMembersCount }}</p>
+              <p class="text-xs text-primary-500 font-medium">Actifs</p>
+              <p class="text-xl font-bold text-primary">{{ activeMembersCount }}</p>
             </div>
           </div>
 
-          <div class="aspect-square bg-white rounded-4xl flex flex-col items-center justify-center text-center gap-3">
-            <div class="bg-info-light size-14 rounded-xl flex items-center justify-center">
-              <UIcon name="i-lucide-shield-check" class="size-8 text-info-500" />
-            </div>
+          <div class="size-32 bg-info-light rounded-3xl flex flex-col items-center justify-center text-center gap-2">
+            <UIcon name="i-lucide-shield-check" class="size-7 text-info-500" />
             <div>
-              <p class="text-sm text-muted">Autorisés</p>
-              <p class="text-2xl font-bold text-primary">{{ authorizedMembersCount }}</p>
+              <p class="text-xs text-primary-500 font-medium">Autorisés</p>
+              <p class="text-xl font-bold text-primary">{{ authorizedMembersCount }}</p>
             </div>
           </div>
 
-          <div class="aspect-square bg-white rounded-4xl flex flex-col items-center justify-center text-center gap-3">
-            <div class="bg-warning-light size-14 rounded-xl flex items-center justify-center">
-              <UIcon name="i-lucide-user-plus" class="size-8 text-warning-500" />
-            </div>
+          <div class="size-32 bg-warning-light rounded-3xl flex flex-col items-center justify-center text-center gap-2">
+            <UIcon name="i-lucide-user-plus" class="size-7 text-warning-500" />
             <div>
-              <p class="text-sm text-muted">En Attente</p>
-              <p class="text-2xl font-bold text-primary">{{ pendingMembersCount }}</p>
+              <p class="text-xs text-primary-500 font-medium">En Attente</p>
+              <p class="text-xl font-bold text-primary">{{ pendingMembersCount }}</p>
             </div>
           </div>
         </div>
@@ -197,10 +187,10 @@
             <UIcon name="i-game-icons-dice-twenty-faces-twenty" class="size-12 text-primary animate-spin-slow" />
           </div>
 
-          <div v-else-if="members.length === 0" class="text-center py-12">
-            <UIcon name="i-lucide-users" class="size-16 mx-auto mb-4 text-muted" />
-            <h3 class="text-xl font-semibold text-primary mb-2">Aucun membre</h3>
-            <p class="text-muted mb-6">
+          <div v-else-if="members.length === 0" class="flex flex-col items-center justify-center text-center py-12">
+            <UIcon name="i-lucide-users" class="size-12 text-neutral-400 mb-4" />
+            <p class="text-base font-normal text-neutral-400">Aucun membre</p>
+            <p class="text-sm text-neutral-400 mt-1 mb-6">
               Commencez par inviter des streamers à rejoindre cette campagne
             </p>
             <UButton
@@ -406,7 +396,7 @@
       <template #body>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-secondary mb-2">
+            <label class="block text-sm font-medium text-primary-500 pl-2 mb-0">
               Rechercher un streamer
             </label>
             <UInput
@@ -416,10 +406,10 @@
               size="lg"
               :ui="{
                 root: 'ring-0 border-0 rounded-lg overflow-hidden',
-                base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+                base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg [&>span:first-child]:text-primary-500',
               }"
             />
-            <p class="text-xs text-muted mt-1">Tapez au moins 2 caractères</p>
+            <p class="text-xs text-neutral-400 mt-1">Tapez au moins 2 caractères</p>
           </div>
 
           <!-- Loading -->
@@ -463,17 +453,17 @@
           </div>
 
           <!-- No Results -->
-          <div v-else-if="searchQuery.length >= 2" class="text-center py-8">
-            <UIcon name="i-lucide-search-x" class="size-12 mx-auto mb-3 text-primary-500" />
-            <p class="text-muted">
+          <div v-else-if="searchQuery.length >= 2" class="flex flex-col items-center justify-center text-center py-8">
+            <UIcon name="i-lucide-search-x" class="size-12 text-neutral-400 mb-4" />
+            <p class="text-base font-normal text-neutral-400">
               {{ searchResults.length > 0 ? 'Tous les streamers trouvés sont déjà invités' : 'Aucun streamer trouvé' }}
             </p>
           </div>
 
           <!-- Initial State -->
-          <div v-else class="text-center py-8">
-            <UIcon name="i-lucide-search" class="size-12 mx-auto mb-3 text-muted" />
-            <p class="text-sm text-muted">Tapez au moins 2 caractères pour rechercher</p>
+          <div v-else class="flex flex-col items-center justify-center text-center py-8">
+            <UIcon name="i-lucide-search" class="size-12 text-neutral-400 mb-4" />
+            <p class="text-sm text-neutral-400">Tapez au moins 2 caractères pour rechercher</p>
           </div>
         </div>
       </template>
@@ -481,7 +471,7 @@
       <template #footer>
         <div class="flex justify-end">
           <UButton
-            color="neutral"
+            color="primary"
             variant="solid"
             label="Fermer"
             @click="showInviteModal = false"

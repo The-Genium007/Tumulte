@@ -87,16 +87,6 @@ const handleConfirmChange = async (characterId: string) => {
   }
 };
 
-// Track if avatar failed to load
-const avatarFailed = ref(false);
-
-const handleAvatarError = () => {
-  avatarFailed.value = true;
-};
-
-const showAvatarFallback = computed(() => {
-  return !settings.value?.assignedCharacter?.avatarUrl || avatarFailed.value;
-});
 </script>
 
 <template>
@@ -153,20 +143,8 @@ const showAvatarFallback = computed(() => {
           <div v-if="settings.assignedCharacter" class="space-y-6">
             <div class="flex items-center gap-4 p-4 rounded-lg bg-primary-50">
               <!-- Avatar -->
-              <div class="shrink-0">
-                <img
-                  v-if="!showAvatarFallback"
-                  :src="settings.assignedCharacter.avatarUrl!"
-                  :alt="settings.assignedCharacter.name"
-                  class="size-16 rounded-full object-cover"
-                  @error="handleAvatarError"
-                />
-                <div
-                  v-else
-                  class="size-16 rounded-full bg-primary-100 flex items-center justify-center"
-                >
-                  <UIcon name="i-lucide-user" class="size-8 text-primary-500" />
-                </div>
+              <div class="size-16 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
+                <UIcon name="i-lucide-user" class="size-8 text-primary-500" />
               </div>
 
               <!-- Info -->
@@ -182,7 +160,7 @@ const showAvatarFallback = computed(() => {
             <div>
               <UButton
                 color="primary"
-                variant="soft"
+                variant="solid"
                 icon="i-lucide-refresh-cw"
                 label="Changer de personnage"
                 :disabled="!settings.canChangeCharacter"
@@ -202,19 +180,14 @@ const showAvatarFallback = computed(() => {
           </div>
 
           <!-- Aucun personnage assigné -->
-          <div v-else class="py-12 text-center space-y-6">
-            <div>
-              <div class="bg-neutral-100 p-4 rounded-2xl mb-4 inline-block">
-                <UIcon name="i-lucide-user-x" class="size-12 text-neutral-400" />
-              </div>
-              <h3 class="text-xl font-semibold text-primary mb-2">
-                Aucun personnage assigné
-              </h3>
-              <p class="text-muted max-w-md mx-auto">
-                Vous devez choisir un personnage pour participer aux sondages de cette campagne.
-              </p>
-            </div>
-
+          <div v-else class="flex flex-col items-center justify-center py-12 text-center">
+            <UIcon name="i-lucide-user-x" class="size-12 text-neutral-400 mb-4" />
+            <p class="text-base font-normal text-neutral-400">
+              Aucun personnage assigné
+            </p>
+            <p class="text-sm text-neutral-400 mt-1 max-w-md mx-auto mb-6">
+              Vous devez choisir un personnage pour participer aux sondages de cette campagne.
+            </p>
             <UButton
               color="primary"
               icon="i-lucide-user-plus"

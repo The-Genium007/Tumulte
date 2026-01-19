@@ -47,23 +47,21 @@
 
       <!-- No VTT Configured -->
       <UCard v-else-if="connections.length === 0">
-        <div class="py-12 px-6 text-center space-y-6">
-          <div class="space-y-3">
-            <UIcon
-              name="i-lucide-plug"
-              class="size-12 text-neutral-400 mx-auto mb-4"
-            />
-            <h2 class="text-neutral-400">
-              Aucun VTT configuré
-            </h2>
-            <p class="text-neutral-400 max-w-md mx-auto">
-              Pour importer une campagne, vous devez d'abord configurer une
-              connexion avec votre Virtual Tabletop (Foundry VTT, Owlbear Rodeo, ou
-              TaleSpire).
-            </p>
-          </div>
+        <div class="flex flex-col items-center justify-center py-12 px-6 text-center">
+          <UIcon
+            name="i-lucide-plug"
+            class="size-12 text-neutral-400 mb-4"
+          />
+          <p class="text-base font-normal text-neutral-400">
+            Aucun VTT configuré
+          </p>
+          <p class="text-sm text-neutral-400 mt-1 max-w-md mx-auto mb-6">
+            Pour importer une campagne, vous devez d'abord configurer une
+            connexion avec votre Virtual Tabletop (Foundry VTT, Owlbear Rodeo, ou
+            TaleSpire).
+          </p>
 
-          <div class="flex flex-col items-center gap-4 pt-4">
+          <div class="flex flex-col items-center gap-4">
             <h3 class="text-lg font-semibold text-primary">
               Choisissez votre VTT
             </h3>
@@ -187,21 +185,19 @@
           </div>
 
           <!-- Empty State if no campaigns available -->
-          <div v-else class="py-12 text-center space-y-4">
+          <div v-else class="flex flex-col items-center justify-center py-12 text-center">
             <UIcon
               name="i-lucide-folder-open"
-              class="size-16 text-muted mx-auto"
+              class="size-12 text-neutral-400 mb-4"
             />
-            <div class="space-y-2">
-              <h3 class="text-xl font-semibold text-primary">
-                Aucune nouvelle campagne disponible
-              </h3>
-              <p class="text-muted max-w-md mx-auto">
-                Toutes vos campagnes VTT ont déjà été importées. Créez une
-                nouvelle campagne dans votre VTT ou ajoutez une autre connexion
-                VTT.
-              </p>
-            </div>
+            <p class="text-base font-normal text-neutral-400">
+              Aucune nouvelle campagne disponible
+            </p>
+            <p class="text-sm text-neutral-400 mt-1 max-w-md mx-auto">
+              Toutes vos campagnes VTT ont déjà été importées. Créez une
+              nouvelle campagne dans votre VTT ou ajoutez une autre connexion
+              VTT.
+            </p>
           </div>
         </UCard>
       </template>

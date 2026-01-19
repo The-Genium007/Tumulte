@@ -119,9 +119,9 @@ watch(
       v-else-if="finishedPolls.length === 0"
       class="flex-1 flex flex-col items-center justify-center text-center py-12"
     >
-      <UIcon name="i-lucide-history" class="size-12 text-muted mb-4" />
-      <p class="text-muted">Aucun sondage terminé</p>
-      <p class="text-xs text-muted mt-1">
+      <UIcon name="i-lucide-history" class="size-12 text-neutral-400 mb-4" />
+      <p class="text-base font-normal text-neutral-400">Aucun sondage terminé</p>
+      <p class="text-sm text-neutral-400 mt-1">
         Les résultats de vos sondages apparaîtront ici
       </p>
     </div>

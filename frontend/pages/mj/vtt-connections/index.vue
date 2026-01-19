@@ -102,10 +102,10 @@
 
       <!-- Empty State -->
       <UCard v-else>
-        <div class="text-center py-12">
-          <UIcon name="i-lucide-plug-2" class="size-16 text-neutral-300 mx-auto mb-4" />
-          <h3 class="text-xl font-semibold text-primary mb-2">Aucune connexion VTT</h3>
-          <p class="text-muted mb-6">
+        <div class="flex flex-col items-center justify-center text-center py-12">
+          <UIcon name="i-lucide-plug-2" class="size-12 text-neutral-400 mb-4" />
+          <p class="text-base font-normal text-neutral-400">Aucune connexion VTT</p>
+          <p class="text-sm text-neutral-400 mt-1 mb-6">
             Connectez votre Foundry VTT pour synchroniser vos campagnes et lancés de dés.
           </p>
           <UButton

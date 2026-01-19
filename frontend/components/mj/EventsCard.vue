@@ -244,8 +244,8 @@ onUnmounted(async () => {
       v-else-if="polls.length === 0"
       class="flex flex-col items-center justify-center py-12"
     >
-      <UIcon name="i-lucide-list" class="size-10 text-muted mb-3" />
-      <p class="text-muted text-sm mb-4">Aucun événement créé</p>
+      <UIcon name="i-lucide-list" class="size-12 text-neutral-400 mb-4" />
+      <p class="text-base font-normal text-neutral-400 mb-4">Aucun événement créé</p>
       <MjAddEventDropdown :campaign-id="campaignId" />
     </div>
 
