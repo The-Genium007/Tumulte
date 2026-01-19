@@ -14,6 +14,7 @@ const DEFAULT_DICE_ELEMENT: OverlayElement = {
   scale: { x: 1, y: 1, z: 1 },
   visible: true,
   locked: true,
+  zIndex: 0,
   properties: {
     // Configuration DiceBox (rendu 3D)
     diceBox: {
@@ -99,6 +100,11 @@ const DEFAULT_DICE_ELEMENT: OverlayElement = {
       },
       minWidth: 320,
       maxWidth: 400,
+    },
+    // Transform indépendant du HUD (position et scale)
+    hudTransform: {
+      position: { x: 0, y: -300 },
+      scale: 1,
     },
     // Couleurs des critiques (glow)
     colors: {

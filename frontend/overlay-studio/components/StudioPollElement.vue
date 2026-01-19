@@ -1,18 +1,22 @@
 <template>
   <TresGroup
     ref="groupRef"
-    :position="[element.position.x, element.position.y, element.position.z]"
+    :position="[element.position.x, element.position.y, isSelected ? 5 : element.position.z]"
     :rotation="[element.rotation.x, element.rotation.y, element.rotation.z]"
     :scale="[element.scale.x, element.scale.y, element.scale.z]"
+    :render-order="renderOrder"
   >
     <!-- Rendu HTML via Html de @tresjs/cientos -->
     <!-- scale=50 pour rendre le HTML visible dans l'espace 3D (1920x1080) -->
+    <!-- zIndexRange contrôle le z-index CSS pour que l'élément sélectionné soit au-dessus -->
     <Html
       :center="true"
       :transform="true"
       :scale="50"
       :occlude="false"
       :sprite="false"
+      :z-index-range="isSelected ? [50000, 49000] : [10000 + renderOrder * 1000, 10000 + renderOrder * 1000 + 999]"
+      :wrapper-class="isSelected ? 'html-wrapper-selected' : 'html-wrapper-normal'"
     >
       <div
         class="poll-preview"
@@ -73,6 +77,7 @@ import type { OverlayElement, PollProperties } from "../types";
 const props = defineProps<{
   element: OverlayElement;
   isSelected: boolean;
+  renderOrder: number;
 }>();
 
 const emit = defineEmits<{
@@ -137,6 +142,7 @@ const getBorderRadiusStyle = (br: number | { topLeft: number; topRight: number; 
 
 // Styles calculés
 // Container style applies questionBoxStyle to the entire card
+// Inclut un z-index très élevé quand l'élément est sélectionné pour garantir qu'il passe au-dessus
 const containerStyle = computed(() => {
   const qbs = pollProps.value.questionBoxStyle;
 
@@ -151,6 +157,9 @@ const containerStyle = computed(() => {
     padding: qbs?.padding
       ? `${qbs.padding.top}px ${qbs.padding.right}px ${qbs.padding.bottom}px ${qbs.padding.left}px`
       : "32px",
+    // Z-index pour passer au-dessus des autres éléments quand sélectionné
+    position: "relative" as const,
+    zIndex: props.isSelected ? 100000 : "auto",
   };
 });
 

@@ -69,7 +69,9 @@ import { computed, ref, onUnmounted } from "vue";
 import type { OverlayElement, PollProperties } from "../types";
 import {
   calculatePollGizmoSize,
-  DICE_GIZMO_SIZE,
+  HUD_BASE_SIZE,
+  HUD_CSS_TO_CANVAS,
+  GIZMO_PADDING,
   DEFAULT_GIZMO_SIZE,
 } from "../utils/gizmo-size";
 
@@ -97,6 +99,7 @@ const emit = defineEmits<{
     deltaX: number,
     deltaY: number,
     proportional: boolean,
+    handle: ResizeHandle,
   ];
   rotate: [deltaAngle: number];
   transformStart: [mode: "move" | "resize" | "rotate"];
@@ -116,7 +119,9 @@ const activeEdges = ref<ActiveEdges>({
 
 // État du drag
 type DragMode = "move" | "resize" | "rotate" | null;
-type ResizeHandle = "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
+
+// Type exporté pour être utilisé par StudioCanvas
+export type ResizeHandle = "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
 
 const dragMode = ref<DragMode>(null);
 const resizeHandle = ref<ResizeHandle | null>(null);
@@ -135,7 +140,12 @@ const baseSize = computed(() => {
   }
 
   if (props.element.type === "dice") {
-    return DICE_GIZMO_SIZE;
+    // Pour les dés, le gizmo cible le HUD (pas la zone 3D complète)
+    // Appliquer le facteur de conversion CSS → Canvas et le padding
+    return {
+      width: (HUD_BASE_SIZE.width + GIZMO_PADDING * 2) * HUD_CSS_TO_CANVAS,
+      height: (HUD_BASE_SIZE.height + GIZMO_PADDING * 2) * HUD_CSS_TO_CANVAS,
+    };
   }
 
   return DEFAULT_GIZMO_SIZE;
@@ -349,7 +359,7 @@ const handleResize = (
       break;
   }
 
-  emit("resize", deltaWidth, deltaHeight, deltaX, deltaY, proportional);
+  emit("resize", deltaWidth, deltaHeight, deltaX, deltaY, proportional, handle);
   startX.value = event.clientX;
   startY.value = event.clientY;
 };

@@ -10,6 +10,7 @@ import type {
   ElementProperties,
   PollProperties,
   DiceProperties,
+  HudTransform,
 } from "../types";
 
 /**
@@ -54,6 +55,32 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
 
   const visibleElements = computed(() => {
     return elements.value.filter((el) => el.visible);
+  });
+
+  /**
+   * Éléments visibles triés par zIndex avec l'élément sélectionné en dernier
+   * Utilisé par le canvas pour l'ordre de rendu (l'élément sélectionné est au-dessus)
+   */
+  const sortedVisibleElements = computed(() => {
+    const visible = elements.value.filter((el) => el.visible);
+
+    // Trier par zIndex (les plus bas d'abord)
+    const sorted = [...visible].sort(
+      (a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0),
+    );
+
+    // Si un élément est sélectionné, le déplacer à la fin pour qu'il soit rendu au-dessus
+    if (selectedElementId.value) {
+      const selectedIndex = sorted.findIndex(
+        (el) => el.id === selectedElementId.value,
+      );
+      if (selectedIndex !== -1) {
+        const [selected] = sorted.splice(selectedIndex, 1);
+        sorted.push(selected);
+      }
+    }
+
+    return sorted;
   });
 
   // ===== Actions - Éléments =====
@@ -261,6 +288,11 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
             minWidth: 320,
             maxWidth: 400,
           },
+          // Transform indépendant du HUD (position et scale)
+          hudTransform: {
+            position: { x: 0, y: -300 },
+            scale: 1,
+          },
           // Couleurs des critiques (glow)
           colors: {
             criticalSuccessGlow: "#22c55e",
@@ -323,6 +355,7 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
       scale: { x: 1, y: 1, z: 1 },
       visible: true,
       locked: isDice, // Les Dice sont verrouillés car ils couvrent tout le canvas
+      zIndex: 0, // Ordre des calques (0 = base)
       properties: getDefaultProperties(type),
     };
 
@@ -383,6 +416,39 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
    */
   function updateElementScale(id: string, scale: Vector3): void {
     updateElement(id, { scale });
+  }
+
+  /**
+   * Met à jour le transform du HUD pour un élément dice
+   * Permet de positionner et redimensionner le HUD indépendamment de la zone 3D
+   */
+  function updateDiceHudTransform(
+    id: string,
+    transform: Partial<HudTransform>,
+  ): void {
+    const element = elements.value.find((el) => el.id === id);
+    if (!element || element.type !== "dice") return;
+
+    const props = element.properties as DiceProperties;
+    const currentTransform = props.hudTransform || {
+      position: { x: 0, y: -300 },
+      scale: 1,
+    };
+
+    const newHudTransform: HudTransform = {
+      position: {
+        ...currentTransform.position,
+        ...(transform.position || {}),
+      },
+      scale: transform.scale ?? currentTransform.scale,
+    };
+
+    updateElement(id, {
+      properties: {
+        ...props,
+        hudTransform: newHudTransform,
+      },
+    });
   }
 
   /**
@@ -464,6 +530,11 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
   function migrateElementProperties(element: OverlayElement): OverlayElement {
     const defaults = getDefaultProperties(element.type);
 
+    // Migration pour ajouter zIndex aux configs existantes
+    if (element.zIndex === undefined) {
+      element.zIndex = 0;
+    }
+
     // Pour les éléments poll, s'assurer que questionBoxStyle existe
     if (element.type === "poll") {
       const pollProps = element.properties as PollProperties;
@@ -523,6 +594,10 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
       }
       if (!diceProps.hud) {
         diceProps.hud = diceDefaults.hud;
+      }
+      // Migration pour ajouter hudTransform aux configs existantes
+      if (!diceProps.hudTransform) {
+        diceProps.hudTransform = diceDefaults.hudTransform;
       }
     }
 
@@ -595,6 +670,7 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
     selectedElement,
     activeConfig,
     visibleElements,
+    sortedVisibleElements,
 
     // Actions - Éléments
     addElement,
@@ -603,6 +679,7 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
     updateElementPosition,
     updateElementRotation,
     updateElementScale,
+    updateDiceHudTransform,
     duplicateElement,
 
     // Actions - Sélection

@@ -195,15 +195,33 @@
               />
             </div>
 
-            <!-- Bouton dev pour accéder au studio -->
-            <div v-if="isDev" class="pt-4 border-t border-default">
-              <UButton
-                color="warning"
-                variant="soft"
-                icon="i-lucide-palette"
-                label="Overlay Studio"
-                to="/streamer/studio"
-              />
+            <!-- Overlay Studio (Bêta) -->
+            <div class="pt-4 border-t border-default space-y-3">
+              <div class="flex flex-col sm:flex-row gap-3 sm:items-start">
+                <UButton
+                  color="primary"
+                  variant="solid"
+                  icon="i-lucide-palette"
+                  label="Overlay Studio"
+                  to="/streamer/studio"
+                  size="lg"
+                />
+                <UAlert
+                  color="warning"
+                  variant="soft"
+                  icon="i-lucide-flask-conical"
+                  class="flex-1"
+                >
+                  <template #title>
+                    <span class="font-semibold">Fonctionnalité en bêta</span>
+                  </template>
+                  <template #description>
+                    <p class="text-sm">
+                      Des bugs peuvent survenir. Utilisez le <button class="underline font-medium hover:text-warning-600" @click="openSupport">support</button> pour signaler un problème ou suggérer une amélioration.
+                    </p>
+                  </template>
+                </UAlert>
+              </div>
             </div>
           </div>
         </UCard>
@@ -260,6 +278,7 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { useAuth } from "@/composables/useAuth";
 import { useCampaigns } from "@/composables/useCampaigns";
 import { useSupportTrigger } from "@/composables/useSupportTrigger";
+import { useSupportWidget } from "@/composables/useSupportWidget";
 import type { AuthorizationStatus } from "@/types/index";
 
 definePageMeta({
@@ -272,9 +291,7 @@ const API_URL = config.public.apiBase;
 const { user: _user } = useAuth();
 const { fetchInvitations, getAuthorizationStatus, grantAuthorization, revokeAuthorization } = useCampaigns();
 const { triggerSupportForError } = useSupportTrigger();
-
-// Dev mode
-const isDev = import.meta.dev;
+const { openSupport } = useSupportWidget();
 
 const overlayUrl = ref<string | null>(null);
 const loadingOverlay = ref(false);

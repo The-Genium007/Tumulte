@@ -102,6 +102,21 @@ export const DICE_GIZMO_SIZE = {
 };
 
 /**
+ * Taille de base du HUD des dés pour le calcul du gizmo
+ * Dimensions ajustées pour englober correctement le panneau de résultats
+ */
+export const HUD_BASE_SIZE = {
+  width: 380,
+  height: 210,
+};
+
+/**
+ * Facteur de conversion CSS → Canvas pour le HUD
+ * Similaire au Poll, ajusté pour que le gizmo englobe correctement le HUD
+ */
+export const HUD_CSS_TO_CANVAS = 1.0;
+
+/**
  * Taille par défaut du gizmo pour les types non reconnus
  */
 export const DEFAULT_GIZMO_SIZE = {

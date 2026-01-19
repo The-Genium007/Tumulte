@@ -210,7 +210,7 @@ router
       '#controllers/streamer/characters_controller.unassign'
     )
 
-    // Campaign Settings (Character Assignment)
+    // Campaign Settings (Character Assignment & Overlay)
     router.get(
       '/campaigns/:campaignId/settings',
       '#controllers/streamer/campaigns_controller.getSettings'
@@ -218,6 +218,14 @@ router
     router.put(
       '/campaigns/:campaignId/character',
       '#controllers/streamer/campaigns_controller.updateCharacter'
+    )
+    router.put(
+      '/campaigns/:campaignId/overlay',
+      '#controllers/streamer/campaigns_controller.updateOverlay'
+    )
+    router.get(
+      '/campaigns/:campaignId/available-overlays',
+      '#controllers/streamer/campaigns_controller.getAvailableOverlays'
     )
 
     // Overlay Studio - Configurations (avec rate limiting sur les mutations)

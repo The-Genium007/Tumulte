@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import CharacterSelectionModal from "@/components/streamer/CharacterSelectionModal.vue";
 import { useCampaignCharacters } from "@/composables/useCampaignCharacters";
 import type { CampaignSettings } from "@/types";
@@ -18,6 +18,7 @@ const {
   fetchCharacters,
   getCampaignSettings,
   updateCharacter,
+  updateOverlay,
 } = useCampaignCharacters();
 
 const campaignId = computed(() => route.params.id as string);
@@ -26,6 +27,8 @@ const settings = ref<CampaignSettings | null>(null);
 const loading = ref(true);
 const showCharacterModal = ref(false);
 const updateLoading = ref(false);
+const overlayLoading = ref(false);
+const selectedOverlayId = ref<string | null>(null);
 
 onMounted(async () => {
   await loadSettings();
@@ -35,6 +38,8 @@ const loadSettings = async () => {
   loading.value = true;
   try {
     settings.value = await getCampaignSettings(campaignId.value);
+    // Initialiser la sélection d'overlay
+    selectedOverlayId.value = settings.value.overlay?.current.id ?? null;
   } catch {
     toast.add({
       title: "Erreur",
@@ -84,6 +89,49 @@ const handleConfirmChange = async (characterId: string) => {
     });
   } finally {
     updateLoading.value = false;
+  }
+};
+
+// Options pour le dropdown d'overlay
+const overlayOptions = computed(() => {
+  if (!settings.value?.overlay?.available) return [];
+  return settings.value.overlay.available.map((overlay) => ({
+    label: overlay.name + (overlay.isDefault ? " (Défaut)" : overlay.isActive ? " (Actif)" : ""),
+    value: overlay.id,
+  }));
+});
+
+// URL de prévisualisation de l'overlay
+const previewUrl = computed(() => {
+  if (selectedOverlayId.value === null) {
+    return `/streamer/overlay-preview?config=default`;
+  }
+  return `/streamer/overlay-preview?config=${selectedOverlayId.value}`;
+});
+
+// Gérer le changement d'overlay
+const handleOverlayChange = async (overlayId: string | null) => {
+  overlayLoading.value = true;
+  try {
+    await updateOverlay(campaignId.value, overlayId);
+
+    toast.add({
+      title: "Overlay modifié",
+      description: "L'overlay de cette campagne a été mis à jour",
+      color: "success",
+    });
+
+    await loadSettings();
+  } catch (error) {
+    toast.add({
+      title: "Erreur",
+      description: error instanceof Error ? error.message : "Impossible de modifier l'overlay",
+      color: "error",
+    });
+    // Restaurer la valeur précédente en cas d'erreur
+    selectedOverlayId.value = settings.value?.overlay?.current.id ?? null;
+  } finally {
+    overlayLoading.value = false;
   }
 };
 
@@ -195,6 +243,78 @@ const handleConfirmChange = async (characterId: string) => {
               size="lg"
               @click="handleChangeCharacter"
             />
+          </div>
+        </UCard>
+
+        <!-- Section : Overlay OBS -->
+        <UCard v-if="settings.overlay">
+          <template #header>
+            <div class="flex items-center gap-3">
+              <h2 class="text-xl font-semibold text-primary">Overlay OBS</h2>
+              <UBadge color="warning" variant="soft" size="sm">
+                Bêta
+              </UBadge>
+            </div>
+          </template>
+
+          <div class="space-y-4">
+            <p class="text-sm text-muted">
+              Sélectionnez l'overlay à utiliser pour cette campagne. Vous pouvez créer des overlays personnalisés dans l'Overlay Studio.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+              <!-- Dropdown de sélection -->
+              <USelect
+                v-model="selectedOverlayId"
+                :items="overlayOptions"
+                placeholder="Sélectionner un overlay"
+                size="lg"
+                class="flex-1"
+                :ui="{ base: 'bg-primary-100 text-primary-600' }"
+                :loading="overlayLoading"
+                @update:model-value="handleOverlayChange"
+              />
+
+              <!-- Bouton Prévisualiser -->
+              <UButton
+                color="primary"
+                variant="soft"
+                icon="i-lucide-eye"
+                size="lg"
+                :to="previewUrl"
+                target="_blank"
+              >
+                <span class="hidden sm:inline">Prévisualiser</span>
+                <span class="sm:hidden">Aperçu</span>
+              </UButton>
+            </div>
+
+            <!-- Lien vers Overlay Studio -->
+            <div class="pt-4 border-t border-default">
+              <UAlert
+                color="primary"
+                variant="soft"
+                icon="i-lucide-palette"
+              >
+                <template #description>
+                  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <p class="text-sm">
+                      Créez des overlays personnalisés avec l'Overlay Studio
+                    </p>
+                    <UButton
+                      color="primary"
+                      variant="solid"
+                      size="sm"
+                      to="/streamer/studio"
+                      icon="i-lucide-external-link"
+                      class="w-full sm:w-auto"
+                    >
+                      Ouvrir le Studio
+                    </UButton>
+                  </div>
+                </template>
+              </UAlert>
+            </div>
           </div>
         </UCard>
       </template>

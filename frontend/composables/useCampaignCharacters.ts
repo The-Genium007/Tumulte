@@ -115,6 +115,35 @@ export const useCampaignCharacters = () => {
     }
   };
 
+  /**
+   * Met à jour l'overlay sélectionné pour une campagne
+   * @param overlayConfigId - null pour l'overlay système par défaut, ou l'ID d'un overlay personnalisé
+   */
+  const updateOverlay = async (
+    campaignId: string,
+    overlayConfigId: string | null,
+  ): Promise<void> => {
+    try {
+      const response = await fetch(
+        `${API_URL}/streamer/campaigns/${campaignId}/overlay`,
+        {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ overlayConfigId }),
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update overlay");
+      }
+    } catch (error) {
+      triggerSupportForError("overlay_update", error);
+      throw error;
+    }
+  };
+
   return {
     // State
     characters,
@@ -126,5 +155,6 @@ export const useCampaignCharacters = () => {
     acceptInvitationWithCharacter,
     getCampaignSettings,
     updateCharacter,
+    updateOverlay,
   };
 };

@@ -34,9 +34,13 @@
     </template>
 
     <!-- Dice Roll Overlay (VTT Integration) - Visibilité contrôlée par la queue -->
+    <!-- Position et scale basés sur hudTransform de l'élément dice -->
     <DiceRollOverlay
       :dice-roll="currentDiceRoll"
       :visible="isPopup2DVisible"
+      :hud-config="diceHudConfig"
+      :critical-colors="diceCriticalColors"
+      :style="diceHudTransformStyle"
       @hidden="handleDiceRollHidden"
     />
   </div>
@@ -52,6 +56,7 @@ import { useOverlayConfig } from "@/composables/useOverlayConfig";
 import { useWorkerTimer } from "@/composables/useWorkerTimer";
 import { useOBSEvents } from "@/composables/useOBSEvents";
 import type { PollStartEvent, DiceRollEvent } from "@/types";
+import type { DiceProperties } from "@/overlay-studio/types";
 
 // State pour l'indicateur de connexion
 const isWsConnected = ref(true);
@@ -78,6 +83,46 @@ const _isPreviewMode = computed(() => route.query.preview === "true");
 
 // Charger la configuration de l'overlay
 const { visibleElements, fetchConfig } = useOverlayConfig(streamerId);
+
+// Récupérer l'élément dice pour extraire les configs HUD
+const diceElement = computed(() =>
+  visibleElements.value.find((el) => el.type === "dice"),
+);
+
+// Config HUD depuis l'élément dice
+const diceHudConfig = computed(() => {
+  if (!diceElement.value) return undefined;
+  return (diceElement.value.properties as DiceProperties).hud;
+});
+
+// Couleurs critiques depuis l'élément dice
+const diceCriticalColors = computed(() => {
+  if (!diceElement.value) return undefined;
+  return (diceElement.value.properties as DiceProperties).colors;
+});
+
+// Style de positionnement du HUD basé sur hudTransform
+// Conversion des coordonnées canvas (centre) vers CSS (top-left)
+const diceHudTransformStyle = computed(() => {
+  if (!diceElement.value) return {};
+
+  const diceProps = diceElement.value.properties as DiceProperties;
+  const transform = diceProps.hudTransform || { position: { x: 0, y: 0 }, scale: 1 };
+
+  // Conversion: Canvas (centre à 0,0) -> CSS (top-left)
+  // Canvas X: -960 à +960 -> CSS left: 0 à 1920
+  // Canvas Y: +540 (haut) à -540 (bas) -> CSS top: 0 à 1080
+  const cssLeft = 960 + transform.position.x;
+  const cssTop = 540 - transform.position.y;
+
+  return {
+    position: "absolute" as const,
+    left: `${cssLeft}px`,
+    top: `${cssTop}px`,
+    transform: `translate(-50%, -50%) scale(${transform.scale})`,
+    transformOrigin: "center center",
+  };
+});
 
 // Refs des éléments pour contrôle externe
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

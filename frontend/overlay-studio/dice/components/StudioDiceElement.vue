@@ -1,51 +1,68 @@
 <template>
-  <TresGroup
-    ref="groupRef"
-    :position="[element.position.x, element.position.y, element.position.z]"
-    :rotation="[element.rotation.x, element.rotation.y, element.rotation.z]"
-    :scale="[element.scale.x, element.scale.y, element.scale.z]"
-  >
-    <!-- Zone de fond cliquable pour la sélection -->
+  <!-- Zone 3D des dés - fixe au centre, couvre le canvas -->
+  <!-- renderOrder bas pour que la zone 3D soit en dessous du HUD -->
+  <TresGroup ref="diceZoneRef" :position="[0, 0, isSelected ? 5 : 0]" :render-order="renderOrder">
     <Html
       :center="true"
       :transform="true"
       :scale="50"
       :occlude="false"
       :sprite="false"
+      :z-index-range="isSelected ? [50000, 49000] : [10000 + renderOrder * 1000, 10000 + renderOrder * 1000 + 499]"
+      :wrapper-class="isSelected ? 'html-wrapper-selected' : 'html-wrapper-normal'"
     >
       <div
-        class="dice-preview"
-        :style="containerStyle"
-        @pointerdown.stop="handlePointerDown"
+        class="dice-3d-zone"
+        :style="{ position: 'relative', zIndex: isSelected ? 100000 : 'auto' }"
+        @pointerdown.stop="handleDiceZonePointerDown"
         @click.stop
       >
-        <!-- Conteneur flex pour le dé 3D et le HUD -->
-        <div class="dice-content">
-          <!-- Zone du dé 3D (vrai DiceBox comme en production) -->
-          <div class="dice-3d-container">
-            <ClientOnly>
-              <DiceBox
-                ref="diceBoxRef"
-                :custom-colorset="diceCustomColorset"
-                :texture="diceTexture"
-                :material="diceMaterial"
-                :light-intensity="diceLightIntensity"
-                :sounds="false"
-                @ready="onDiceBoxReady"
-              />
-            </ClientOnly>
-          </div>
-
-          <!-- HUD de résultat réel (même composant que l'overlay OBS) -->
-          <div class="hud-container">
-            <DiceRollOverlay
-              :dice-roll="mockDiceRollEvent"
-              :visible="true"
-              :hud-config="diceProperties.hud"
-              :critical-colors="diceProperties.colors"
+        <div class="dice-3d-container">
+          <ClientOnly>
+            <DiceBox
+              ref="diceBoxRef"
+              :custom-colorset="diceCustomColorset"
+              :texture="diceTexture"
+              :material="diceMaterial"
+              :light-intensity="diceLightIntensity"
+              :sounds="false"
+              @ready="onDiceBoxReady"
             />
-          </div>
+          </ClientOnly>
         </div>
+      </div>
+    </Html>
+  </TresGroup>
+
+  <!-- HUD - positionnable et redimensionnable indépendamment -->
+  <!-- renderOrder légèrement plus haut pour que le HUD soit au-dessus de la zone 3D -->
+  <TresGroup
+    ref="hudGroupRef"
+    :position="[hudPosition.x, hudPosition.y, isSelected ? 6 : 1]"
+    :scale="[hudScale, hudScale, 1]"
+    :render-order="renderOrder + 1"
+  >
+    <Html
+      :center="true"
+      :transform="true"
+      :scale="50"
+      :occlude="false"
+      :sprite="false"
+      :z-index-range="isSelected ? [50500, 49500] : [10000 + renderOrder * 1000 + 500, 10000 + renderOrder * 1000 + 999]"
+      :wrapper-class="isSelected ? 'html-wrapper-selected' : 'html-wrapper-normal'"
+    >
+      <div
+        class="hud-zone"
+        :style="{ position: 'relative', zIndex: isSelected ? 100001 : 'auto' }"
+        @pointerdown.stop="handleHudPointerDown"
+        @click.stop
+      >
+        <DiceRollOverlay
+          :dice-roll="mockDiceRollEvent"
+          :visible="true"
+          :hud-config="diceProperties.hud"
+          :critical-colors="diceProperties.colors"
+        />
       </div>
     </Html>
   </TresGroup>
@@ -64,20 +81,34 @@ import DiceBox from "~/components/DiceBox.client.vue";
 const props = defineProps<{
   element: OverlayElement;
   isSelected: boolean;
+  renderOrder: number;
 }>();
 
 const emit = defineEmits<{
   select: [id: string, meshRef: Object3D];
-  moveStart: [];
-  move: [deltaX: number, deltaY: number];
-  moveEnd: [];
+  hudSelect: [id: string, meshRef: Object3D];
 }>();
 
-const groupRef = ref<Object3D | null>(null);
+const diceZoneRef = ref<Object3D | null>(null);
+const hudGroupRef = ref<Object3D | null>(null);
 const diceBoxRef = ref<InstanceType<typeof DiceBox> | null>(null);
 
 // Propriétés typées du Dice
-const diceProperties = computed(() => props.element.properties as DiceProperties);
+const diceProperties = computed(
+  () => props.element.properties as DiceProperties,
+);
+
+// Position du HUD depuis hudTransform
+const hudPosition = computed(() => {
+  const transform = diceProperties.value.hudTransform;
+  return transform?.position ?? { x: 0, y: -300 };
+});
+
+// Scale du HUD depuis hudTransform
+const hudScale = computed(() => {
+  const transform = diceProperties.value.hudTransform;
+  return transform?.scale ?? 1;
+});
 
 // Configuration custom colorset pour le DiceBox
 const diceCustomColorset = computed(() => {
@@ -96,7 +127,9 @@ const diceTexture = computed(() => diceProperties.value.diceBox.texture);
 const diceMaterial = computed(() => diceProperties.value.diceBox.material);
 
 // Intensité lumineuse de la scène 3D
-const diceLightIntensity = computed(() => diceProperties.value.diceBox.lightIntensity);
+const diceLightIntensity = computed(
+  () => diceProperties.value.diceBox.lightIntensity,
+);
 
 // Quand le DiceBox est prêt, lancer un dé statique pour l'aperçu
 const onDiceBoxReady = async () => {
@@ -121,7 +154,7 @@ watch(
   () => {
     debouncedReroll();
   },
-  { deep: true }
+  { deep: true },
 );
 
 // Création d'un DiceRollEvent mocké basé sur les mockData
@@ -151,42 +184,33 @@ const mockDiceRollEvent = computed<DiceRollEvent>(() => {
   };
 });
 
-// Style du conteneur - couvre tout le canvas (1920x1080)
-const containerStyle = computed(() => {
-  return {
-    width: "1920px",
-    height: "1080px",
-  };
-});
-
-// Gestion du pointerdown - sélection uniquement, pas de drag
-const handlePointerDown = (event: PointerEvent) => {
+// Gestion du pointerdown sur la zone 3D - sélection de l'élément dice
+const handleDiceZonePointerDown = (event: PointerEvent) => {
   event.stopPropagation();
+  if (hudGroupRef.value) {
+    emit("select", props.element.id, hudGroupRef.value);
+  }
+};
 
-  if (groupRef.value) {
-    emit("select", props.element.id, groupRef.value);
+// Gestion du pointerdown sur le HUD - sélection pour manipulation avec gizmo
+const handleHudPointerDown = (event: PointerEvent) => {
+  event.stopPropagation();
+  if (hudGroupRef.value) {
+    emit("hudSelect", props.element.id, hudGroupRef.value);
   }
 };
 </script>
 
 <style scoped>
-.dice-preview {
+.dice-3d-zone {
+  width: 1920px;
+  height: 1080px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: transparent;
   cursor: default;
   user-select: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dice-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 48px;
-  width: 100%;
-  height: 100%;
 }
 
 .dice-3d-container {
@@ -196,12 +220,13 @@ const handlePointerDown = (event: PointerEvent) => {
   overflow: hidden;
 }
 
-.hud-container {
-  position: relative;
+.hud-zone {
+  cursor: move;
+  user-select: none;
 }
 
 /* Override le positionnement fixed du DiceRollOverlay pour l'afficher inline */
-.hud-container :deep(.dice-roll-container) {
+.hud-zone :deep(.dice-roll-container) {
   position: relative !important;
   top: auto !important;
   left: auto !important;

@@ -388,11 +388,24 @@ export interface DiceHudConfig {
 }
 
 /**
+ * Transform indépendant pour le HUD (position et scale)
+ * Permet de positionner le HUD séparément de la zone 3D des dés
+ */
+export interface HudTransform {
+  position: {
+    x: number; // Position X en coordonnées canvas (-960 à 960)
+    y: number; // Position Y en coordonnées canvas (-540 à 540, Y inversé)
+  };
+  scale: number; // Scale uniforme (1 = 100%)
+}
+
+/**
  * Propriétés spécifiques pour un élément dice (dés 3D)
  */
 export interface DiceProperties {
   diceBox: DiceBoxConfig;
   hud: DiceHudConfig;
+  hudTransform: HudTransform;
   colors: DiceCriticalColors;
   audio: DiceAudioConfig;
   animations: DiceAnimationsConfig;
@@ -417,6 +430,7 @@ export interface OverlayElement {
   scale: Vector3;
   visible: boolean;
   locked: boolean;
+  zIndex: number; // Ordre des calques (0 = base, valeurs plus hautes = au-dessus)
   properties: ElementProperties;
 }
 

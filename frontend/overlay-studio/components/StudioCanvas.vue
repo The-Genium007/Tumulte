@@ -27,11 +27,12 @@
           :rotation-x="Math.PI / 2"
         />
 
-        <!-- Éléments de l'overlay -->
-        <template v-for="element in visibleElements" :key="element.id">
+        <!-- Éléments de l'overlay (triés par zIndex, sélectionné en dernier) -->
+        <template v-for="(element, index) in sortedVisibleElements" :key="element.id">
           <StudioElement
             :element="element"
             :is-selected="element.id === selectedElementId"
+            :render-order="index"
             @select="handleSelectElement"
             @move-start="handleElementMoveStart"
             @move="(dx, dy) => handleElementMove(element.id, dx, dy)"
@@ -52,10 +53,11 @@
         :style="{ top: snapGuideYStyle }"
       />
 
-      <!-- Gizmo de transformation 2D (overlay HTML) - masqué pour les éléments Dice -->
+      <!-- Gizmo de transformation 2D (overlay HTML) -->
+      <!-- Pour les dice, le gizmo cible le HUD avec un élément synthétique -->
       <TransformGizmo
-        v-if="selectedElement && selectedElement.type !== 'dice'"
-        :element="selectedElement"
+        v-if="selectedElement"
+        :element="gizmoTargetElement"
         :canvas-width="canvasWidth"
         :canvas-height="canvasHeight"
         :container-width="wrapperWidth"
@@ -168,13 +170,13 @@ import { computed, ref, onMounted, onUnmounted, nextTick } from "vue";
 import type { Object3D } from "three";
 import { useOverlayStudioStore } from "../stores/overlayStudio";
 import { useInjectedUndoRedo } from "../composables/useUndoRedo";
-import type { PollProperties } from "../types";
+import type { PollProperties, DiceProperties } from "../types";
 import {
   calculatePollGizmoSize,
-  DICE_GIZMO_SIZE,
+  HUD_BASE_SIZE,
 } from "../utils/gizmo-size";
 import StudioElement from "./StudioElement.vue";
-import TransformGizmo, { type ActiveEdges } from "./TransformGizmo.vue";
+import TransformGizmo, { type ActiveEdges, type ResizeHandle } from "./TransformGizmo.vue";
 
 const store = useOverlayStudioStore();
 
@@ -338,12 +340,36 @@ const canvasProps = computed(() => ({
 
 // État du store
 const elements = computed(() => store.elements);
-const visibleElements = computed(() => store.visibleElements);
+const sortedVisibleElements = computed(() => store.sortedVisibleElements);
 const selectedElementId = computed(() => store.selectedElementId);
 const selectedElement = computed(() => store.selectedElement);
 const showGrid = computed(() => store.showGrid);
 const canvasWidth = computed(() => store.canvasWidth);
 const canvasHeight = computed(() => store.canvasHeight);
+
+// Élément cible pour le gizmo
+// Pour les dice, on crée un élément synthétique basé sur hudTransform
+const gizmoTargetElement = computed(() => {
+  if (!selectedElement.value) return null;
+
+  if (selectedElement.value.type === "dice") {
+    const diceProps = selectedElement.value.properties as DiceProperties;
+    const hudTransform = diceProps.hudTransform || {
+      position: { x: 0, y: -300 },
+      scale: 1,
+    };
+
+    // Retourner un élément synthétique pour le gizmo
+    return {
+      ...selectedElement.value,
+      position: { x: hudTransform.position.x, y: hudTransform.position.y, z: 0 },
+      scale: { x: hudTransform.scale, y: hudTransform.scale, z: 1 },
+      rotation: { x: 0, y: 0, z: 0 }, // Pas de rotation pour le HUD
+    };
+  }
+
+  return selectedElement.value;
+});
 
 // Clic sur le canvas (désélectionner)
 const handleCanvasClick = (event: MouseEvent) => {
@@ -423,7 +449,8 @@ const findNearestGridLine = (position: number): number => {
 
 // Calculer la demi-taille de l'élément en coordonnées canvas
 // Utilise les utilitaires centralisés de utils/gizmo-size.ts
-const getElementHalfSize = (element: typeof selectedElement.value) => {
+// Pour les dice, utilise HUD_BASE_SIZE car le gizmo cible le HUD, pas le canvas entier
+const getElementHalfSize = (element: typeof gizmoTargetElement.value) => {
   if (!element) return { halfWidth: 0, halfHeight: 0 };
 
   let baseWidth = 100;
@@ -435,8 +462,9 @@ const getElementHalfSize = (element: typeof selectedElement.value) => {
     baseWidth = gizmoSize.width;
     baseHeight = gizmoSize.height;
   } else if (element.type === "dice") {
-    baseWidth = DICE_GIZMO_SIZE.width;
-    baseHeight = DICE_GIZMO_SIZE.height;
+    // Pour les dice, le gizmo cible le HUD, pas le canvas entier
+    baseWidth = HUD_BASE_SIZE.width;
+    baseHeight = HUD_BASE_SIZE.height;
   }
 
   return {
@@ -447,13 +475,16 @@ const getElementHalfSize = (element: typeof selectedElement.value) => {
 
 // Gestion du déplacement avec snap basé sur les bordures actives (depuis TransformGizmo)
 const handleMove = (deltaX: number, deltaY: number, activeEdges: ActiveEdges) => {
-  if (!selectedElement.value) return;
+  if (!selectedElement.value || !gizmoTargetElement.value) return;
 
   const el = selectedElement.value;
-  let newX = el.position.x + deltaX;
-  let newY = el.position.y + deltaY;
+  const target = gizmoTargetElement.value;
 
-  const { halfWidth, halfHeight } = getElementHalfSize(el);
+  // Utiliser la position du target (qui peut être hudTransform pour les dice)
+  let newX = target.position.x + deltaX;
+  let newY = target.position.y + deltaY;
+
+  const { halfWidth, halfHeight } = getElementHalfSize(target);
   const hasActiveEdge = activeEdges.top || activeEdges.bottom || activeEdges.left || activeEdges.right;
 
   // Réinitialiser les guides
@@ -556,24 +587,35 @@ const handleMove = (deltaX: number, deltaY: number, activeEdges: ActiveEdges) =>
   const maxY = canvasHalfHeight - halfHeight;
   newY = Math.max(minY, Math.min(maxY, newY));
 
-  store.updateElementPosition(el.id, {
-    x: newX,
-    y: newY,
-    z: 0,
-  });
+  // Router vers la bonne action selon le type d'élément
+  if (el.type === "dice") {
+    // Pour les dice, mettre à jour hudTransform
+    store.updateDiceHudTransform(el.id, {
+      position: { x: newX, y: newY },
+    });
+  } else {
+    // Pour les autres éléments, mettre à jour la position normale
+    store.updateElementPosition(el.id, {
+      x: newX,
+      y: newY,
+      z: 0,
+    });
+  }
 };
 
-// Gestion du redimensionnement
+// Gestion du redimensionnement avec snap magnétique sur la grille
 const handleResize = (
   deltaWidth: number,
   deltaHeight: number,
   deltaX: number,
   deltaY: number,
   proportional: boolean,
+  handle: ResizeHandle,
 ) => {
-  if (!selectedElement.value) return;
+  if (!selectedElement.value || !gizmoTargetElement.value) return;
 
   const el = selectedElement.value;
+  const target = gizmoTargetElement.value;
 
   // Calculer la taille de base selon le type d'élément
   // Utilise les utilitaires centralisés de utils/gizmo-size.ts
@@ -586,38 +628,139 @@ const handleResize = (
     baseWidth = gizmoSize.width;
     baseHeight = gizmoSize.height;
   } else if (el.type === "dice") {
-    baseWidth = DICE_GIZMO_SIZE.width;
-    baseHeight = DICE_GIZMO_SIZE.height;
+    // Pour les dice, le gizmo cible le HUD
+    baseWidth = HUD_BASE_SIZE.width;
+    baseHeight = HUD_BASE_SIZE.height;
   }
 
-  // Calculer les nouveaux facteurs d'échelle
-  let newScaleX = el.scale.x + deltaWidth / baseWidth;
-  let newScaleY = el.scale.y + deltaHeight / baseHeight;
+  // Calculer les nouveaux facteurs d'échelle (basé sur le scale du target)
+  let newScaleX = target.scale.x + deltaWidth / baseWidth;
+  let newScaleY = target.scale.y + deltaHeight / baseHeight;
 
-  // Si proportionnel, garder le ratio
+  // Si proportionnel, garder le ratio (avant snap)
   if (proportional) {
     const avgDelta = (deltaWidth / baseWidth + deltaHeight / baseHeight) / 2;
-    newScaleX = el.scale.x + avgDelta;
-    newScaleY = el.scale.y + avgDelta;
+    newScaleX = target.scale.x + avgDelta;
+    newScaleY = target.scale.y + avgDelta;
   }
 
   // Limiter le scale minimum
   newScaleX = Math.max(0.1, newScaleX);
   newScaleY = Math.max(0.1, newScaleY);
 
-  store.updateElementScale(el.id, {
-    x: newScaleX,
-    y: newScaleY,
-    z: 1,
-  });
+  // Variables pour le snap (peuvent être modifiées par la logique de snap)
+  let finalDeltaX = deltaX;
+  let finalDeltaY = deltaY;
 
-  // Ajuster la position si nécessaire (pour les handles qui déplacent le centre)
-  if (deltaX !== 0 || deltaY !== 0) {
-    store.updateElementPosition(el.id, {
-      x: el.position.x + deltaX,
-      y: el.position.y + deltaY,
-      z: 0,
+  // Réinitialiser les guides de snap
+  showSnapGuideX.value = false;
+  showSnapGuideY.value = false;
+
+  // Position du centre après les deltas de position
+  const newCenterX = target.position.x + deltaX;
+  const newCenterY = target.position.y + deltaY;
+
+  // Demi-dimensions après scale
+  let newHalfWidth = (baseWidth * newScaleX) / 2;
+  let newHalfHeight = (baseHeight * newScaleY) / 2;
+
+  // Helper pour vérifier si un bord doit snapper
+  const checkEdgeSnap = (edgePosition: number): { snapped: boolean; gridLine: number } => {
+    const nearest = findNearestGridLine(edgePosition);
+    const threshold = nearest === 0 ? SNAP_THRESHOLD : SNAP_THRESHOLD_GRID;
+    if (Math.abs(edgePosition - nearest) < threshold) {
+      return { snapped: true, gridLine: nearest };
+    }
+    return { snapped: false, gridLine: nearest };
+  };
+
+  // Snap bord droit (handles: e, ne, se)
+  if (handle.includes("e")) {
+    const rightEdge = newCenterX + newHalfWidth;
+    const { snapped, gridLine } = checkEdgeSnap(rightEdge);
+    if (snapped) {
+      // Ajuster la largeur pour que le bord droit soit sur la grille
+      newHalfWidth = gridLine - newCenterX;
+      newScaleX = Math.max(0.1, (newHalfWidth * 2) / baseWidth);
+      snapGuideXPosition.value = gridLine;
+      showSnapGuideX.value = true;
+    }
+  }
+
+  // Snap bord gauche (handles: w, nw, sw)
+  if (handle.includes("w")) {
+    const leftEdge = newCenterX - newHalfWidth;
+    const { snapped, gridLine } = checkEdgeSnap(leftEdge);
+    if (snapped) {
+      // Le bord droit reste fixe, on ajuste la largeur et le centre
+      const rightEdge = newCenterX + newHalfWidth;
+      const newWidth = rightEdge - gridLine;
+      newScaleX = Math.max(0.1, newWidth / baseWidth);
+      newHalfWidth = newWidth / 2;
+      // Nouveau centre = milieu entre gridLine et rightEdge
+      finalDeltaX = (gridLine + rightEdge) / 2 - target.position.x;
+      snapGuideXPosition.value = gridLine;
+      showSnapGuideX.value = true;
+    }
+  }
+
+  // Snap bord haut (handles: n, nw, ne)
+  if (handle.includes("n")) {
+    const topEdge = newCenterY + newHalfHeight;
+    const { snapped, gridLine } = checkEdgeSnap(topEdge);
+    if (snapped) {
+      // Le bord bas reste fixe, on ajuste la hauteur et le centre
+      const bottomEdge = newCenterY - newHalfHeight;
+      const newHeight = gridLine - bottomEdge;
+      newScaleY = Math.max(0.1, newHeight / baseHeight);
+      newHalfHeight = newHeight / 2;
+      // Nouveau centre = milieu entre bottomEdge et gridLine
+      finalDeltaY = (bottomEdge + gridLine) / 2 - target.position.y;
+      snapGuideYPosition.value = gridLine;
+      showSnapGuideY.value = true;
+    }
+  }
+
+  // Snap bord bas (handles: s, sw, se)
+  if (handle.includes("s")) {
+    const bottomEdge = newCenterY - newHalfHeight;
+    const { snapped, gridLine } = checkEdgeSnap(bottomEdge);
+    if (snapped) {
+      // Ajuster la hauteur pour que le bord bas soit sur la grille
+      newHalfHeight = newCenterY - gridLine;
+      newScaleY = Math.max(0.1, (newHalfHeight * 2) / baseHeight);
+      snapGuideYPosition.value = gridLine;
+      showSnapGuideY.value = true;
+    }
+  }
+
+  // Router vers la bonne action selon le type d'élément
+  if (el.type === "dice") {
+    // Pour les dice, mettre à jour hudTransform avec scale uniforme
+    const uniformScale = (newScaleX + newScaleY) / 2; // Moyenne pour uniformité
+    store.updateDiceHudTransform(el.id, {
+      scale: uniformScale,
+      // Ajuster la position si nécessaire
+      ...(finalDeltaX !== 0 || finalDeltaY !== 0
+        ? { position: { x: target.position.x + finalDeltaX, y: target.position.y + finalDeltaY } }
+        : {}),
     });
+  } else {
+    // Pour les autres éléments, mettre à jour le scale normal
+    store.updateElementScale(el.id, {
+      x: newScaleX,
+      y: newScaleY,
+      z: 1,
+    });
+
+    // Ajuster la position si nécessaire (pour les handles qui déplacent le centre)
+    if (finalDeltaX !== 0 || finalDeltaY !== 0) {
+      store.updateElementPosition(el.id, {
+        x: el.position.x + finalDeltaX,
+        y: el.position.y + finalDeltaY,
+        z: 0,
+      });
+    }
   }
 };
 
@@ -805,5 +948,18 @@ const handleTransformEnd = () => {
   width: 1px;
   height: 16px;
   background: var(--color-neutral-300);
+}
+</style>
+
+<!-- Styles globaux pour les wrappers Html de TresJS -->
+<!-- Ces classes sont appliquées via la prop wrapper-class du composant Html -->
+<!-- IMPORTANT: Toujours passer une classe (jamais undefined) car Html ne retire pas la classe précédente -->
+<style>
+.html-wrapper-selected {
+  z-index: 100000 !important;
+}
+
+.html-wrapper-normal {
+  z-index: auto !important;
 }
 </style>

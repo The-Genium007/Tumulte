@@ -1,18 +1,22 @@
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
+import { DateTime } from 'luxon'
 import env from '#start/env'
 import { MembershipService } from '#services/campaigns/membership_service'
 import { StreamerRepository } from '#repositories/streamer_repository'
+import { OverlayStudioRepository } from '#repositories/overlay_studio_repository'
 import { CampaignDto } from '#dtos/campaigns/campaign_dto'
 import { CampaignInvitationDto } from '#dtos/campaigns/campaign_invitation_dto'
 import { CharacterDto } from '#dtos/characters/character_dto'
 import { campaignMembership as CampaignMembership } from '#models/campaign_membership'
 import { campaign as Campaign } from '#models/campaign'
+import { overlayConfig as OverlayConfig } from '#models/overlay_config'
 import CharacterAssignment from '#models/character_assignment'
 import Character from '#models/character'
 import { pollInstance as PollInstance } from '#models/poll_instance'
 import { acceptInvitationSchema } from '#validators/streamer/accept_invitation_validator'
 import { updateCharacterSchema } from '#validators/streamer/update_character_validator'
+import { updateOverlaySchema } from '#validators/streamer/update_overlay_validator'
 
 /**
  * Contrôleur pour la gestion des campagnes (Streamer)
@@ -21,7 +25,8 @@ import { updateCharacterSchema } from '#validators/streamer/update_character_val
 export default class CampaignsController {
   constructor(
     private membershipService: MembershipService,
-    private streamerRepository: StreamerRepository
+    private streamerRepository: StreamerRepository,
+    private overlayStudioRepository: OverlayStudioRepository
   ) {}
 
   /**
@@ -210,6 +215,7 @@ export default class CampaignsController {
       .where('streamerId', streamer.id)
       .where('status', 'ACTIVE')
       .preload('campaign')
+      .preload('overlayConfig')
       .first()
 
     const ownedCampaign = await Campaign.query()
@@ -237,11 +243,37 @@ export default class CampaignsController {
       .where('status', 'RUNNING')
       .first()
 
+    // Récupérer les overlays disponibles pour le dropdown
+    const personalOverlays = await this.overlayStudioRepository.findByStreamerId(streamer.id)
+    const availableOverlays = [
+      {
+        id: null,
+        name: 'Tumulte Default',
+        isDefault: true,
+        isActive: false,
+      },
+      ...personalOverlays.map((overlay) => ({
+        id: overlay.id,
+        name: overlay.name,
+        isDefault: false,
+        isActive: overlay.isActive,
+      })),
+    ]
+
+    // Overlay actuellement sélectionné
+    const currentOverlay = membership?.overlayConfig
+      ? { id: membership.overlayConfig.id, name: membership.overlayConfig.name }
+      : { id: null, name: 'Tumulte Default' }
+
     return response.ok({
       campaign: CampaignDto.fromModel(campaign),
       assignedCharacter: assignment ? CharacterDto.fromModel(assignment.character) : null,
       canChangeCharacter: !activePoll,
       isOwner: !!ownedCampaign,
+      overlay: {
+        current: currentOverlay,
+        available: availableOverlays,
+      },
     })
   }
 
@@ -323,6 +355,133 @@ export default class CampaignsController {
     } catch (error) {
       return response.badRequest({
         error: error instanceof Error ? error.message : 'Failed to update character',
+      })
+    }
+  }
+
+  /**
+   * Récupère les overlays disponibles pour une campagne
+   * GET /api/v2/streamer/campaigns/:campaignId/available-overlays
+   * Retourne l'overlay système par défaut + les overlays personnels du streamer
+   */
+  async getAvailableOverlays({ auth, params, response }: HttpContext) {
+    const user = auth.user!
+    const streamer = await this.streamerRepository.findByUserId(user.id)
+
+    if (!streamer) {
+      return response.notFound({ error: 'Streamer profile not found' })
+    }
+
+    // Vérifier que le streamer est membre actif OU propriétaire de la campagne
+    const membership = await CampaignMembership.query()
+      .where('campaignId', params.campaignId)
+      .where('streamerId', streamer.id)
+      .where('status', 'ACTIVE')
+      .first()
+
+    const ownedCampaign = await Campaign.query()
+      .where('id', params.campaignId)
+      .where('ownerId', user.id)
+      .first()
+
+    if (!membership && !ownedCampaign) {
+      return response.notFound({ error: 'Campaign not found or not a member' })
+    }
+
+    // Récupérer les overlays personnels du streamer
+    const personalOverlays = await this.overlayStudioRepository.findByStreamerId(streamer.id)
+
+    // Construire la liste avec l'option "default" en premier
+    const availableOverlays = [
+      {
+        id: null,
+        name: 'Tumulte Default',
+        isDefault: true,
+        isActive: false,
+      },
+      ...personalOverlays.map((overlay) => ({
+        id: overlay.id,
+        name: overlay.name,
+        isDefault: false,
+        isActive: overlay.isActive,
+      })),
+    ]
+
+    // Récupérer l'overlay actuellement sélectionné pour cette campagne
+    const currentOverlayId = membership?.overlayConfigId ?? null
+
+    return response.ok({
+      data: {
+        availableOverlays,
+        currentOverlayId,
+      },
+    })
+  }
+
+  /**
+   * Met à jour l'overlay sélectionné pour une campagne
+   * PUT /api/v2/streamer/campaigns/:campaignId/overlay
+   * Body: { overlayConfigId: string | null }
+   */
+  async updateOverlay({ auth, params, request, response }: HttpContext) {
+    const user = auth.user!
+    const streamer = await this.streamerRepository.findByUserId(user.id)
+
+    if (!streamer) {
+      return response.notFound({ error: 'Streamer profile not found' })
+    }
+
+    // Vérifier que le streamer est membre actif OU propriétaire de la campagne
+    const membership = await CampaignMembership.query()
+      .where('campaignId', params.campaignId)
+      .where('streamerId', streamer.id)
+      .where('status', 'ACTIVE')
+      .first()
+
+    const ownedCampaign = await Campaign.query()
+      .where('id', params.campaignId)
+      .where('ownerId', user.id)
+      .first()
+
+    if (!membership && !ownedCampaign) {
+      return response.notFound({ error: 'Campaign not found or not a member' })
+    }
+
+    try {
+      const { overlayConfigId } = updateOverlaySchema.parse(request.body())
+
+      // Si un overlay est spécifié, vérifier qu'il appartient au streamer
+      if (overlayConfigId) {
+        const overlayConfig = await OverlayConfig.query()
+          .where('id', overlayConfigId)
+          .where('streamerId', streamer.id)
+          .first()
+
+        if (!overlayConfig) {
+          return response.notFound({ error: 'Overlay configuration not found' })
+        }
+      }
+
+      // Mettre à jour le membership ou en créer un si c'est le propriétaire sans membership
+      if (membership) {
+        membership.overlayConfigId = overlayConfigId
+        await membership.save()
+      } else if (ownedCampaign) {
+        // Le propriétaire n'a pas de membership, on en crée un avec status ACTIVE
+        await CampaignMembership.create({
+          campaignId: params.campaignId,
+          streamerId: streamer.id,
+          status: 'ACTIVE',
+          invitedAt: DateTime.now(),
+          acceptedAt: DateTime.now(),
+          overlayConfigId,
+        })
+      }
+
+      return response.ok({ message: 'Overlay updated successfully' })
+    } catch (error) {
+      return response.badRequest({
+        error: error instanceof Error ? error.message : 'Failed to update overlay',
       })
     }
   }

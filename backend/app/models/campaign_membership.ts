@@ -3,6 +3,7 @@ import { BaseModel, column, belongsTo } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import { campaign as Campaign } from './campaign.js'
 import { streamer as Streamer } from './streamer.js'
+import { overlayConfig as OverlayConfig } from './overlay_config.js'
 
 type MembershipStatus = 'PENDING' | 'ACTIVE'
 
@@ -15,6 +16,9 @@ class CampaignMembership extends BaseModel {
 
   @column({ columnName: 'streamer_id' })
   declare streamerId: string
+
+  @column({ columnName: 'overlay_config_id' })
+  declare overlayConfigId: string | null
 
   @column()
   declare status: MembershipStatus
@@ -63,6 +67,11 @@ class CampaignMembership extends BaseModel {
     foreignKey: 'streamerId',
   })
   declare streamer: BelongsTo<typeof Streamer>
+
+  @belongsTo(() => OverlayConfig, {
+    foreignKey: 'overlayConfigId',
+  })
+  declare overlayConfig: BelongsTo<typeof OverlayConfig>
 }
 
 export { CampaignMembership as campaignMembership }

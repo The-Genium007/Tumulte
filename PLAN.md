@@ -1,422 +1,223 @@
-# Plan : Personnalisation complète du Dice dans l'Overlay Studio
+# Plan : Magnétisme sur les poignées de redimensionnement du Gizmo
 
 ## Objectif
+Ajouter un snap (magnétisme) aux poignées de redimensionnement du TransformGizmo, permettant aux bords de l'élément de s'accrocher aux lignes de la grille lors du resize.
 
-Permettre une personnalisation avancée du composant Dice avec :
-1. **Dé 3D** : Couleurs personnalisées (foreground, background, outline), texture, matériau
-2. **HUD de résultat** : Styles globaux + éléments spécifiques
-
----
-
-## Configuration DiceBox
-
-Le DiceBox accepte `theme_customColorset` pour des couleurs personnalisées :
-
-```javascript
-// Dans DiceBox.updateConfig()
-theme_customColorset: {
-  name: "custom",           // Nom unique
-  foreground: "#ffffff",    // Couleur des chiffres
-  background: "#000000",    // Couleur du dé
-  outline: "black",         // Couleur du contour (ou "none")
-  texture: "marble",        // Texture optionnelle
-  material: "glass"         // Matériau (none/metal/wood/glass)
-}
-```
+## Comportement attendu
+- **Magnétisme actif par défaut** (pas de touche modificateur requise)
+- **Seuil de snap** : 4px (comme `SNAP_THRESHOLD_GRID` existant), 15px pour l'axe central
+- **Feedback visuel** : Guides bleus (réutiliser `snap-guide-vertical` / `snap-guide-horizontal`)
+- **Logique** : Le bord manipulé (selon le handle) snap sur la ligne de grille la plus proche
 
 ---
 
-## Plan d'implémentation
+## Analyse technique
 
-### Phase 1 : Mise à jour des types
+### Flux actuel du resize
+1. `TransformGizmo.vue` : Détecte le handle utilisé (`n`, `s`, `e`, `w`, `nw`, `ne`, `sw`, `se`)
+2. `TransformGizmo.vue` : Calcule les deltas et émet `resize(deltaWidth, deltaHeight, deltaX, deltaY, proportional)`
+3. `StudioCanvas.vue::handleResize()` : Convertit les deltas en scale et met à jour le store
 
-**Fichier** : `frontend/overlay-studio/types/index.ts`
+### Problème
+Le handler `handleResize` actuel ne sait pas quel handle est utilisé, donc il ne peut pas déterminer quel bord doit snapper.
 
-#### 1.1 Nouveau type pour la config DiceBox
+---
 
+## Modifications à effectuer
+
+### 1. TransformGizmo.vue - Émettre le handle utilisé
+
+**Fichier** : `frontend/overlay-studio/components/TransformGizmo.vue`
+
+#### 1.1 Exporter le type ResizeHandle (ligne ~121)
 ```typescript
-// Textures disponibles
-export type DiceTexture =
-  | "none" | ""
-  | "cloudy" | "cloudy_2" | "fire" | "marble" | "water" | "ice"
-  | "paper" | "speckles" | "glitter" | "glitter_2" | "stars"
-  | "stainedglass" | "wood" | "metal" | "skulls"
-  | "leopard" | "tiger" | "cheetah" | "dragon" | "lizard" | "bird" | "astral";
-
-// Matériaux disponibles
-export type DiceMaterial = "none" | "metal" | "wood" | "glass";
-
-// Configuration des couleurs du dé (via ColorModule)
-export interface DiceCustomColors {
-  foreground: string;     // Couleur des chiffres
-  background: string;     // Couleur du dé
-  outline: string;        // Contour ("none" ou couleur)
-}
-
-// Configuration DiceBox complète
-export interface DiceBoxConfig {
-  colors: DiceCustomColors;
-  texture: DiceTexture;
-  material: DiceMaterial;
-}
+export type ResizeHandle = "n" | "s" | "e" | "w" | "nw" | "ne" | "sw" | "se";
 ```
 
-#### 1.2 Type pour le style HUD
-
+#### 1.2 Modification de l'interface d'émission (ligne ~96-103)
+Ajouter `handle` au type d'émission `resize` :
 ```typescript
-// Style du conteneur HUD
-export interface HudContainerStyle {
-  backgroundColor: string;
-  borderColor: string;
-  borderWidth: number;
-  borderRadius: number;
-  padding: { top: number; right: number; bottom: number; left: number };
-  backdropBlur: number;
-  boxShadow: {
-    enabled: boolean;
-    color: string;
-    blur: number;
-    offsetX: number;
-    offsetY: number;
-  };
-}
-
-// Style des badges critiques
-export interface HudCriticalBadgeStyle {
-  successBackground: string;
-  successTextColor: string;
-  successBorderColor: string;
-  failureBackground: string;
-  failureTextColor: string;
-  failureBorderColor: string;
-}
-
-// Style de la formule
-export interface HudFormulaStyle {
-  typography: TypographySettings;
-}
-
-// Style du résultat principal
-export interface HudResultStyle {
-  typography: TypographySettings;
-  criticalSuccessColor: string;
-  criticalFailureColor: string;
-}
-
-// Style du breakdown des dés
-export interface HudDiceBreakdownStyle {
-  backgroundColor: string;
-  borderColor: string;
-  borderRadius: number;
-  typography: TypographySettings;
-}
-
-// Style des infos de compétence
-export interface HudSkillInfoStyle {
-  backgroundColor: string;
-  borderColor: string;
-  borderRadius: number;
-  skillTypography: TypographySettings;
-  abilityTypography: TypographySettings;
-}
-
-// Configuration HUD complète
-export interface DiceHudConfig {
-  container: HudContainerStyle;
-  criticalBadge: HudCriticalBadgeStyle;
-  formula: HudFormulaStyle;
-  result: HudResultStyle;
-  diceBreakdown: HudDiceBreakdownStyle;
-  skillInfo: HudSkillInfoStyle;
-  minWidth: number;
-  maxWidth: number;
-}
+const emit = defineEmits<{
+  // ... autres émissions
+  resize: [
+    deltaWidth: number,
+    deltaHeight: number,
+    deltaX: number,
+    deltaY: number,
+    proportional: boolean,
+    handle: ResizeHandle,  // NOUVEAU
+  ];
+}>();
 ```
 
-#### 1.3 Mise à jour de DiceProperties
-
+#### 1.3 Modification de l'émission (ligne ~359)
 ```typescript
-export interface DiceProperties {
-  // Configuration DiceBox (couleurs personnalisées)
-  diceBox: DiceBoxConfig;
+emit("resize", deltaWidth, deltaHeight, deltaX, deltaY, proportional, handle);
+```
 
-  // Configuration HUD
-  hud: DiceHudConfig;
+---
 
-  // Animations (glow pour les critiques)
-  colors: {
-    criticalSuccessGlow: string;
-    criticalFailureGlow: string;
-  };
+### 2. StudioCanvas.vue - Implémenter le snap au resize
 
-  audio: DiceAudioConfig;
-  animations: DiceAnimationsConfig;
-  mockData: DiceMockData;
+**Fichier** : `frontend/overlay-studio/components/StudioCanvas.vue`
+
+#### 2.1 Mise à jour de l'import (ligne ~179)
+```typescript
+import TransformGizmo, { type ActiveEdges, type ResizeHandle } from "./TransformGizmo.vue";
+```
+
+#### 2.2 Mise à jour de la signature handleResize (ligne ~607)
+```typescript
+const handleResize = (
+  deltaWidth: number,
+  deltaHeight: number,
+  deltaX: number,
+  deltaY: number,
+  proportional: boolean,
+  handle: ResizeHandle,  // NOUVEAU
+) => {
+```
+
+#### 2.3 Mapping handle → bord(s) affecté(s)
+
+| Handle | Bord(s) à snapper |
+|--------|-------------------|
+| `n`    | top               |
+| `s`    | bottom            |
+| `e`    | right             |
+| `w`    | left              |
+| `nw`   | top + left        |
+| `ne`   | top + right       |
+| `sw`   | bottom + left     |
+| `se`   | bottom + right    |
+
+#### 2.4 Logique de snap (après calcul des nouvelles tailles, avant application)
+
+**Algorithme** :
+1. Calculer la position actuelle du centre après le delta de position
+2. Calculer les nouvelles demi-dimensions après le delta de scale
+3. Pour chaque bord manipulé par le handle :
+   - Calculer la position du bord (`center ± halfSize`)
+   - Trouver la ligne de grille la plus proche (`findNearestGridLine`)
+   - Si distance < seuil (4px ou 15px pour axe central) :
+     - Ajuster `newScale` pour que le bord coïncide avec la grille
+     - Si le handle déplace le centre (w, n, nw, etc.), ajuster aussi la position
+     - Afficher le guide de snap correspondant
+
+**Pseudo-code détaillé** :
+```typescript
+// Réinitialiser les guides
+showSnapGuideX.value = false;
+showSnapGuideY.value = false;
+
+// Position du centre après deltas
+const newCenterX = target.position.x + deltaX;
+const newCenterY = target.position.y + deltaY;
+
+// Demi-dimensions après scale
+let newHalfWidth = (baseWidth * newScaleX) / 2;
+let newHalfHeight = (baseHeight * newScaleY) / 2;
+
+// Helper pour snap sur un bord
+const snapEdge = (edgePosition: number, isHorizontal: boolean) => {
+  const nearest = findNearestGridLine(edgePosition);
+  const threshold = nearest === 0 ? SNAP_THRESHOLD : SNAP_THRESHOLD_GRID;
+  if (Math.abs(edgePosition - nearest) < threshold) {
+    return { snapped: true, gridLine: nearest };
+  }
+  return { snapped: false, gridLine: nearest };
+};
+
+// Snap bord droit (handles: e, ne, se)
+if (handle.includes('e')) {
+  const rightEdge = newCenterX + newHalfWidth;
+  const { snapped, gridLine } = snapEdge(rightEdge, false);
+  if (snapped) {
+    // Ajuster la largeur pour que le bord droit soit sur la grille
+    newHalfWidth = gridLine - newCenterX;
+    newScaleX = (newHalfWidth * 2) / baseWidth;
+    snapGuideXPosition.value = gridLine;
+    showSnapGuideX.value = true;
+  }
+}
+
+// Snap bord gauche (handles: w, nw, sw)
+if (handle.includes('w')) {
+  const leftEdge = newCenterX - newHalfWidth;
+  const { snapped, gridLine } = snapEdge(leftEdge, false);
+  if (snapped) {
+    // Le centre doit se déplacer, et la largeur s'ajuster
+    // Bord droit fixe : rightEdge = newCenterX + newHalfWidth
+    const rightEdge = newCenterX + newHalfWidth;
+    const newWidth = rightEdge - gridLine;
+    newScaleX = newWidth / baseWidth;
+    newHalfWidth = newWidth / 2;
+    // Nouveau centre = milieu entre gridLine et rightEdge
+    deltaX = (gridLine + rightEdge) / 2 - target.position.x;
+    snapGuideXPosition.value = gridLine;
+    showSnapGuideX.value = true;
+  }
+}
+
+// Snap bord haut (handles: n, nw, ne)
+if (handle.includes('n')) {
+  const topEdge = newCenterY + newHalfHeight;
+  const { snapped, gridLine } = snapEdge(topEdge, true);
+  if (snapped) {
+    const bottomEdge = newCenterY - newHalfHeight;
+    const newHeight = gridLine - bottomEdge;
+    newScaleY = newHeight / baseHeight;
+    newHalfHeight = newHeight / 2;
+    deltaY = (bottomEdge + gridLine) / 2 - target.position.y;
+    snapGuideYPosition.value = gridLine;
+    showSnapGuideY.value = true;
+  }
+}
+
+// Snap bord bas (handles: s, sw, se)
+if (handle.includes('s')) {
+  const bottomEdge = newCenterY - newHalfHeight;
+  const { snapped, gridLine } = snapEdge(bottomEdge, true);
+  if (snapped) {
+    newHalfHeight = newCenterY - gridLine;
+    newScaleY = (newHalfHeight * 2) / baseHeight;
+    snapGuideYPosition.value = gridLine;
+    showSnapGuideY.value = true;
+  }
 }
 ```
 
 ---
 
-### Phase 2 : Mise à jour de l'inspecteur
+## Fichiers modifiés
 
-**Fichier** : `frontend/overlay-studio/components/inspector/DiceInspector.vue`
-
-#### Structure des sections
-
-1. **Section "Dé 3D"** (icône: `i-lucide-dice-5`)
-   - ColorModule : "Couleur du dé" (background)
-   - ColorModule : "Couleur des chiffres" (foreground)
-   - ColorModule : "Contour" (outline) + option "none"
-   - USelect : Texture (avec options groupées)
-   - USelect : Matériau (none/metal/wood/glass)
-
-2. **Section "HUD"** (icône: `i-lucide-layout-template`)
-   - Sous-section "Conteneur"
-     - ColorModule : Background
-     - BorderModule : Bordure
-     - BorderRadiusModule : Coins
-     - PaddingModule : Espacement
-     - NumberInput : Backdrop blur
-     - BoxShadowModule : Ombre
-   - Sous-section "Résultat"
-     - TextModule : Typographie
-     - ColorModule : Couleur normale
-     - ColorModule : Couleur critique succès
-     - ColorModule : Couleur critique échec
-   - Sous-section "Formule"
-     - TextModule : Typographie
-     - ColorModule : Couleur
-   - Sous-section "Badges critiques"
-     - ColorModule x3 : Success (bg, text, border)
-     - ColorModule x3 : Failure (bg, text, border)
-   - Sous-section "Détail des dés"
-     - ColorModule : Background
-     - ColorModule : Bordure
-     - TextModule : Typographie
-   - Sous-section "Compétence"
-     - ColorModule : Background
-     - ColorModule : Bordure
-     - TextModule : Typographie skill
-     - TextModule : Typographie ability
-
-3. **Section "Animations"** (conservée)
-
-4. **Section "Audio"** (conservée)
-
-5. **Section "Prévisualisation"** (conservée)
+| Fichier | Modifications |
+|---------|---------------|
+| `TransformGizmo.vue` | Export type `ResizeHandle`, ajouter `handle` à l'émission `resize` |
+| `StudioCanvas.vue` | Import `ResizeHandle`, logique de snap dans `handleResize()` |
 
 ---
 
-### Phase 3 : Mise à jour DiceBox.client.vue
+## Tests manuels à effectuer
 
-**Fichier** : `frontend/components/DiceBox.client.vue`
-
-Ajouter support pour `customColorset` :
-
-```typescript
-const props = withDefaults(defineProps<{
-  notation?: string
-  colorset?: string           // Preset (fallback)
-  customColorset?: {          // NOUVEAU : couleurs custom
-    foreground: string
-    background: string
-    outline: string
-    texture?: string
-    material?: string
-  } | null
-  texture?: string
-  material?: string
-  sounds?: boolean
-  volume?: number
-}>(), {
-  // ...defaults
-  customColorset: null,
-})
-```
-
-Dans `onMounted` et avec un `watch` sur `customColorset` :
-```javascript
-if (props.customColorset) {
-  await diceBox.updateConfig({
-    theme_customColorset: {
-      name: 'studio-custom',
-      ...props.customColorset
-    }
-  })
-}
-```
+1. **Resize par handle Est (e)** : Le bord droit doit snapper aux lignes verticales
+2. **Resize par handle Nord (n)** : Le bord haut doit snapper aux lignes horizontales
+3. **Resize par handle Ouest (w)** : Le bord gauche snap ET le centre se déplace correctement
+4. **Resize par coin (nw, ne, sw, se)** : Les deux bords concernés snappent
+5. **Snap sur axe central** : Vérifier le seuil plus élevé (15px) sur X=0 et Y=0
+6. **Guide visuel** : La ligne bleue apparaît sur la ligne de grille lors du snap
+7. **Élément avec rotation** : Tester que le snap fonctionne (rotation gérée en amont)
+8. **Élément Dice** : Vérifier le resize du HUD avec snap
+9. **Resize proportionnel (coin)** : Les deux axes snappent correctement
 
 ---
 
-### Phase 4 : Mise à jour StudioDiceElement
+## Points d'attention
 
-**Fichier** : `frontend/overlay-studio/dice/components/StudioDiceElement.vue`
+1. **Handles qui déplacent le centre** : `w`, `n`, `nw`, `sw`, `ne` modifient la position ET la taille. Le snap doit ajuster les deux.
 
-Passer les props au DiceBox :
+2. **Resize proportionnel** : Pour les coins, si un axe snappe, l'autre doit suivre proportionnellement (ou on peut autoriser le snap indépendant sur chaque axe).
 
-```vue
-<DiceBox
-  ref="diceBoxRef"
-  :custom-colorset="diceBoxCustomColorset"
-  :sounds="false"
-  @ready="onDiceBoxReady"
-/>
-```
+3. **Ordre des snaps** : Snap X avant Y ou vice-versa peut donner des résultats différents pour les coins. À tester.
 
-```typescript
-const diceBoxCustomColorset = computed(() => ({
-  foreground: diceProperties.value.diceBox.colors.foreground,
-  background: diceProperties.value.diceBox.colors.background,
-  outline: diceProperties.value.diceBox.colors.outline,
-  texture: diceProperties.value.diceBox.texture,
-  material: diceProperties.value.diceBox.material,
-}))
-```
-
----
-
-### Phase 5 : Mise à jour DiceRollOverlay
-
-**Fichier** : `frontend/components/overlay/DiceRollOverlay.vue`
-
-Ajouter props optionnelles avec valeurs par défaut :
-
-```typescript
-const props = withDefaults(defineProps<{
-  diceRoll: DiceRollEvent | null;
-  visible: boolean;
-  // Props de style optionnelles (pour le studio)
-  customStyles?: DiceHudConfig | null;
-}>(), {
-  customStyles: null,
-})
-```
-
-Utiliser les styles custom si fournis, sinon valeurs CSS hardcodées actuelles.
-
----
-
-### Phase 6 : Valeurs par défaut
-
-**Fichier** : `frontend/overlay-studio/stores/overlayStudio.ts`
-
-```typescript
-// Valeurs par défaut pour DiceProperties
-const defaultDiceProperties: DiceProperties = {
-  diceBox: {
-    colors: {
-      foreground: "#000000",
-      background: "#ffffff",
-      outline: "none",
-    },
-    texture: "none",
-    material: "glass",
-  },
-  hud: {
-    container: {
-      backgroundColor: "rgba(15, 23, 42, 0.95)",
-      borderColor: "rgba(148, 163, 184, 0.3)",
-      borderWidth: 2,
-      borderRadius: 16,
-      padding: { top: 24, right: 24, bottom: 24, left: 24 },
-      backdropBlur: 10,
-      boxShadow: {
-        enabled: true,
-        color: "rgba(0, 0, 0, 0.5)",
-        blur: 60,
-        offsetX: 0,
-        offsetY: 20,
-      },
-    },
-    criticalBadge: {
-      successBackground: "rgba(34, 197, 94, 0.3)",
-      successTextColor: "rgb(74, 222, 128)",
-      successBorderColor: "rgba(34, 197, 94, 0.5)",
-      failureBackground: "rgba(239, 68, 68, 0.3)",
-      failureTextColor: "rgb(252, 165, 165)",
-      failureBorderColor: "rgba(239, 68, 68, 0.5)",
-    },
-    formula: {
-      typography: {
-        fontFamily: "'Courier New', monospace",
-        fontSize: 20,
-        fontWeight: 600,
-        color: "rgb(148, 163, 184)",
-      },
-    },
-    result: {
-      typography: {
-        fontFamily: "system-ui",
-        fontSize: 48,
-        fontWeight: 800,
-        color: "rgb(226, 232, 240)",
-      },
-      criticalSuccessColor: "rgb(74, 222, 128)",
-      criticalFailureColor: "rgb(252, 165, 165)",
-    },
-    diceBreakdown: {
-      backgroundColor: "rgba(15, 23, 42, 0.7)",
-      borderColor: "rgba(148, 163, 184, 0.3)",
-      borderRadius: 6,
-      typography: {
-        fontFamily: "'Courier New', monospace",
-        fontSize: 16,
-        fontWeight: 600,
-        color: "rgb(203, 213, 225)",
-      },
-    },
-    skillInfo: {
-      backgroundColor: "rgba(59, 130, 246, 0.15)",
-      borderColor: "rgba(59, 130, 246, 0.3)",
-      borderRadius: 8,
-      skillTypography: {
-        fontFamily: "system-ui",
-        fontSize: 16,
-        fontWeight: 700,
-        color: "rgb(147, 197, 253)",
-      },
-      abilityTypography: {
-        fontFamily: "system-ui",
-        fontSize: 14,
-        fontWeight: 500,
-        color: "rgb(148, 163, 184)",
-      },
-    },
-    minWidth: 320,
-    maxWidth: 400,
-  },
-  colors: {
-    criticalSuccessGlow: "#22c55e",
-    criticalFailureGlow: "#ef4444",
-  },
-  audio: { /* existant */ },
-  animations: { /* existant */ },
-  mockData: { /* existant */ },
-}
-```
-
----
-
-## Fichiers à modifier
-
-| Fichier | Action | Description |
-|---------|--------|-------------|
-| `overlay-studio/types/index.ts` | Modifier | Nouveaux types DiceBox et HUD |
-| `overlay-studio/stores/overlayStudio.ts` | Modifier | Valeurs par défaut |
-| `overlay-studio/components/inspector/DiceInspector.vue` | Modifier | Nouvelles sections |
-| `components/DiceBox.client.vue` | Modifier | Support customColorset |
-| `components/overlay/DiceRollOverlay.vue` | Modifier | Props de style optionnelles |
-| `overlay-studio/dice/components/StudioDiceElement.vue` | Modifier | Passer props |
-
----
-
-## Ordre d'implémentation
-
-1. Types (`index.ts`)
-2. Valeurs par défaut (`overlayStudio.ts`)
-3. DiceBox.client.vue - Support customColorset
-4. DiceInspector - Section "Dé 3D"
-5. StudioDiceElement - Connexion DiceBox
-6. DiceRollOverlay - Props de style
-7. DiceInspector - Section "HUD"
-8. Tests et ajustements
+4. **Scale minimum** : Après snap, vérifier que `newScaleX/Y >= 0.1`.
