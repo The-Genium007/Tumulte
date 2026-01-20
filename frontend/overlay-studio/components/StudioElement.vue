@@ -22,17 +22,6 @@
     @move="handleMove"
     @move-end="handleMoveEnd"
   />
-
-  <!-- Dice (dés 3D) -->
-  <StudioDiceElement
-    v-else-if="element.type === 'dice'"
-    :element="element"
-    :is-selected="isSelected"
-    @select="handleSelect"
-    @move-start="handleMoveStart"
-    @move="handleMove"
-    @move-end="handleMoveEnd"
-  />
 </template>
 
 <script setup lang="ts">
