@@ -6,7 +6,7 @@ const mockAuthStore = {
   user: null as {
     id: string;
     email: string;
-    display_name?: string;
+    displayName?: string;
     streamer?: unknown;
   } | null,
   fetchMe: vi.fn(),
@@ -77,6 +77,7 @@ vi.stubGlobal("performance", {
 
 // Mock Intl
 vi.stubGlobal("Intl", {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   DateTimeFormat: () => ({
     resolvedOptions: () => ({ timeZone: "Europe/Paris" }),
   }),
@@ -546,7 +547,7 @@ describe("useSupportReporter Composable", () => {
       mockAuthStore.user = {
         id: "user-123",
         email: "test@example.com",
-        display_name: "TestUser",
+        displayName: "TestUser",
         streamer: { id: "streamer-456" },
       };
 

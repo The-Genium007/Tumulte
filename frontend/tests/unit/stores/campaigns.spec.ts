@@ -176,12 +176,11 @@ describe("Campaigns Store", () => {
     test("should invite streamer and add to members list", async () => {
       const mockMember = {
         id: "member-1",
+        campaignId: "campaign-1",
         streamerId: "streamer-123",
-        twitchLogin: "teststreamer",
-        twitchDisplayName: "TestStreamer",
-        status: "pending" as const,
-        isChannelAuthorized: false,
+        status: "PENDING" as const,
         invitedAt: "2024-01-01T00:00:00Z",
+        acceptedAt: null,
       };
 
       const { campaignsRepository } =
@@ -194,15 +193,14 @@ describe("Campaigns Store", () => {
       // Set up a selected campaign
       store.selectedCampaign = {
         id: "campaign-1",
+        ownerId: "owner-1",
         name: "Test Campaign",
         description: "Test",
         createdAt: "2024-01-01T00:00:00Z",
         updatedAt: "2024-01-01T00:00:00Z",
         activeMemberCount: 0,
-        totalMemberCount: 0,
-        pollCount: 0,
+        memberCount: 0,
         members: [],
-        polls: [],
       };
 
       const result = await store.inviteStreamer("campaign-1", "streamer-123");
@@ -218,12 +216,11 @@ describe("Campaigns Store", () => {
     test("should create members array if not exists", async () => {
       const mockMember = {
         id: "member-1",
+        campaignId: "campaign-1",
         streamerId: "streamer-123",
-        twitchLogin: "teststreamer",
-        twitchDisplayName: "TestStreamer",
-        status: "pending" as const,
-        isChannelAuthorized: false,
+        status: "PENDING" as const,
         invitedAt: "2024-01-01T00:00:00Z",
+        acceptedAt: null,
       };
 
       const { campaignsRepository } =
@@ -236,14 +233,13 @@ describe("Campaigns Store", () => {
       // Set up a selected campaign without members array
       store.selectedCampaign = {
         id: "campaign-1",
+        ownerId: "owner-1",
         name: "Test Campaign",
         description: "Test",
         createdAt: "2024-01-01T00:00:00Z",
         updatedAt: "2024-01-01T00:00:00Z",
         activeMemberCount: 0,
-        totalMemberCount: 0,
-        pollCount: 0,
-        polls: [],
+        memberCount: 0,
       } as ReturnType<typeof useCampaignsStore>["selectedCampaign"];
 
       await store.inviteStreamer("campaign-1", "streamer-123");
@@ -254,12 +250,11 @@ describe("Campaigns Store", () => {
     test("should not modify members if different campaign selected", async () => {
       const mockMember = {
         id: "member-1",
+        campaignId: "campaign-1",
         streamerId: "streamer-123",
-        twitchLogin: "teststreamer",
-        twitchDisplayName: "TestStreamer",
-        status: "pending" as const,
-        isChannelAuthorized: false,
+        status: "PENDING" as const,
         invitedAt: "2024-01-01T00:00:00Z",
+        acceptedAt: null,
       };
 
       const { campaignsRepository } =
@@ -271,15 +266,14 @@ describe("Campaigns Store", () => {
       const store = useCampaignsStore();
       store.selectedCampaign = {
         id: "other-campaign",
+        ownerId: "owner-1",
         name: "Other Campaign",
         description: "Test",
         createdAt: "2024-01-01T00:00:00Z",
         updatedAt: "2024-01-01T00:00:00Z",
         activeMemberCount: 0,
-        totalMemberCount: 0,
-        pollCount: 0,
+        memberCount: 0,
         members: [],
-        polls: [],
       };
 
       await store.inviteStreamer("campaign-1", "streamer-123");
@@ -315,34 +309,31 @@ describe("Campaigns Store", () => {
       const store = useCampaignsStore();
       store.selectedCampaign = {
         id: "campaign-1",
+        ownerId: "owner-1",
         name: "Test Campaign",
         description: "Test",
         createdAt: "2024-01-01T00:00:00Z",
         updatedAt: "2024-01-01T00:00:00Z",
         activeMemberCount: 2,
-        totalMemberCount: 2,
-        pollCount: 0,
+        memberCount: 2,
         members: [
           {
             id: "member-1",
+            campaignId: "campaign-1",
             streamerId: "s1",
-            twitchLogin: "user1",
-            twitchDisplayName: "User1",
-            status: "accepted" as const,
-            isChannelAuthorized: true,
+            status: "ACTIVE" as const,
             invitedAt: "2024-01-01T00:00:00Z",
+            acceptedAt: "2024-01-01T00:00:00Z",
           },
           {
             id: "member-2",
+            campaignId: "campaign-1",
             streamerId: "s2",
-            twitchLogin: "user2",
-            twitchDisplayName: "User2",
-            status: "accepted" as const,
-            isChannelAuthorized: true,
+            status: "ACTIVE" as const,
             invitedAt: "2024-01-01T00:00:00Z",
+            acceptedAt: "2024-01-01T00:00:00Z",
           },
         ],
-        polls: [],
       };
 
       await store.removeMember("campaign-1", "member-1");
@@ -365,25 +356,23 @@ describe("Campaigns Store", () => {
       const store = useCampaignsStore();
       store.selectedCampaign = {
         id: "other-campaign",
+        ownerId: "owner-1",
         name: "Other Campaign",
         description: "Test",
         createdAt: "2024-01-01T00:00:00Z",
         updatedAt: "2024-01-01T00:00:00Z",
         activeMemberCount: 1,
-        totalMemberCount: 1,
-        pollCount: 0,
+        memberCount: 1,
         members: [
           {
             id: "member-1",
+            campaignId: "other-campaign",
             streamerId: "s1",
-            twitchLogin: "user1",
-            twitchDisplayName: "User1",
-            status: "accepted" as const,
-            isChannelAuthorized: true,
+            status: "ACTIVE" as const,
             invitedAt: "2024-01-01T00:00:00Z",
+            acceptedAt: "2024-01-01T00:00:00Z",
           },
         ],
-        polls: [],
       };
 
       await store.removeMember("campaign-1", "member-1");
@@ -460,15 +449,14 @@ describe("Campaigns Store", () => {
     test("should fetch and set selected campaign", async () => {
       const mockCampaignDetail = {
         id: "1",
+        ownerId: "owner-1",
         name: "Test Campaign",
         description: "Description",
         createdAt: "2024-01-01T00:00:00Z",
         updatedAt: "2024-01-01T00:00:00Z",
         activeMemberCount: 2,
-        totalMemberCount: 3,
-        pollCount: 5,
+        memberCount: 3,
         members: [],
-        polls: [],
       };
 
       const { campaignsRepository } =

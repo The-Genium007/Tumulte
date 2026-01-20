@@ -738,16 +738,16 @@ describe("useCampaigns Composable", () => {
       const mockStatus = [
         {
           campaign_id: "c1",
-          campaign_name: "Campaign 1",
-          is_owner: false,
+          campaignName: "Campaign 1",
+          isOwner: false,
           is_authorized: true,
           expires_at: "2024-01-01T12:00:00Z",
           remaining_seconds: 3600,
         },
         {
           campaign_id: "c2",
-          campaign_name: "Campaign 2",
-          is_owner: true,
+          campaignName: "Campaign 2",
+          isOwner: true,
           is_authorized: false,
           expires_at: null,
           remaining_seconds: null,

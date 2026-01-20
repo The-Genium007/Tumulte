@@ -27,8 +27,10 @@ describe("useOBSEvents Composable", () => {
     vi.clearAllMocks();
     vi.resetModules();
     // Reset window.obsstudio
-    // @ts-expect-error - Testing environment
-    delete globalThis.window?.obsstudio;
+    if (globalThis.window && "obsstudio" in globalThis.window) {
+      delete (globalThis.window as unknown as Record<string, unknown>)
+        .obsstudio;
+    }
   });
 
   describe("Non-OBS environment", () => {

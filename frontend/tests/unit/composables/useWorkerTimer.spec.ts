@@ -356,8 +356,8 @@ describe("useWorkerTimer Composable", () => {
 
       start(1000);
 
-      // Save original handler reference
-      const originalHandler = mockWorkerInstance?.onmessage;
+      // Save original handler reference (used for verification)
+      const _originalHandler = mockWorkerInstance?.onmessage;
 
       const pingPromise = ping();
       mockWorkerInstance?.simulateMessage({

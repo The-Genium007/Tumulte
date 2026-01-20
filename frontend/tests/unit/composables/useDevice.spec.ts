@@ -5,14 +5,14 @@ describe("useDevice Composable", () => {
   let originalWindow: typeof window;
   let mockAddEventListener: ReturnType<typeof vi.fn>;
   let mockRemoveEventListener: ReturnType<typeof vi.fn>;
-  let resizeCallback: (() => void) | null = null;
+  let _resizeCallback: (() => void) | null = null;
 
   beforeEach(() => {
     vi.resetModules();
 
     mockAddEventListener = vi.fn((event: string, callback: () => void) => {
       if (event === "resize") {
-        resizeCallback = callback;
+        _resizeCallback = callback;
       }
     });
     mockRemoveEventListener = vi.fn();
@@ -39,15 +39,14 @@ describe("useDevice Composable", () => {
       writable: true,
       configurable: true,
     });
-    resizeCallback = null;
+    _resizeCallback = null;
   });
 
   test("should initialize with current window width", async () => {
     const { useDevice } = await import("~/composables/useDevice");
 
     // Simulate mounted lifecycle
-    const { windowWidth, isMobile, isTablet, isDesktop, deviceType } =
-      useDevice();
+    const { windowWidth } = useDevice();
 
     // Initially 0 before mount
     expect(windowWidth.value).toBe(0);

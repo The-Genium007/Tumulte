@@ -418,7 +418,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, provide, ref, watch } from "vue";
 import { useOverlayStudioStore } from "~/overlay-studio/stores/overlayStudio";
 import { useOverlayStudioApi } from "~/overlay-studio/composables/useOverlayStudioApi";
 import { useUndoRedo, UNDO_REDO_KEY } from "~/overlay-studio/composables/useUndoRedo";

@@ -8,30 +8,43 @@ function createMockReadiness(
   overrides: Partial<CampaignReadiness> = {},
 ): CampaignReadiness {
   return {
+    campaignId: "campaign-1",
     allReady: false,
     readyCount: 1,
     totalCount: 3,
     streamers: [
       {
         streamerId: "streamer-1",
-        displayName: "Streamer One",
-        profileImageUrl: "https://example.com/avatar1.png",
+        streamerName: "Streamer One",
+        streamerAvatar: "https://example.com/avatar1.png",
+        twitchUserId: "twitch-1",
         isReady: true,
         issues: [],
+        tokenValid: true,
+        authorizationActive: true,
+        authorizationExpiresAt: null,
       },
       {
         streamerId: "streamer-2",
-        displayName: "Streamer Two",
-        profileImageUrl: "https://example.com/avatar2.png",
+        streamerName: "Streamer Two",
+        streamerAvatar: "https://example.com/avatar2.png",
+        twitchUserId: "twitch-2",
         isReady: false,
-        issues: ["not_authorized"],
+        issues: ["authorization_missing"],
+        tokenValid: true,
+        authorizationActive: false,
+        authorizationExpiresAt: null,
       },
       {
         streamerId: "streamer-3",
-        displayName: "Streamer Three",
-        profileImageUrl: "https://example.com/avatar3.png",
+        streamerName: "Streamer Three",
+        streamerAvatar: "https://example.com/avatar3.png",
+        twitchUserId: "twitch-3",
         isReady: false,
-        issues: ["offline"],
+        issues: ["streamer_inactive"],
+        tokenValid: true,
+        authorizationActive: false,
+        authorizationExpiresAt: null,
       },
     ],
     ...overrides,
@@ -162,8 +175,9 @@ describe("Streamer Readiness Store", () => {
         const store = useStreamerReadinessStore();
         const event: ReadinessChangeEvent = {
           streamerId: "streamer-1",
+          streamerName: "Streamer One",
           isReady: true,
-          campaignId: "campaign-1",
+          timestamp: new Date().toISOString(),
         };
 
         // Should not throw
@@ -178,8 +192,9 @@ describe("Streamer Readiness Store", () => {
 
         const event: ReadinessChangeEvent = {
           streamerId: "streamer-2",
+          streamerName: "Streamer Two",
           isReady: true,
-          campaignId: "campaign-1",
+          timestamp: new Date().toISOString(),
         };
 
         store.updateStreamerStatus(event);
@@ -196,8 +211,9 @@ describe("Streamer Readiness Store", () => {
 
         const event: ReadinessChangeEvent = {
           streamerId: "streamer-2",
+          streamerName: "Streamer Two",
           isReady: true,
-          campaignId: "campaign-1",
+          timestamp: new Date().toISOString(),
         };
 
         store.updateStreamerStatus(event);
@@ -216,8 +232,9 @@ describe("Streamer Readiness Store", () => {
 
         store.updateStreamerStatus({
           streamerId: "streamer-2",
+          streamerName: "Streamer Two",
           isReady: true,
-          campaignId: "campaign-1",
+          timestamp: new Date().toISOString(),
         });
 
         expect(store.readiness?.readyCount).toBe(2);
@@ -231,13 +248,15 @@ describe("Streamer Readiness Store", () => {
 
         store.updateStreamerStatus({
           streamerId: "streamer-2",
+          streamerName: "Streamer Two",
           isReady: true,
-          campaignId: "campaign-1",
+          timestamp: new Date().toISOString(),
         });
         store.updateStreamerStatus({
           streamerId: "streamer-3",
+          streamerName: "Streamer Three",
           isReady: true,
-          campaignId: "campaign-1",
+          timestamp: new Date().toISOString(),
         });
 
         expect(store.readiness?.allReady).toBe(true);
@@ -249,8 +268,9 @@ describe("Streamer Readiness Store", () => {
 
         store.updateStreamerStatus({
           streamerId: "unknown-streamer",
+          streamerName: "Unknown",
           isReady: true,
-          campaignId: "campaign-1",
+          timestamp: new Date().toISOString(),
         });
 
         // Should remain unchanged

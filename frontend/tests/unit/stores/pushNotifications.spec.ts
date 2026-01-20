@@ -121,7 +121,9 @@ describe("Push Notifications Store", () => {
           id: "sub-1",
           endpoint: "https://push.example.com/123",
           deviceName: "Test Device",
+          userAgent: null,
           createdAt: "2024-01-01T00:00:00Z",
+          lastUsedAt: null,
         },
       ];
 
@@ -143,11 +145,12 @@ describe("Push Notifications Store", () => {
 
       store.preferences = {
         pushEnabled: false,
-        emailEnabled: true,
         campaignInvitations: true,
+        criticalAlerts: true,
         pollStarted: true,
         pollEnded: true,
-        sessionReminders: true,
+        campaignMemberJoined: true,
+        sessionReminder: true,
       };
 
       expect(store.isPushEnabled).toBe(false);
@@ -225,7 +228,16 @@ describe("Push Notifications Store", () => {
       const store = usePushNotificationsStore();
 
       // Set some state
-      store.subscriptions = [{ id: "1", endpoint: "test", createdAt: "" }];
+      store.subscriptions = [
+        {
+          id: "1",
+          endpoint: "test",
+          deviceName: null,
+          userAgent: null,
+          createdAt: "",
+          lastUsedAt: null,
+        },
+      ];
       store.preferences = { pushEnabled: true } as never;
       store.initialized = true;
 
@@ -447,7 +459,16 @@ describe("Push Notifications Store", () => {
         await import("~/stores/pushNotifications");
       const store = usePushNotificationsStore();
 
-      store.subscriptions = [{ id: "1", endpoint: "test", createdAt: "" }];
+      store.subscriptions = [
+        {
+          id: "1",
+          endpoint: "test",
+          deviceName: null,
+          userAgent: null,
+          createdAt: "",
+          lastUsedAt: null,
+        },
+      ];
       // browserEndpoint is null by default
 
       expect(store.isCurrentBrowserSubscribed).toBe(false);
