@@ -100,6 +100,26 @@ const introAudio = ref<HTMLAudioElement | null>(null);
 const loopAudio = ref<HTMLAudioElement | null>(null);
 const resultAudio = ref<HTMLAudioElement | null>(null);
 
+// Gestion sécurisée des timers pour éviter les memory leaks
+const activeTimers = new Set<ReturnType<typeof setTimeout>>();
+
+const safeSetTimeout = (
+  callback: () => void,
+  delay: number
+): ReturnType<typeof setTimeout> => {
+  const id = setTimeout(() => {
+    callback();
+    activeTimers.delete(id);
+  }, delay);
+  activeTimers.add(id);
+  return id;
+};
+
+const clearAllTimers = () => {
+  activeTimers.forEach((id) => clearTimeout(id));
+  activeTimers.clear();
+};
+
 // Configuration du poll
 const config = computed(() => props.element.properties as PollProperties);
 
@@ -460,11 +480,11 @@ const startPoll = async () => {
   await playIntro();
 
   // 2. Attendre le soundLeadTime puis démarrer l'animation
-  setTimeout(() => {
+  safeSetTimeout(() => {
     transitionTo("entering");
 
     // 3. Après l'animation d'entrée, passer en état actif
-    setTimeout(() => {
+    safeSetTimeout(() => {
       transitionTo("active");
       startLoop();
 
@@ -483,12 +503,12 @@ const endPoll = () => {
 
   // Après le délai d'affichage des résultats, sortir
   const resultAnim = config.value.animations.result;
-  setTimeout(() => {
+  safeSetTimeout(() => {
     transitionTo("exiting");
 
     // Après l'animation de sortie, cacher
     const exitAnim = config.value.animations.exit;
-    setTimeout(() => {
+    safeSetTimeout(() => {
       transitionTo("hidden");
       cleanupAudio();
     }, exitAnim.animation.duration * 1000);
@@ -508,9 +528,9 @@ const publicPlayEntry = async () => {
 
   const entryAnim = config.value.animations.entry;
   return new Promise<void>((resolve) => {
-    setTimeout(() => {
+    safeSetTimeout(() => {
       transitionTo("entering");
-      setTimeout(() => {
+      safeSetTimeout(() => {
         transitionTo("active");
         resolve();
       }, entryAnim.animation.duration * 1000);
@@ -537,7 +557,7 @@ const publicPlayExit = async () => {
   transitionTo("exiting");
 
   return new Promise<void>((resolve) => {
-    setTimeout(() => {
+    safeSetTimeout(() => {
       transitionTo("hidden");
       cleanupAudio();
       resolve();
@@ -558,7 +578,7 @@ const publicPlayFullSequence = async (duration: number) => {
   publicPlayLoop();
 
   // Attendre la durée spécifiée
-  await new Promise<void>((resolve) => setTimeout(resolve, duration * 1000));
+  await new Promise<void>((resolve) => safeSetTimeout(resolve, duration * 1000));
 
   publicStopLoop();
   await publicPlayResult();
@@ -566,7 +586,7 @@ const publicPlayFullSequence = async (duration: number) => {
   // Attendre l'affichage des résultats
   const resultAnim = config.value.animations.result;
   await new Promise<void>((resolve) =>
-    setTimeout(resolve, resultAnim.displayDuration * 1000)
+    safeSetTimeout(resolve, resultAnim.displayDuration * 1000)
   );
 
   await publicPlayExit();
@@ -600,7 +620,7 @@ watch(
         transitionTo("hidden");
         cleanupAudio();
         // Petit délai pour permettre le reset avant de démarrer le nouveau
-        setTimeout(() => startPoll(), 100);
+        safeSetTimeout(() => startPoll(), 100);
       } else {
         startPoll();
       }
@@ -630,6 +650,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  clearAllTimers();
   stopTimer();
   cleanupAudio();
 });

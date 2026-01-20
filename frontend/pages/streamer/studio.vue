@@ -1097,6 +1097,10 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  // Cleanup des timers de snapshot en attente pour éviter les memory leaks
+  pendingSnapshots.forEach((timer) => clearTimeout(timer));
+  pendingSnapshots.clear();
+
   window.removeEventListener("keydown", handleKeydown);
 });
 </script>

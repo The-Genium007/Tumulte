@@ -59,7 +59,7 @@
     "@japa/runner": "^4.2.0",
     "@swc/core": "1.11.24",
     "@types/luxon": "^3.7.1",
-    "@types/node": "^22.15.18",
+    "@types/node": "^25.0.0",
     "@types/node-cron": "^3.0.11",
     "@types/web-push": "^3.6.4",
     "c8": "^10.1.3",

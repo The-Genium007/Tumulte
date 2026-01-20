@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onUnmounted } from "vue";
 
 const props = withDefaults(
   defineProps<{
@@ -116,6 +116,18 @@ const stopDecrement = () => {
     decrementInterval = null;
   }
 };
+
+// Cleanup des intervalles au démontage pour éviter les memory leaks
+onUnmounted(() => {
+  if (incrementInterval) {
+    clearInterval(incrementInterval);
+    incrementInterval = null;
+  }
+  if (decrementInterval) {
+    clearInterval(decrementInterval);
+    decrementInterval = null;
+  }
+});
 </script>
 
 <style scoped>
