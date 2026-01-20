@@ -11,17 +11,69 @@
         />
       </button>
       <div v-show="expandedSections.question" class="section-content">
-        <TextModule
-          :model-value="questionTextStyle"
-          :show-text-transform="true"
-          :show-letter-spacing="true"
-          @update:model-value="handleQuestionStyleUpdate"
-        />
-        <ColorModule
-          :model-value="props.questionStyle.color"
-          label="Couleur du texte"
-          @update:model-value="(v: string) => updateQuestionStyle('color', v)"
-        />
+        <!-- Conteneur (background, bordure, border-radius) -->
+        <div class="sub-section">
+          <button class="sub-section-header" @click="toggleQuestionSubSection('container')">
+            <span>Conteneur</span>
+            <UIcon
+              :name="expandedQuestionSubSections.container ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+              class="size-3"
+            />
+          </button>
+          <div v-show="expandedQuestionSubSections.container" class="sub-section-content">
+            <ColorModule
+              :model-value="props.questionBoxStyle?.backgroundColor ?? 'transparent'"
+              label="Couleur de fond"
+              @update:model-value="(v: string) => updateQuestionBoxStyle('backgroundColor', v)"
+            />
+            <BorderModule
+              :model-value="questionBorderModuleValue"
+              @update:model-value="handleQuestionBorderUpdate"
+            />
+            <BorderRadiusModule
+              :model-value="questionBorderRadiusValue"
+              @update:model-value="handleQuestionBorderRadiusUpdate"
+            />
+            <PaddingModule
+              :model-value="questionPaddingValue"
+              @update:model-value="handleQuestionPaddingUpdate"
+            />
+          </div>
+        </div>
+
+        <!-- Texte -->
+        <div class="sub-section">
+          <button class="sub-section-header" @click="toggleQuestionSubSection('text')">
+            <span>Texte</span>
+            <UIcon
+              :name="expandedQuestionSubSections.text ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+              class="size-3"
+            />
+          </button>
+          <div v-show="expandedQuestionSubSections.text" class="sub-section-content">
+            <TextModule
+              :model-value="questionTextStyle"
+              :show-font-family="true"
+              :show-font-size="true"
+              :show-font-weight="true"
+              :show-text-transform="true"
+              :show-letter-spacing="true"
+              :show-line-height="true"
+              :show-text-align="true"
+              :show-text-decoration="true"
+              @update:model-value="handleQuestionStyleUpdate"
+            />
+            <ColorModule
+              :model-value="props.questionStyle.color"
+              label="Couleur du texte"
+              @update:model-value="(v: string) => updateQuestionStyle('color', v)"
+            />
+            <TextShadowModule
+              :model-value="questionTextShadowValue"
+              @update:model-value="handleQuestionTextShadowUpdate"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
@@ -37,72 +89,120 @@
       </button>
       <div v-show="expandedSections.options" class="section-content">
         <!-- Box style -->
-        <div class="field-group">
-          <label class="group-label">Conteneur</label>
-          <ColorModule
-            :model-value="props.optionBoxStyle.backgroundColor"
-            label="Couleur de fond"
-            @update:model-value="(v: string) => updateOptionBoxStyle('backgroundColor', v)"
-          />
-          <BorderModule
-            :model-value="borderModuleValue"
-            @update:model-value="handleBorderUpdate"
-          />
-          <BorderRadiusModule
-            :model-value="borderRadiusValue"
-            @update:model-value="handleBorderRadiusUpdate"
-          />
+        <div class="sub-section">
+          <button class="sub-section-header" @click="toggleSubSection('container')">
+            <span>Conteneur</span>
+            <UIcon
+              :name="expandedSubSections.container ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+              class="size-3"
+            />
+          </button>
+          <div v-show="expandedSubSections.container" class="sub-section-content">
+            <ColorModule
+              :model-value="props.optionBoxStyle.backgroundColor"
+              label="Couleur de fond"
+              @update:model-value="(v: string) => updateOptionBoxStyle('backgroundColor', v)"
+            />
+            <BorderModule
+              :model-value="borderModuleValue"
+              @update:model-value="handleBorderUpdate"
+            />
+            <BorderRadiusModule
+              :model-value="borderRadiusValue"
+              @update:model-value="handleBorderRadiusUpdate"
+            />
+            <PaddingModule
+              :model-value="optionPaddingValue"
+              @update:model-value="handleOptionPaddingUpdate"
+            />
+          </div>
         </div>
 
         <!-- Text style -->
-        <div class="field-group">
-          <label class="group-label">Texte des options</label>
-          <TextModule
-            :model-value="optionTextStyle"
-            :show-font-family="true"
-            :show-text-align="false"
-            @update:model-value="handleOptionTextStyleUpdate"
-          />
-          <ColorModule
-            :model-value="props.optionTextStyle.color"
-            label="Couleur"
-            @update:model-value="(v: string) => updateOptionTextStyle('color', v)"
-          />
+        <div class="sub-section">
+          <button class="sub-section-header" @click="toggleSubSection('optionText')">
+            <span>Texte des options</span>
+            <UIcon
+              :name="expandedSubSections.optionText ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+              class="size-3"
+            />
+          </button>
+          <div v-show="expandedSubSections.optionText" class="sub-section-content">
+            <TextModule
+              :model-value="optionTextStyle"
+              :show-font-family="true"
+              :show-font-size="true"
+              :show-font-weight="true"
+              :show-text-transform="true"
+              :show-letter-spacing="true"
+              :show-text-align="false"
+              :show-text-decoration="true"
+              @update:model-value="handleOptionTextStyleUpdate"
+            />
+            <ColorModule
+              :model-value="props.optionTextStyle.color"
+              label="Couleur"
+              @update:model-value="(v: string) => updateOptionTextStyle('color', v)"
+            />
+            <TextShadowModule
+              :model-value="optionTextShadowValue"
+              @update:model-value="handleOptionTextShadowUpdate"
+            />
+          </div>
         </div>
 
         <!-- Pourcentages -->
-        <div class="field-group">
-          <label class="group-label">Pourcentages</label>
-          <TextModule
-            :model-value="percentageTextStyle"
-            :show-font-family="false"
-            :show-font-weight="true"
-            :show-text-align="false"
-            :font-size-min="10"
-            :font-size-max="32"
-            @update:model-value="handlePercentageStyleUpdate"
-          />
-          <ColorModule
-            :model-value="props.optionPercentageStyle.color"
-            label="Couleur"
-            @update:model-value="(v: string) => updatePercentageStyle('color', v)"
-          />
+        <div class="sub-section">
+          <button class="sub-section-header" @click="toggleSubSection('percentage')">
+            <span>Pourcentages</span>
+            <UIcon
+              :name="expandedSubSections.percentage ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+              class="size-3"
+            />
+          </button>
+          <div v-show="expandedSubSections.percentage" class="sub-section-content">
+            <TextModule
+              :model-value="percentageTextStyle"
+              :show-font-family="true"
+              :show-font-size="true"
+              :show-font-weight="true"
+              :show-text-transform="true"
+              :show-letter-spacing="true"
+              :show-text-align="false"
+              :show-text-decoration="true"
+              :font-size-min="10"
+              :font-size-max="32"
+              @update:model-value="handlePercentageStyleUpdate"
+            />
+            <ColorModule
+              :model-value="props.optionPercentageStyle.color"
+              label="Couleur"
+              @update:model-value="(v: string) => updatePercentageStyle('color', v)"
+            />
+          </div>
         </div>
 
         <!-- Espacement -->
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Espacement entre options</label>
-            <span class="slider-value">{{ props.optionSpacing }}px</span>
+        <div class="sub-section">
+          <button class="sub-section-header" @click="toggleSubSection('spacing')">
+            <span>Espacement</span>
+            <UIcon
+              :name="expandedSubSections.spacing ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+              class="size-3"
+            />
+          </button>
+          <div v-show="expandedSubSections.spacing" class="sub-section-content">
+            <div class="inline-field">
+              <label>Entre les options</label>
+              <NumberInput
+                :model-value="props.optionSpacing"
+                :min="0"
+                :max="32"
+                :step="2"
+                @update:model-value="(v) => emit('updateOptionSpacing', v)"
+              />
+            </div>
           </div>
-          <URange
-            :model-value="props.optionSpacing"
-            :min="0"
-            :max="32"
-            :step="2"
-            size="sm"
-            @update:model-value="(v: number) => emit('updateOptionSpacing', v)"
-          />
         </div>
       </div>
     </div>
@@ -155,19 +255,18 @@
         />
       </button>
       <div v-show="expandedSections.progressBar" class="section-content">
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Hauteur</label>
-            <span class="slider-value">{{ props.progressBar.height }}px</span>
+        <div class="inline-field">
+          <label>Hauteur</label>
+          <div class="input-with-unit">
+            <NumberInput
+              :model-value="props.progressBar.height"
+              :min="2"
+              :max="20"
+              :step="1"
+              @update:model-value="(v) => updateProgressBar('height', v)"
+            />
+            <span class="unit">px</span>
           </div>
-          <URange
-            :model-value="props.progressBar.height"
-            :min="2"
-            :max="20"
-            :step="1"
-            size="sm"
-            @update:model-value="(v: number) => updateProgressBar('height', v)"
-          />
         </div>
 
         <ColorModule
@@ -177,11 +276,36 @@
         />
 
         <ColorModule
+          v-if="!props.progressBar.fillGradient?.enabled"
           :model-value="props.progressBar.fillColor"
           label="Remplissage"
           :presets="['#22c55e', '#3b82f6', '#8b5cf6', '#f59e0b']"
           @update:model-value="(v: string) => updateProgressBar('fillColor', v)"
         />
+
+        <!-- Gradient -->
+        <div class="inline-field">
+          <label>Utiliser un dégradé</label>
+          <USwitch
+            :model-value="props.progressBar.fillGradient?.enabled ?? false"
+            size="sm"
+            @update:model-value="(v: boolean) => updateFillGradient('enabled', v)"
+          />
+        </div>
+        <template v-if="props.progressBar.fillGradient?.enabled">
+          <ColorModule
+            :model-value="props.progressBar.fillGradient?.startColor ?? '#22c55e'"
+            label="Couleur début"
+            :presets="['#22c55e', '#3b82f6', '#8b5cf6', '#f59e0b']"
+            @update:model-value="(v: string) => updateFillGradient('startColor', v)"
+          />
+          <ColorModule
+            :model-value="props.progressBar.fillGradient?.endColor ?? '#3b82f6'"
+            label="Couleur fin"
+            :presets="['#22c55e', '#3b82f6', '#8b5cf6', '#f59e0b']"
+            @update:model-value="(v: string) => updateFillGradient('endColor', v)"
+          />
+        </template>
 
         <div class="inline-field">
           <label>Position</label>
@@ -189,24 +313,23 @@
             :model-value="props.progressBar.position"
             :items="positionOptions"
             size="xs"
-            :ui="{ base: 'w-24' }"
+            :ui="selectUi"
             @update:model-value="(v: string) => updateProgressBar('position', v)"
           />
         </div>
 
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Rayon de bordure</label>
-            <span class="slider-value">{{ props.progressBar.borderRadius }}px</span>
+        <div class="inline-field">
+          <label>Rayon de bordure</label>
+          <div class="input-with-unit">
+            <NumberInput
+              :model-value="props.progressBar.borderRadius"
+              :min="0"
+              :max="10"
+              :step="1"
+              @update:model-value="(v) => updateProgressBar('borderRadius', v)"
+            />
+            <span class="unit">px</span>
           </div>
-          <URange
-            :model-value="props.progressBar.borderRadius"
-            :min="0"
-            :max="10"
-            :step="1"
-            size="sm"
-            @update:model-value="(v: number) => updateProgressBar('borderRadius', v)"
-          />
         </div>
 
         <div class="checkbox-field">
@@ -224,8 +347,12 @@
             <TextModule
               :model-value="timeTextStyle"
               :show-font-family="true"
+              :show-font-size="true"
               :show-font-weight="true"
+              :show-text-transform="true"
+              :show-letter-spacing="true"
               :show-text-align="false"
+              :show-text-decoration="true"
               :font-size-min="10"
               :font-size-max="48"
               @update:model-value="handleTimeTextStyleUpdate"
@@ -260,47 +387,44 @@
         <!-- Effets de résultat -->
         <div class="field-group">
           <label class="group-label">Résultat gagnant</label>
-          <div class="slider-field">
-            <div class="slider-header">
-              <label>Agrandissement</label>
-              <span class="slider-value">{{ props.animations.result.winnerEnlarge.scale.toFixed(2) }}x</span>
+          <div class="inline-field">
+            <label>Agrandissement</label>
+            <div class="input-with-unit">
+              <NumberInput
+                :model-value="props.animations.result.winnerEnlarge.scale"
+                :min="1"
+                :max="1.5"
+                :step="0.05"
+                @update:model-value="(v) => updateResultAnimation('winnerEnlarge', 'scale', v)"
+              />
+              <span class="unit">x</span>
             </div>
-            <URange
-              :model-value="props.animations.result.winnerEnlarge.scale"
-              :min="1"
-              :max="1.5"
-              :step="0.05"
-              size="sm"
-              @update:model-value="(v: number) => updateResultAnimation('winnerEnlarge', 'scale', v)"
-            />
           </div>
-          <div class="slider-field">
-            <div class="slider-header">
-              <label>Fondu perdants</label>
-              <span class="slider-value">{{ Math.round(props.animations.result.loserFadeOut.opacity * 100) }}%</span>
+          <div class="inline-field">
+            <label>Fondu perdants</label>
+            <div class="input-with-unit">
+              <NumberInput
+                :model-value="Math.round(props.animations.result.loserFadeOut.opacity * 100)"
+                :min="10"
+                :max="100"
+                :step="5"
+                @update:model-value="(v) => updateResultAnimation('loserFadeOut', 'opacity', v / 100)"
+              />
+              <span class="unit">%</span>
             </div>
-            <URange
-              :model-value="props.animations.result.loserFadeOut.opacity"
-              :min="0.1"
-              :max="1"
-              :step="0.05"
-              size="sm"
-              @update:model-value="(v: number) => updateResultAnimation('loserFadeOut', 'opacity', v)"
-            />
           </div>
-          <div class="slider-field">
-            <div class="slider-header">
-              <label>Durée affichage résultat</label>
-              <span class="slider-value">{{ props.animations.result.displayDuration.toFixed(1) }}s</span>
+          <div class="inline-field">
+            <label>Durée affichage</label>
+            <div class="input-with-unit">
+              <NumberInput
+                :model-value="props.animations.result.displayDuration"
+                :min="1"
+                :max="10"
+                :step="0.5"
+                @update:model-value="(v) => emit('updateAnimations', { result: { ...props.animations.result, displayDuration: v } })"
+              />
+              <span class="unit">s</span>
             </div>
-            <URange
-              :model-value="props.animations.result.displayDuration"
-              :min="1"
-              :max="10"
-              :step="0.5"
-              size="sm"
-              @update:model-value="(v: number) => emit('updateAnimations', { result: { ...props.animations.result, displayDuration: v } })"
-            />
           </div>
         </div>
       </div>
@@ -338,62 +462,6 @@
       </div>
     </div>
 
-    <!-- Section Disposition -->
-    <div class="inspector-section">
-      <button class="section-header" @click="toggleSection('layout')">
-        <UIcon name="i-lucide-layout-grid" class="size-4" />
-        <span>Disposition</span>
-        <UIcon
-          :name="expandedSections.layout ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-          class="size-4 ml-auto"
-        />
-      </button>
-      <div v-show="expandedSections.layout" class="section-content">
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Largeur maximum</label>
-            <span class="slider-value">{{ props.layout.maxWidth }}px</span>
-          </div>
-          <URange
-            :model-value="props.layout.maxWidth"
-            :min="300"
-            :max="800"
-            :step="10"
-            size="sm"
-            @update:model-value="(v: number) => emit('updateLayout', { maxWidth: v })"
-          />
-        </div>
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Options minimum affichées</label>
-            <span class="slider-value">{{ props.layout.minOptionsToShow }}</span>
-          </div>
-          <URange
-            :model-value="props.layout.minOptionsToShow"
-            :min="2"
-            :max="6"
-            :step="1"
-            size="sm"
-            @update:model-value="(v: number) => emit('updateLayout', { minOptionsToShow: v })"
-          />
-        </div>
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Options maximum affichées</label>
-            <span class="slider-value">{{ props.layout.maxOptionsToShow }}</span>
-          </div>
-          <URange
-            :model-value="props.layout.maxOptionsToShow"
-            :min="2"
-            :max="10"
-            :step="1"
-            size="sm"
-            @update:model-value="(v: number) => emit('updateLayout', { maxOptionsToShow: v })"
-          />
-        </div>
-      </div>
-    </div>
-
     <!-- Section Prévisualisation -->
     <div class="inspector-section">
       <button class="section-header" @click="toggleSection('preview')">
@@ -410,33 +478,33 @@
           <UInput
             :model-value="props.mockData.question"
             size="sm"
+            :ui="inputUi"
             @update:model-value="(v: string | number) => updateMockData('question', String(v))"
           />
         </div>
 
-        <div class="slider-field">
-          <div class="slider-header">
-            <label>Temps restant</label>
-            <span class="slider-value">{{ props.mockData.timeRemaining }}s</span>
+        <div class="inline-field">
+          <label>Temps restant</label>
+          <div class="input-with-unit">
+            <NumberInput
+              :model-value="props.mockData.timeRemaining"
+              :min="0"
+              :max="props.mockData.totalDuration"
+              :step="1"
+              @update:model-value="(v) => updateMockData('timeRemaining', v)"
+            />
+            <span class="unit">s</span>
           </div>
-          <URange
-            :model-value="props.mockData.timeRemaining"
-            :min="0"
-            :max="props.mockData.totalDuration"
-            :step="1"
-            size="sm"
-            @update:model-value="(v: number) => updateMockData('timeRemaining', v)"
-          />
         </div>
 
         <UButton
           color="primary"
-          variant="soft"
+          variant="solid"
           icon="i-lucide-play"
           label="Lancer l'aperçu"
           size="sm"
           block
-          class="mt-3"
+          class="mt-4"
           @click="emit('playPreview')"
         />
       </div>
@@ -453,11 +521,16 @@ import {
   BorderRadiusModule,
   AnimationModule,
   AudioModule,
+  NumberInput,
+  PaddingModule,
+  TextShadowModule,
   type TextStyleConfig,
   type BorderConfig,
   type BorderRadiusConfig,
   type AnimationConfig,
   type AudioConfig,
+  type PaddingConfig,
+  type TextShadowConfig,
 } from "./modules";
 import type {
   TypographySettings,
@@ -470,6 +543,7 @@ import type {
 
 const props = defineProps<{
   questionStyle: TypographySettings;
+  questionBoxStyle: BoxStyleSettings;
   optionBoxStyle: BoxStyleSettings;
   optionTextStyle: TypographySettings;
   optionPercentageStyle: TypographySettings;
@@ -487,6 +561,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   updateQuestionStyle: [style: Partial<TypographySettings>];
+  updateQuestionBoxStyle: [style: Partial<BoxStyleSettings>];
   updateOptionBoxStyle: [style: Partial<BoxStyleSettings>];
   updateOptionTextStyle: [style: Partial<TypographySettings>];
   updatePercentageStyle: [style: Partial<TypographySettings>];
@@ -507,12 +582,33 @@ const expandedSections = reactive({
   progressBar: false,
   animations: false,
   audio: false,
-  layout: false,
   preview: true,
+});
+
+// Sub-sections collapsed/expanded state (for Question)
+const expandedQuestionSubSections = reactive({
+  container: true,
+  text: false,
+});
+
+// Sub-sections collapsed/expanded state (for Options de réponse)
+const expandedSubSections = reactive({
+  container: true,
+  optionText: false,
+  percentage: false,
+  spacing: false,
 });
 
 const toggleSection = (section: keyof typeof expandedSections) => {
   expandedSections[section] = !expandedSections[section];
+};
+
+const toggleQuestionSubSection = (subSection: keyof typeof expandedQuestionSubSections) => {
+  expandedQuestionSubSections[subSection] = !expandedQuestionSubSections[subSection];
+};
+
+const toggleSubSection = (subSection: keyof typeof expandedSubSections) => {
+  expandedSubSections[subSection] = !expandedSubSections[subSection];
 };
 
 // Options
@@ -520,6 +616,16 @@ const positionOptions = [
   { label: "Haut", value: "top" },
   { label: "Bas", value: "bottom" },
 ];
+
+// UI customization for selects
+const selectUi = {
+  base: "bg-neutral-100 text-neutral-600",
+};
+
+// UI customization for text inputs
+const inputUi = {
+  base: "bg-neutral-100 text-neutral-600 placeholder:text-neutral-400",
+};
 
 // Conversions pour TextModule
 const questionTextStyle = computed<TextStyleConfig>(() => ({
@@ -552,11 +658,87 @@ const borderModuleValue = computed<BorderConfig>(() => ({
   color: props.optionBoxStyle.borderColor,
 }));
 
-const borderRadiusValue = computed<BorderRadiusConfig>(() => ({
-  topLeft: props.optionBoxStyle.borderRadius,
-  topRight: props.optionBoxStyle.borderRadius,
-  bottomRight: props.optionBoxStyle.borderRadius,
-  bottomLeft: props.optionBoxStyle.borderRadius,
+const borderRadiusValue = computed<BorderRadiusConfig>(() => {
+  const br = props.optionBoxStyle.borderRadius;
+  if (typeof br === "number") {
+    return { topLeft: br, topRight: br, bottomRight: br, bottomLeft: br };
+  }
+  return {
+    topLeft: br?.topLeft ?? 0,
+    topRight: br?.topRight ?? 0,
+    bottomRight: br?.bottomRight ?? 0,
+    bottomLeft: br?.bottomLeft ?? 0,
+  };
+});
+
+// Conversions pour BorderModule (Question)
+// Default values for backwards compatibility with existing elements
+const defaultQuestionBoxStyle = {
+  backgroundColor: "transparent",
+  borderColor: "transparent",
+  borderWidth: 0,
+  borderRadius: 0,
+  opacity: 1,
+  padding: { top: 0, right: 0, bottom: 16, left: 0 },
+};
+
+const questionBorderModuleValue = computed<BorderConfig>(() => ({
+  width: props.questionBoxStyle?.borderWidth ?? defaultQuestionBoxStyle.borderWidth,
+  style: "solid",
+  color: props.questionBoxStyle?.borderColor ?? defaultQuestionBoxStyle.borderColor,
+}));
+
+const questionBorderRadiusValue = computed<BorderRadiusConfig>(() => {
+  const br = props.questionBoxStyle?.borderRadius ?? defaultQuestionBoxStyle.borderRadius;
+  if (typeof br === "number") {
+    return { topLeft: br, topRight: br, bottomRight: br, bottomLeft: br };
+  }
+  return {
+    topLeft: br?.topLeft ?? 0,
+    topRight: br?.topRight ?? 0,
+    bottomRight: br?.bottomRight ?? 0,
+    bottomLeft: br?.bottomLeft ?? 0,
+  };
+});
+
+// Conversions pour PaddingModule
+const questionPaddingValue = computed<PaddingConfig>(() => ({
+  top: props.questionBoxStyle?.padding?.top ?? defaultQuestionBoxStyle.padding.top,
+  right: props.questionBoxStyle?.padding?.right ?? defaultQuestionBoxStyle.padding.right,
+  bottom: props.questionBoxStyle?.padding?.bottom ?? defaultQuestionBoxStyle.padding.bottom,
+  left: props.questionBoxStyle?.padding?.left ?? defaultQuestionBoxStyle.padding.left,
+}));
+
+const optionPaddingValue = computed<PaddingConfig>(() => ({
+  top: props.optionBoxStyle.padding?.top ?? 12,
+  right: props.optionBoxStyle.padding?.right ?? 16,
+  bottom: props.optionBoxStyle.padding?.bottom ?? 12,
+  left: props.optionBoxStyle.padding?.left ?? 16,
+}));
+
+// Conversions pour TextShadowModule
+const defaultTextShadow = {
+  enabled: false,
+  color: "rgba(0,0,0,0.5)",
+  blur: 4,
+  offsetX: 0,
+  offsetY: 2,
+};
+
+const questionTextShadowValue = computed<TextShadowConfig>(() => ({
+  enabled: props.questionStyle.textShadow?.enabled ?? defaultTextShadow.enabled,
+  color: props.questionStyle.textShadow?.color ?? defaultTextShadow.color,
+  blur: props.questionStyle.textShadow?.blur ?? defaultTextShadow.blur,
+  offsetX: props.questionStyle.textShadow?.offsetX ?? defaultTextShadow.offsetX,
+  offsetY: props.questionStyle.textShadow?.offsetY ?? defaultTextShadow.offsetY,
+}));
+
+const optionTextShadowValue = computed<TextShadowConfig>(() => ({
+  enabled: props.optionTextStyle.textShadow?.enabled ?? false,
+  color: props.optionTextStyle.textShadow?.color ?? defaultTextShadow.color,
+  blur: props.optionTextStyle.textShadow?.blur ?? defaultTextShadow.blur,
+  offsetX: props.optionTextStyle.textShadow?.offsetX ?? defaultTextShadow.offsetX,
+  offsetY: props.optionTextStyle.textShadow?.offsetY ?? defaultTextShadow.offsetY,
 }));
 
 // Conversion pour AnimationModule
@@ -639,8 +821,104 @@ const handleBorderUpdate = (value: BorderConfig) => {
 };
 
 const handleBorderRadiusUpdate = (value: BorderRadiusConfig) => {
-  // Utilise la valeur du coin supérieur gauche (uniforme)
-  emit("updateOptionBoxStyle", { borderRadius: value.topLeft });
+  // Check if all corners are equal for uniform radius
+  const allEqual = value.topLeft === value.topRight &&
+    value.topRight === value.bottomRight &&
+    value.bottomRight === value.bottomLeft;
+
+  if (allEqual) {
+    emit("updateOptionBoxStyle", { borderRadius: value.topLeft });
+  } else {
+    emit("updateOptionBoxStyle", {
+      borderRadius: {
+        topLeft: value.topLeft,
+        topRight: value.topRight,
+        bottomRight: value.bottomRight,
+        bottomLeft: value.bottomLeft,
+      },
+    });
+  }
+};
+
+// Update functions for Question Box Style
+const updateQuestionBoxStyle = (key: keyof BoxStyleSettings, value: string | number) => {
+  emit("updateQuestionBoxStyle", { [key]: value });
+};
+
+const handleQuestionBorderUpdate = (value: BorderConfig) => {
+  emit("updateQuestionBoxStyle", {
+    borderWidth: value.width,
+    borderColor: value.color,
+  });
+};
+
+const handleQuestionBorderRadiusUpdate = (value: BorderRadiusConfig) => {
+  // Check if all corners are equal for uniform radius
+  const allEqual = value.topLeft === value.topRight &&
+    value.topRight === value.bottomRight &&
+    value.bottomRight === value.bottomLeft;
+
+  if (allEqual) {
+    emit("updateQuestionBoxStyle", { borderRadius: value.topLeft });
+  } else {
+    emit("updateQuestionBoxStyle", {
+      borderRadius: {
+        topLeft: value.topLeft,
+        topRight: value.topRight,
+        bottomRight: value.bottomRight,
+        bottomLeft: value.bottomLeft,
+      },
+    });
+  }
+};
+
+// Handlers pour PaddingModule
+const handleQuestionPaddingUpdate = (value: PaddingConfig) => {
+  emit("updateQuestionBoxStyle", { padding: value });
+};
+
+const handleOptionPaddingUpdate = (value: PaddingConfig) => {
+  emit("updateOptionBoxStyle", { padding: value });
+};
+
+// Handlers pour TextShadowModule
+const handleQuestionTextShadowUpdate = (value: TextShadowConfig) => {
+  emit("updateQuestionStyle", {
+    textShadow: {
+      enabled: value.enabled,
+      color: value.color,
+      blur: value.blur,
+      offsetX: value.offsetX,
+      offsetY: value.offsetY,
+    },
+  });
+};
+
+const handleOptionTextShadowUpdate = (value: TextShadowConfig) => {
+  emit("updateOptionTextStyle", {
+    textShadow: {
+      enabled: value.enabled,
+      color: value.color,
+      blur: value.blur,
+      offsetX: value.offsetX,
+      offsetY: value.offsetY,
+    },
+  });
+};
+
+// Handler pour le gradient de la progress bar
+const updateFillGradient = (key: string, value: boolean | string) => {
+  const currentGradient = props.progressBar.fillGradient ?? {
+    enabled: false,
+    startColor: "#22c55e",
+    endColor: "#3b82f6",
+  };
+  emit("updateProgressBar", {
+    fillGradient: {
+      ...currentGradient,
+      [key]: value,
+    },
+  });
 };
 
 const updateMedalColor = (key: keyof MedalColors, value: string) => {
@@ -774,11 +1052,45 @@ const updateMockData = (key: keyof PollMockData, value: string | number | string
   gap: 0.75rem;
 }
 
-/* Field groups */
+/* Sub-sections (collapsible) */
+.sub-section {
+  border-bottom: 1px solid var(--color-neutral-200);
+}
+
+.sub-section:last-child {
+  border-bottom: none;
+}
+
+.sub-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-neutral-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: color 0.15s ease;
+}
+
+.sub-section-header:hover {
+  color: var(--color-text-primary);
+}
+
+.sub-section-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+}
+
+/* Field groups (legacy, kept for other sections) */
 .field-group {
-  background: var(--color-neutral-100);
-  border-radius: 8px;
-  padding: 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -787,7 +1099,7 @@ const updateMockData = (key: keyof PollMockData, value: string | number | string
 .group-label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-500);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.25rem;
@@ -808,7 +1120,7 @@ const updateMockData = (key: keyof PollMockData, value: string | number | string
 
 .slider-header label {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
 }
 
 .slider-value {
@@ -828,7 +1140,18 @@ const updateMockData = (key: keyof PollMockData, value: string | number | string
 
 .inline-field label {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.unit {
+  font-size: 0.75rem;
+  color: var(--color-neutral-400);
 }
 
 /* Checkbox fields */
@@ -845,6 +1168,6 @@ const updateMockData = (key: keyof PollMockData, value: string | number | string
 
 .field label {
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-neutral-400);
 }
 </style>

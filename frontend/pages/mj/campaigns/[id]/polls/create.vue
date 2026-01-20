@@ -141,7 +141,7 @@ const handleSubmit = async () => {
             </UButton>
             <div>
               <h1 class="text-3xl font-bold text-primary">Créer un sondage</h1>
-              <p class="text-muted">
+              <p class="text-neutral-400">
                 Ajoutez un nouveau sondage à votre campagne
               </p>
             </div>
@@ -153,8 +153,8 @@ const handleSubmit = async () => {
       <UCard>
         <form class="space-y-8" @submit.prevent="handleSubmit">
           <!-- Question -->
-          <div class="space-y-3">
-            <label class="block text-sm font-medium text-secondary uppercase">
+          <div>
+            <label class="block text-sm font-medium text-primary-500 uppercase pl-2">
               Question
             </label>
             <UInput
@@ -167,22 +167,22 @@ const handleSubmit = async () => {
                 base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
               }"
             />
-            <p class="text-xs text-muted">{{ questionLength }}/45 caractères</p>
+            <p class="text-xs text-neutral-400 pl-2 mt-2">{{ questionLength }}/45 caractères</p>
           </div>
 
           <!-- Options -->
-          <div class="space-y-3">
-            <label class="block text-sm font-medium text-secondary uppercase">
+          <div>
+            <label class="block text-sm font-medium text-primary-500 uppercase pl-15">
               Réponses (2-5 max)
             </label>
-            <div class="space-y-3">
+            <div class="space-y-3 mt-1">
               <div
                 v-for="(_, idx) in options"
                 :key="idx"
                 class="flex items-center gap-3"
               >
                 <span
-                  class="flex items-center justify-center size-10 rounded-full bg-neutral-100 text-sm font-medium text-muted shrink-0"
+                  class="flex items-center justify-center size-10 rounded-full bg-neutral-100 text-sm font-medium text-primary-500 shrink-0"
                 >
                   {{ idx + 1 }}
                 </span>
@@ -210,8 +210,8 @@ const handleSubmit = async () => {
             </div>
             <UButton
               v-if="options.length < 5"
-              color="neutral"
-              variant="soft"
+              color="primary"
+              variant="solid"
               icon="i-lucide-plus"
               label="Ajouter une réponse"
               size="md"
@@ -221,11 +221,11 @@ const handleSubmit = async () => {
           </div>
 
           <!-- Duration -->
-          <div class="space-y-3">
-            <label class="block text-sm font-medium text-secondary uppercase">
+          <div>
+            <label class="block text-sm font-medium text-primary-500 uppercase pl-2">
               Durée
             </label>
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-3 mt-1">
               <!-- Presets - 2 par ligne sur mobile, 5 sur desktop -->
               <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 w-full sm:w-auto">
                 <button
@@ -236,7 +236,7 @@ const handleSubmit = async () => {
                   :class="
                     !useCustomDuration && form.durationSeconds === preset.value
                       ? 'bg-primary text-white'
-                      : 'bg-neutral-100 text-secondary hover:bg-neutral-200'
+                      : 'bg-neutral-100 text-primary-500 hover:bg-neutral-200'
                   "
                   @click="selectDuration(preset.value)"
                 >
@@ -252,7 +252,7 @@ const handleSubmit = async () => {
                   :class="
                     useCustomDuration
                       ? 'bg-primary text-white'
-                      : 'bg-neutral-100 text-secondary hover:bg-neutral-200'
+                      : 'bg-neutral-100 text-primary-500 hover:bg-neutral-200'
                   "
                   @click="enableCustomDuration"
                 >
@@ -274,10 +274,10 @@ const handleSubmit = async () => {
                     base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
                   }"
                 />
-                <span class="text-muted text-sm sm:text-base">secondes</span>
+                <span class="text-neutral-400 text-sm sm:text-base">secondes</span>
               </div>
             </div>
-            <p class="text-xs text-muted">
+            <p class="text-xs text-neutral-400 pl-2 mt-2">
               Entre 15 secondes et 30 minutes (1800 secondes)
             </p>
           </div>

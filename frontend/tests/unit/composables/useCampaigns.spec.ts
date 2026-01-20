@@ -293,17 +293,569 @@ describe("useCampaigns Composable", () => {
     ]);
   });
 
-  // TODO: Add more tests for other methods
-  // - getCampaignMembers()
-  // - getCampaignDetails()
-  // - inviteStreamer()
-  // - removeMember()
-  // - fetchInvitations()
-  // - acceptInvitation()
-  // - declineInvitation()
-  // - fetchActiveCampaigns()
-  // - leaveCampaign()
-  // - grantAuthorization()
-  // - revokeAuthorization()
-  // - getAuthorizationStatus()
+  describe("getCampaignMembers", () => {
+    test("should fetch and return campaign members", async () => {
+      const mockMembers = [
+        {
+          id: "member-1",
+          status: "ACTIVE",
+          isOwner: false,
+          streamer: {
+            id: "s1",
+            twitchUserId: "123",
+            twitchDisplayName: "Streamer1",
+            twitchLogin: "streamer1",
+          },
+          invitedAt: "2024-01-01T00:00:00Z",
+          acceptedAt: "2024-01-02T00:00:00Z",
+          pollAuthorizationGrantedAt: null,
+          pollAuthorizationExpiresAt: null,
+          isPollAuthorized: false,
+          authorizationRemainingSeconds: null,
+        },
+      ];
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { members: mockMembers } }),
+      } as Response);
+
+      const { getCampaignMembers } = useCampaigns();
+      const result = await getCampaignMembers("campaign-1");
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/mj/campaigns/campaign-1",
+        { credentials: "include" },
+      );
+      expect(result).toEqual(mockMembers);
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      } as Response);
+
+      const { getCampaignMembers } = useCampaigns();
+
+      await expect(getCampaignMembers("invalid-id")).rejects.toThrow(
+        "Failed to fetch campaign members",
+      );
+    });
+  });
+
+  describe("getCampaignDetails", () => {
+    test("should fetch and return campaign details with members", async () => {
+      const mockResponse = {
+        id: "campaign-1",
+        name: "Test Campaign",
+        description: "Description",
+        memberCount: 3,
+        activeMemberCount: 2,
+        createdAt: "2024-01-01T00:00:00Z",
+        members: [
+          { id: "m1", status: "ACTIVE" },
+          { id: "m2", status: "PENDING" },
+        ],
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockResponse }),
+      } as Response);
+
+      const { getCampaignDetails } = useCampaigns();
+      const result = await getCampaignDetails("campaign-1");
+
+      expect(result.campaign).toEqual({
+        id: "campaign-1",
+        name: "Test Campaign",
+        description: "Description",
+        memberCount: 3,
+        activeMemberCount: 2,
+        createdAt: "2024-01-01T00:00:00Z",
+      });
+      expect(result.members).toEqual(mockResponse.members);
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      } as Response);
+
+      const { getCampaignDetails } = useCampaigns();
+
+      await expect(getCampaignDetails("campaign-1")).rejects.toThrow(
+        "Failed to fetch campaign details",
+      );
+    });
+  });
+
+  describe("inviteStreamer", () => {
+    test("should invite streamer by streamer_id", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: {} }),
+      } as Response);
+
+      const { inviteStreamer } = useCampaigns();
+      await inviteStreamer("campaign-1", { streamer_id: "streamer-123" });
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/mj/campaigns/campaign-1/invite",
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ streamer_id: "streamer-123" }),
+        },
+      );
+    });
+
+    test("should invite streamer by twitch info", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: {} }),
+      } as Response);
+
+      const { inviteStreamer } = useCampaigns();
+      await inviteStreamer("campaign-1", {
+        twitch_user_id: "123456",
+        twitch_login: "newstreamer",
+        twitch_display_name: "NewStreamer",
+        profile_image_url: "https://example.com/img.png",
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/mj/campaigns/campaign-1/invite",
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            twitch_user_id: "123456",
+            twitch_login: "newstreamer",
+            twitch_display_name: "NewStreamer",
+            profile_image_url: "https://example.com/img.png",
+          }),
+        },
+      );
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+      } as Response);
+
+      const { inviteStreamer } = useCampaigns();
+
+      await expect(
+        inviteStreamer("campaign-1", { streamer_id: "invalid" }),
+      ).rejects.toThrow("Failed to invite streamer");
+    });
+  });
+
+  describe("removeMember", () => {
+    test("should remove member from campaign", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+      } as Response);
+
+      const { removeMember } = useCampaigns();
+      await removeMember("campaign-1", "member-1");
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/mj/campaigns/campaign-1/members/member-1",
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+      } as Response);
+
+      const { removeMember } = useCampaigns();
+
+      await expect(removeMember("campaign-1", "member-1")).rejects.toThrow(
+        "Failed to remove member",
+      );
+    });
+  });
+
+  describe("fetchInvitations", () => {
+    test("should fetch pending invitations for streamer", async () => {
+      const mockInvitations = [
+        {
+          id: "inv-1",
+          campaignId: "c1",
+          campaignName: "Campaign 1",
+          invitedAt: "2024-01-01T00:00:00Z",
+          gmName: "GameMaster",
+        },
+      ];
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockInvitations }),
+      } as Response);
+
+      const { fetchInvitations } = useCampaigns();
+      const result = await fetchInvitations();
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/streamer/campaigns/invitations",
+        { credentials: "include" },
+      );
+      expect(result).toEqual(mockInvitations);
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+      } as Response);
+
+      const { fetchInvitations } = useCampaigns();
+
+      await expect(fetchInvitations()).rejects.toThrow(
+        "Failed to fetch invitations",
+      );
+    });
+  });
+
+  describe("acceptInvitation", () => {
+    test("should accept invitation", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+      } as Response);
+
+      const { acceptInvitation } = useCampaigns();
+      await acceptInvitation("inv-1");
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/streamer/campaigns/invitations/inv-1/accept",
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      } as Response);
+
+      const { acceptInvitation } = useCampaigns();
+
+      await expect(acceptInvitation("invalid-inv")).rejects.toThrow(
+        "Failed to accept invitation",
+      );
+    });
+  });
+
+  describe("declineInvitation", () => {
+    test("should decline invitation", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+      } as Response);
+
+      const { declineInvitation } = useCampaigns();
+      await declineInvitation("inv-1");
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/streamer/campaigns/invitations/inv-1/decline",
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      } as Response);
+
+      const { declineInvitation } = useCampaigns();
+
+      await expect(declineInvitation("invalid-inv")).rejects.toThrow(
+        "Failed to decline invitation",
+      );
+    });
+  });
+
+  describe("fetchActiveCampaigns", () => {
+    test("should fetch active campaigns for streamer", async () => {
+      const mockCampaigns = [
+        createMockCampaign({ id: "c1", name: "Active Campaign 1" }),
+        createMockCampaign({ id: "c2", name: "Active Campaign 2" }),
+      ];
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockCampaigns }),
+      } as Response);
+
+      const { fetchActiveCampaigns } = useCampaigns();
+      const result = await fetchActiveCampaigns();
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/streamer/campaigns",
+        { credentials: "include" },
+      );
+      expect(result).toEqual(mockCampaigns);
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+      } as Response);
+
+      const { fetchActiveCampaigns } = useCampaigns();
+
+      await expect(fetchActiveCampaigns()).rejects.toThrow(
+        "Failed to fetch active campaigns",
+      );
+    });
+  });
+
+  describe("leaveCampaign", () => {
+    test("should leave campaign", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+      } as Response);
+
+      const { leaveCampaign } = useCampaigns();
+      await leaveCampaign("campaign-1");
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/streamer/campaigns/campaign-1/leave",
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+      } as Response);
+
+      const { leaveCampaign } = useCampaigns();
+
+      await expect(leaveCampaign("campaign-1")).rejects.toThrow(
+        "Failed to leave campaign",
+      );
+    });
+  });
+
+  describe("grantAuthorization", () => {
+    test("should grant authorization and return expiry info", async () => {
+      const mockResponse = {
+        expires_at: "2024-01-01T12:00:00Z",
+        remaining_seconds: 43200,
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockResponse }),
+      } as Response);
+
+      const { grantAuthorization } = useCampaigns();
+      const result = await grantAuthorization("campaign-1");
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/streamer/campaigns/campaign-1/authorize",
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
+      expect(result).toEqual(mockResponse);
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+      } as Response);
+
+      const { grantAuthorization } = useCampaigns();
+
+      await expect(grantAuthorization("campaign-1")).rejects.toThrow(
+        "Failed to grant authorization",
+      );
+    });
+  });
+
+  describe("revokeAuthorization", () => {
+    test("should revoke authorization", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+      } as Response);
+
+      const { revokeAuthorization } = useCampaigns();
+      await revokeAuthorization("campaign-1");
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/streamer/campaigns/campaign-1/authorize",
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      } as Response);
+
+      const { revokeAuthorization } = useCampaigns();
+
+      await expect(revokeAuthorization("campaign-1")).rejects.toThrow(
+        "Failed to revoke authorization",
+      );
+    });
+  });
+
+  describe("getAuthorizationStatus", () => {
+    test("should fetch authorization status for all campaigns", async () => {
+      const mockStatus = [
+        {
+          campaign_id: "c1",
+          campaignName: "Campaign 1",
+          isOwner: false,
+          is_authorized: true,
+          expires_at: "2024-01-01T12:00:00Z",
+          remaining_seconds: 3600,
+        },
+        {
+          campaign_id: "c2",
+          campaignName: "Campaign 2",
+          isOwner: true,
+          is_authorized: false,
+          expires_at: null,
+          remaining_seconds: null,
+        },
+      ];
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockStatus }),
+      } as Response);
+
+      const { getAuthorizationStatus } = useCampaigns();
+      const result = await getAuthorizationStatus();
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/streamer/campaigns/authorization-status",
+        { credentials: "include" },
+      );
+      expect(result).toEqual(mockStatus);
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+      } as Response);
+
+      const { getAuthorizationStatus } = useCampaigns();
+
+      await expect(getAuthorizationStatus()).rejects.toThrow(
+        "Failed to fetch authorization status",
+      );
+    });
+  });
+
+  describe("getLiveStatus", () => {
+    test("should fetch live status for campaign members", async () => {
+      const mockLiveStatus = {
+        "streamer-1": {
+          isLive: true,
+          viewerCount: 1500,
+          gameName: "Just Chatting",
+          title: "Live Stream",
+        },
+        "streamer-2": {
+          isLive: false,
+          viewerCount: 0,
+          gameName: null,
+          title: null,
+        },
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockLiveStatus }),
+      } as Response);
+
+      const { getLiveStatus } = useCampaigns();
+      const result = await getLiveStatus("campaign-1");
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/mj/campaigns/campaign-1/live-status",
+        { credentials: "include" },
+      );
+      expect(result).toEqual(mockLiveStatus);
+    });
+
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      } as Response);
+
+      const { getLiveStatus } = useCampaigns();
+
+      await expect(getLiveStatus("campaign-1")).rejects.toThrow(
+        "Failed to fetch live status",
+      );
+    });
+  });
+
+  describe("searchTwitchStreamers - edge cases", () => {
+    test("should handle errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      } as Response);
+
+      const { searchTwitchStreamers } = useCampaigns();
+
+      await expect(searchTwitchStreamers("test")).rejects.toThrow(
+        "Failed to search streamers",
+      );
+    });
+
+    test("should encode special characters in query", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [] }),
+      } as Response);
+
+      const { searchTwitchStreamers } = useCampaigns();
+      await searchTwitchStreamers("test user&special");
+
+      expect(fetch).toHaveBeenCalledWith(
+        "http://localhost:3333/api/v2/mj/streamers/search?q=test%20user%26special",
+        { credentials: "include" },
+      );
+    });
+  });
 });

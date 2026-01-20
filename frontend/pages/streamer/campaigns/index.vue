@@ -109,12 +109,10 @@
             <UIcon name="i-game-icons-dice-twenty-faces-twenty" class="size-10 text-primary animate-spin-slow mx-auto" />
           </div>
 
-          <div v-else-if="authorizationStatuses.length === 0" class="text-center py-12">
-            <div class="bg-neutral-100 p-4 rounded-2xl mb-4 inline-block">
-              <UIcon name="i-lucide-shield-off" class="size-12 text-neutral-400" />
-            </div>
-            <p class="text-muted mb-2">Aucune campagne active</p>
-            <p class="text-sm text-muted">
+          <div v-else-if="authorizationStatuses.length === 0" class="flex flex-col items-center justify-center text-center py-12">
+            <UIcon name="i-lucide-shield-off" class="size-12 text-neutral-400 mb-4" />
+            <p class="text-base font-normal text-neutral-400">Aucune campagne active</p>
+            <p class="text-sm text-neutral-400 mt-1">
               Acceptez une invitation pour gérer vos autorisations de sondages
             </p>
           </div>
@@ -166,12 +164,10 @@
             <UIcon name="i-game-icons-dice-twenty-faces-twenty" class="size-10 text-primary animate-spin-slow mx-auto" />
           </div>
 
-          <div v-else-if="activeCampaigns.length === 0" class="text-center py-12">
-            <div class="bg-neutral-100 p-4 rounded-2xl mb-4 inline-block">
-              <UIcon name="i-lucide-folder-x" class="size-12 text-neutral-400" />
-            </div>
-            <p class="text-muted mb-2">Aucune campagne active</p>
-            <p class="text-sm text-muted">
+          <div v-else-if="activeCampaigns.length === 0" class="flex flex-col items-center justify-center text-center py-12">
+            <UIcon name="i-lucide-folder-x" class="size-12 text-neutral-400 mb-4" />
+            <p class="text-base font-normal text-neutral-400">Aucune campagne active</p>
+            <p class="text-sm text-neutral-400 mt-1">
               Vous apparaîtrez ici une fois que vous aurez accepté une invitation
             </p>
           </div>

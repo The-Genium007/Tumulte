@@ -10,6 +10,7 @@ const items = computed(() => [
       label: "Sondage",
       icon: "i-lucide-bar-chart-2",
       to: `/mj/campaigns/${props.campaignId}/polls/create`,
+      class: "text-primary-500",
     },
   ],
 ]);

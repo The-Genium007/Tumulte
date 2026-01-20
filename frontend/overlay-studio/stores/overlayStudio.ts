@@ -10,6 +10,7 @@ import type {
   ElementProperties,
   PollProperties,
   DiceProperties,
+  HudTransform,
 } from "../types";
 
 /**
@@ -56,6 +57,32 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
     return elements.value.filter((el) => el.visible);
   });
 
+  /**
+   * Éléments visibles triés par zIndex avec l'élément sélectionné en dernier
+   * Utilisé par le canvas pour l'ordre de rendu (l'élément sélectionné est au-dessus)
+   */
+  const sortedVisibleElements = computed(() => {
+    const visible = elements.value.filter((el) => el.visible);
+
+    // Trier par zIndex (les plus bas d'abord)
+    const sorted = [...visible].sort(
+      (a, b) => (a.zIndex ?? 0) - (b.zIndex ?? 0),
+    );
+
+    // Si un élément est sélectionné, le déplacer à la fin pour qu'il soit rendu au-dessus
+    if (selectedElementId.value) {
+      const selectedIndex = sorted.findIndex(
+        (el) => el.id === selectedElementId.value,
+      );
+      if (selectedIndex !== -1) {
+        const [selected] = sorted.splice(selectedIndex, 1);
+        sorted.push(selected);
+      }
+    }
+
+    return sorted;
+  });
+
   // ===== Actions - Éléments =====
 
   /**
@@ -85,6 +112,14 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
               offsetX: 0,
               offsetY: 2,
             },
+          },
+          questionBoxStyle: {
+            backgroundColor: "transparent",
+            borderColor: "transparent",
+            borderWidth: 0,
+            borderRadius: 0,
+            opacity: 1,
+            padding: { top: 0, right: 0, bottom: 16, left: 0 },
           },
           optionBoxStyle: {
             backgroundColor: "rgba(17, 17, 17, 0.9)",
@@ -168,47 +203,108 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
 
       case "dice":
         return {
-          colors: {
-            baseColor: "#1a1a2e",
-            numberColor: "#ffffff",
-            criticalSuccessGlow: "#ffd700",
-            criticalFailureGlow: "#ff4444",
+          // Configuration DiceBox (rendu 3D)
+          diceBox: {
+            colors: {
+              foreground: "#000000",
+              background: "#ffffff",
+              outline: "none",
+            },
+            texture: "none",
+            material: "glass",
+            lightIntensity: 1.0,
           },
-          textures: {
-            enabled: false,
-            textureUrl: null,
-          },
-          physics: {
-            gravity: -30,
-            bounciness: 0.4,
-            friction: 0.3,
-            rollForce: 1,
-            spinForce: 1,
-          },
-          resultText: {
-            enabled: true,
-            typography: {
-              fontFamily: "Inter",
-              fontSize: 64,
-              fontWeight: 800,
-              color: "#ffffff",
-              textShadow: {
+          // Configuration HUD
+          hud: {
+            container: {
+              backgroundColor: "rgba(15, 23, 42, 0.95)",
+              borderColor: "rgba(148, 163, 184, 0.3)",
+              borderWidth: 2,
+              borderRadius: 16,
+              padding: { top: 24, right: 24, bottom: 24, left: 24 },
+              backdropBlur: 10,
+              boxShadow: {
                 enabled: true,
-                color: "rgba(0, 0, 0, 0.8)",
-                blur: 8,
+                color: "rgba(0, 0, 0, 0.5)",
+                blur: 60,
                 offsetX: 0,
-                offsetY: 4,
+                offsetY: 20,
               },
             },
-            offsetY: 50,
-            fadeInDelay: 0.3,
-            persistDuration: 3,
+            criticalBadge: {
+              successBackground: "rgba(34, 197, 94, 0.3)",
+              successTextColor: "rgb(74, 222, 128)",
+              successBorderColor: "rgba(34, 197, 94, 0.5)",
+              failureBackground: "rgba(239, 68, 68, 0.3)",
+              failureTextColor: "rgb(252, 165, 165)",
+              failureBorderColor: "rgba(239, 68, 68, 0.5)",
+            },
+            formula: {
+              typography: {
+                fontFamily: "'Courier New', monospace",
+                fontSize: 20,
+                fontWeight: 600,
+                color: "rgb(148, 163, 184)",
+              },
+            },
+            result: {
+              typography: {
+                fontFamily: "system-ui",
+                fontSize: 48,
+                fontWeight: 800,
+                color: "rgb(226, 232, 240)",
+              },
+              criticalSuccessColor: "rgb(74, 222, 128)",
+              criticalFailureColor: "rgb(252, 165, 165)",
+            },
+            diceBreakdown: {
+              backgroundColor: "rgba(15, 23, 42, 0.7)",
+              borderColor: "rgba(148, 163, 184, 0.3)",
+              borderRadius: 6,
+              typography: {
+                fontFamily: "'Courier New', monospace",
+                fontSize: 16,
+                fontWeight: 600,
+                color: "rgb(203, 213, 225)",
+              },
+            },
+            skillInfo: {
+              backgroundColor: "rgba(59, 130, 246, 0.15)",
+              borderColor: "rgba(59, 130, 246, 0.3)",
+              borderRadius: 8,
+              skillTypography: {
+                fontFamily: "system-ui",
+                fontSize: 16,
+                fontWeight: 700,
+                color: "rgb(147, 197, 253)",
+              },
+              abilityTypography: {
+                fontFamily: "system-ui",
+                fontSize: 14,
+                fontWeight: 500,
+                color: "rgb(148, 163, 184)",
+              },
+            },
+            minWidth: 320,
+            maxWidth: 400,
           },
+          // Transform indépendant du HUD (position et scale)
+          hudTransform: {
+            position: { x: 0, y: -300 },
+            scale: 1,
+          },
+          // Couleurs des critiques (glow)
+          colors: {
+            criticalSuccessGlow: "#22c55e",
+            criticalFailureGlow: "#ef4444",
+          },
+          // Audio
           audio: {
             rollSound: { enabled: true, volume: 0.7 },
             criticalSuccessSound: { enabled: true, volume: 0.9 },
             criticalFailureSound: { enabled: true, volume: 0.9 },
           },
+          // Animations
           animations: {
             entry: {
               type: "throw",
@@ -227,14 +323,11 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
               delay: 2,
             },
           },
-          layout: {
-            maxDice: 10,
-            diceSize: 1,
-          },
+          // Données mock pour prévisualisation
           mockData: {
-            rollFormula: "2d20+5",
-            diceTypes: ["d20", "d20"],
-            diceValues: [18, 7],
+            rollFormula: "1d20",
+            diceTypes: ["d20"],
+            diceValues: [18],
             isCritical: false,
             criticalType: null,
           },
@@ -249,15 +342,20 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
     type: OverlayElementType,
     position: Vector3 = { x: 0, y: 0, z: 0 },
   ): OverlayElement {
+    // Les éléments Dice sont toujours centrés et verrouillés (couvrent tout le canvas)
+    const isDice = type === "dice";
+    const finalPosition = isDice ? { x: 0, y: 0, z: 0 } : position;
+
     const element: OverlayElement = {
       id: generateId(),
       type,
       name: `${type.charAt(0).toUpperCase() + type.slice(1)} ${elements.value.length + 1}`,
-      position,
+      position: finalPosition,
       rotation: { x: 0, y: 0, z: 0 },
       scale: { x: 1, y: 1, z: 1 },
       visible: true,
-      locked: false,
+      locked: isDice, // Les Dice sont verrouillés car ils couvrent tout le canvas
+      zIndex: 0, // Ordre des calques (0 = base)
       properties: getDefaultProperties(type),
     };
 
@@ -318,6 +416,39 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
    */
   function updateElementScale(id: string, scale: Vector3): void {
     updateElement(id, { scale });
+  }
+
+  /**
+   * Met à jour le transform du HUD pour un élément dice
+   * Permet de positionner et redimensionner le HUD indépendamment de la zone 3D
+   */
+  function updateDiceHudTransform(
+    id: string,
+    transform: Partial<HudTransform>,
+  ): void {
+    const element = elements.value.find((el) => el.id === id);
+    if (!element || element.type !== "dice") return;
+
+    const props = element.properties as DiceProperties;
+    const currentTransform = props.hudTransform || {
+      position: { x: 0, y: -300 },
+      scale: 1,
+    };
+
+    const newHudTransform: HudTransform = {
+      position: {
+        ...currentTransform.position,
+        ...(transform.position || {}),
+      },
+      scale: transform.scale ?? currentTransform.scale,
+    };
+
+    updateElement(id, {
+      properties: {
+        ...props,
+        hudTransform: newHudTransform,
+      },
+    });
   }
 
   /**
@@ -393,12 +524,94 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
   }
 
   /**
+   * Migre les propriétés d'un élément pour ajouter les valeurs par défaut manquantes
+   * Cela garantit la rétrocompatibilité avec les configurations créées avant l'ajout de nouvelles propriétés
+   */
+  function migrateElementProperties(element: OverlayElement): OverlayElement {
+    const defaults = getDefaultProperties(element.type);
+
+    // Migration pour ajouter zIndex aux configs existantes
+    if (element.zIndex === undefined) {
+      element.zIndex = 0;
+    }
+
+    // Pour les éléments poll, s'assurer que questionBoxStyle existe
+    if (element.type === "poll") {
+      const pollProps = element.properties as PollProperties;
+      const pollDefaults = defaults as PollProperties;
+
+      if (!pollProps.questionBoxStyle) {
+        pollProps.questionBoxStyle = pollDefaults.questionBoxStyle;
+      }
+    }
+
+    // Pour les éléments dice, migrer vers la nouvelle structure
+    if (element.type === "dice") {
+      const diceProps = element.properties as DiceProperties;
+      const diceDefaults = defaults as DiceProperties;
+
+      // Si l'ancienne structure existe (colors.baseColor), migrer vers la nouvelle
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const oldProps = diceProps as any;
+      if (oldProps.colors?.baseColor !== undefined && !diceProps.diceBox) {
+        // Migration de l'ancienne structure vers la nouvelle
+        diceProps.diceBox = {
+          colors: {
+            foreground:
+              oldProps.colors?.numberColor ||
+              diceDefaults.diceBox.colors.foreground,
+            background:
+              oldProps.colors?.baseColor ||
+              diceDefaults.diceBox.colors.background,
+            outline: "none",
+          },
+          texture: "none",
+          material: "glass",
+          lightIntensity: diceDefaults.diceBox.lightIntensity,
+        };
+        diceProps.hud = diceDefaults.hud;
+        diceProps.colors = {
+          criticalSuccessGlow:
+            oldProps.colors?.criticalSuccessGlow ||
+            diceDefaults.colors.criticalSuccessGlow,
+          criticalFailureGlow:
+            oldProps.colors?.criticalFailureGlow ||
+            diceDefaults.colors.criticalFailureGlow,
+        };
+        // Nettoyer les anciennes propriétés
+        delete oldProps.textures;
+        delete oldProps.physics;
+        delete oldProps.resultText;
+        delete oldProps.layout;
+      }
+
+      // S'assurer que toutes les nouvelles propriétés existent
+      if (!diceProps.diceBox) {
+        diceProps.diceBox = diceDefaults.diceBox;
+      } else if (diceProps.diceBox.lightIntensity === undefined) {
+        // Migration pour ajouter lightIntensity aux configs existantes
+        diceProps.diceBox.lightIntensity = diceDefaults.diceBox.lightIntensity;
+      }
+      if (!diceProps.hud) {
+        diceProps.hud = diceDefaults.hud;
+      }
+      // Migration pour ajouter hudTransform aux configs existantes
+      if (!diceProps.hudTransform) {
+        diceProps.hudTransform = diceDefaults.hudTransform;
+      }
+    }
+
+    return element;
+  }
+
+  /**
    * Charge une configuration
    */
   function loadConfig(config: OverlayConfigData): void {
     canvasWidth.value = config.canvas.width;
     canvasHeight.value = config.canvas.height;
-    elements.value = config.elements;
+    // Migrer les éléments pour ajouter les propriétés manquantes
+    elements.value = config.elements.map(migrateElementProperties);
     selectedElementId.value = null;
     // Sauvegarder le snapshot initial et marquer comme propre
     lastSavedSnapshot.value = JSON.stringify(config);
@@ -457,6 +670,7 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
     selectedElement,
     activeConfig,
     visibleElements,
+    sortedVisibleElements,
 
     // Actions - Éléments
     addElement,
@@ -465,6 +679,7 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
     updateElementPosition,
     updateElementRotation,
     updateElementScale,
+    updateDiceHudTransform,
     duplicateElement,
 
     // Actions - Sélection

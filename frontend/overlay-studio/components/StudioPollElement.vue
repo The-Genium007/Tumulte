@@ -1,18 +1,22 @@
 <template>
   <TresGroup
     ref="groupRef"
-    :position="[element.position.x, element.position.y, element.position.z]"
+    :position="[element.position.x, element.position.y, isSelected ? 5 : element.position.z]"
     :rotation="[element.rotation.x, element.rotation.y, element.rotation.z]"
     :scale="[element.scale.x, element.scale.y, element.scale.z]"
+    :render-order="renderOrder"
   >
     <!-- Rendu HTML via Html de @tresjs/cientos -->
     <!-- scale=50 pour rendre le HTML visible dans l'espace 3D (1920x1080) -->
+    <!-- zIndexRange contrôle le z-index CSS pour que l'élément sélectionné soit au-dessus -->
     <Html
       :center="true"
       :transform="true"
       :scale="50"
       :occlude="false"
       :sprite="false"
+      :z-index-range="isSelected ? [50000, 49000] : [10000 + renderOrder * 1000, 10000 + renderOrder * 1000 + 999]"
+      :wrapper-class="isSelected ? 'html-wrapper-selected' : 'html-wrapper-normal'"
     >
       <div
         class="poll-preview"
@@ -73,6 +77,7 @@ import type { OverlayElement, PollProperties } from "../types";
 const props = defineProps<{
   element: OverlayElement;
   isSelected: boolean;
+  renderOrder: number;
 }>();
 
 const emit = defineEmits<{
@@ -128,13 +133,40 @@ const getMedalColor = (rank: number): string => {
   }
 };
 
-// Styles calculés
-const containerStyle = computed(() => ({
-  width: `${pollProps.value.layout.maxWidth}px`,
-}));
+// Helper to convert borderRadius to CSS string
+const getBorderRadiusStyle = (br: number | { topLeft: number; topRight: number; bottomRight: number; bottomLeft: number } | undefined): string => {
+  if (br === undefined) return "0px";
+  if (typeof br === "number") return `${br}px`;
+  return `${br.topLeft}px ${br.topRight}px ${br.bottomRight}px ${br.bottomLeft}px`;
+};
 
+// Styles calculés
+// Container style applies questionBoxStyle to the entire card
+// Inclut un z-index très élevé quand l'élément est sélectionné pour garantir qu'il passe au-dessus
+const containerStyle = computed(() => {
+  const qbs = pollProps.value.questionBoxStyle;
+
+  return {
+    width: `${pollProps.value.layout.maxWidth}px`,
+    // Card background and border from questionBoxStyle
+    backgroundColor: qbs?.backgroundColor ?? "rgba(17, 17, 17, 0.9)",
+    borderColor: qbs?.borderColor ?? "transparent",
+    borderWidth: `${qbs?.borderWidth ?? 0}px`,
+    borderStyle: (qbs?.borderWidth ?? 0) > 0 ? "solid" : "none",
+    borderRadius: getBorderRadiusStyle(qbs?.borderRadius ?? 24),
+    padding: qbs?.padding
+      ? `${qbs.padding.top}px ${qbs.padding.right}px ${qbs.padding.bottom}px ${qbs.padding.left}px`
+      : "32px",
+    // Z-index pour passer au-dessus des autres éléments quand sélectionné
+    position: "relative" as const,
+    zIndex: props.isSelected ? 100000 : "auto",
+  };
+});
+
+// Question style is now typography only
 const questionStyle = computed(() => {
   const qs = pollProps.value.questionStyle;
+
   return {
     fontFamily: qs.fontFamily,
     fontSize: `${qs.fontSize}px`,
@@ -175,7 +207,7 @@ const getOptionStyle = (index: number) => {
     backgroundColor: box.backgroundColor,
     borderColor: medalColor,
     borderWidth: `${box.borderWidth}px`,
-    borderRadius: `${box.borderRadius}px`,
+    borderRadius: getBorderRadiusStyle(box.borderRadius),
     borderStyle: "solid",
     opacity: box.opacity,
     padding: `${box.padding.top}px ${box.padding.right}px ${box.padding.bottom}px ${box.padding.left}px`,
@@ -281,14 +313,8 @@ const handlePointerUp = () => {
 
 <style scoped>
 .poll-preview {
-  background: linear-gradient(
-    145deg,
-    var(--color-overlay-bg-dark),
-    var(--color-overlay-bg-dark-alt)
-  );
+  /* background, border-radius, padding sont maintenant gérés par containerStyle via inline styles */
   backdrop-filter: blur(16px);
-  border-radius: 24px;
-  padding: 32px;
   box-shadow: 0 20px 60px var(--color-overlay-shadow-brand);
   cursor: move;
   user-select: none;
@@ -297,8 +323,7 @@ const handlePointerUp = () => {
 .poll-question {
   text-align: center;
   margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid var(--color-overlay-border-brand);
+  /* padding, border, background sont maintenant gérés par questionBoxStyle via inline styles */
 }
 
 .poll-options {

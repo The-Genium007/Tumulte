@@ -46,7 +46,14 @@ export interface BoxStyleSettings {
   backgroundColor: string;
   borderColor: string;
   borderWidth: number;
-  borderRadius: number;
+  borderRadius:
+    | number
+    | {
+        topLeft: number;
+        topRight: number;
+        bottomRight: number;
+        bottomLeft: number;
+      };
   opacity: number;
   padding: {
     top: number;
@@ -149,6 +156,7 @@ export interface PollMockData {
  */
 export interface PollProperties {
   questionStyle: TypographySettings;
+  questionBoxStyle: BoxStyleSettings;
   optionBoxStyle: BoxStyleSettings;
   optionTextStyle: TypographySettings;
   optionPercentageStyle: TypographySettings;
@@ -188,43 +196,64 @@ export type DiceType =
   | "d30";
 
 /**
- * Configuration des couleurs des dés
+ * Textures disponibles pour les dés (dice-box-threejs)
  */
-export interface DiceColorConfig {
-  baseColor: string;
-  numberColor: string;
+export type DiceTexture =
+  | "none"
+  | ""
+  | "cloudy"
+  | "cloudy_2"
+  | "fire"
+  | "marble"
+  | "water"
+  | "ice"
+  | "paper"
+  | "speckles"
+  | "glitter"
+  | "glitter_2"
+  | "stars"
+  | "stainedglass"
+  | "wood"
+  | "metal"
+  | "skulls"
+  | "leopard"
+  | "tiger"
+  | "cheetah"
+  | "dragon"
+  | "lizard"
+  | "bird"
+  | "astral";
+
+/**
+ * Matériaux disponibles pour les dés
+ */
+export type DiceMaterial = "none" | "metal" | "wood" | "glass";
+
+/**
+ * Configuration des couleurs personnalisées du dé
+ */
+export interface DiceCustomColors {
+  foreground: string; // Couleur des chiffres
+  background: string; // Couleur du dé
+  outline: string; // Contour ("none" ou couleur)
+}
+
+/**
+ * Configuration DiceBox (rendu 3D des dés)
+ */
+export interface DiceBoxConfig {
+  colors: DiceCustomColors;
+  texture: DiceTexture;
+  material: DiceMaterial;
+  lightIntensity: number;
+}
+
+/**
+ * Configuration des couleurs des critiques (glow animations)
+ */
+export interface DiceCriticalColors {
   criticalSuccessGlow: string;
   criticalFailureGlow: string;
-}
-
-/**
- * Configuration de la physique des dés
- */
-export interface DicePhysicsConfig {
-  gravity: number;
-  bounciness: number;
-  friction: number;
-  rollForce: number;
-  spinForce: number;
-}
-
-/**
- * Configuration des textures des dés
- */
-export interface DiceTextureConfig {
-  enabled: boolean;
-  textureUrl: string | null;
-}
-
-/**
- * Configuration du texte de résultat flottant
- */
-export interface DiceResultTextConfig {
-  enabled: boolean;
-  typography: TypographySettings;
-  offsetY: number;
-  fadeInDelay: number;
-  persistDuration: number;
 }
 
 /**
@@ -269,20 +298,117 @@ export interface DiceMockData {
   criticalType: "success" | "failure" | null;
 }
 
+// ===== INTERFACES HUD DICE =====
+
+/**
+ * Style du conteneur HUD
+ */
+export interface HudContainerStyle {
+  backgroundColor: string;
+  borderColor: string;
+  borderWidth: number;
+  borderRadius: number;
+  padding: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
+  backdropBlur: number;
+  boxShadow: {
+    enabled: boolean;
+    color: string;
+    blur: number;
+    offsetX: number;
+    offsetY: number;
+  };
+}
+
+/**
+ * Style des badges critiques
+ */
+export interface HudCriticalBadgeStyle {
+  successBackground: string;
+  successTextColor: string;
+  successBorderColor: string;
+  failureBackground: string;
+  failureTextColor: string;
+  failureBorderColor: string;
+}
+
+/**
+ * Style de la formule de lancer
+ */
+export interface HudFormulaStyle {
+  typography: TypographySettings;
+}
+
+/**
+ * Style du résultat principal
+ */
+export interface HudResultStyle {
+  typography: TypographySettings;
+  criticalSuccessColor: string;
+  criticalFailureColor: string;
+}
+
+/**
+ * Style du breakdown des dés
+ */
+export interface HudDiceBreakdownStyle {
+  backgroundColor: string;
+  borderColor: string;
+  borderRadius: number;
+  typography: TypographySettings;
+}
+
+/**
+ * Style des infos de compétence
+ */
+export interface HudSkillInfoStyle {
+  backgroundColor: string;
+  borderColor: string;
+  borderRadius: number;
+  skillTypography: TypographySettings;
+  abilityTypography: TypographySettings;
+}
+
+/**
+ * Configuration complète du HUD Dice
+ */
+export interface DiceHudConfig {
+  container: HudContainerStyle;
+  criticalBadge: HudCriticalBadgeStyle;
+  formula: HudFormulaStyle;
+  result: HudResultStyle;
+  diceBreakdown: HudDiceBreakdownStyle;
+  skillInfo: HudSkillInfoStyle;
+  minWidth: number;
+  maxWidth: number;
+}
+
+/**
+ * Transform indépendant pour le HUD (position et scale)
+ * Permet de positionner le HUD séparément de la zone 3D des dés
+ */
+export interface HudTransform {
+  position: {
+    x: number; // Position X en coordonnées canvas (-960 à 960)
+    y: number; // Position Y en coordonnées canvas (-540 à 540, Y inversé)
+  };
+  scale: number; // Scale uniforme (1 = 100%)
+}
+
 /**
  * Propriétés spécifiques pour un élément dice (dés 3D)
  */
 export interface DiceProperties {
-  colors: DiceColorConfig;
-  textures: DiceTextureConfig;
-  physics: DicePhysicsConfig;
-  resultText: DiceResultTextConfig;
+  diceBox: DiceBoxConfig;
+  hud: DiceHudConfig;
+  hudTransform: HudTransform;
+  colors: DiceCriticalColors;
   audio: DiceAudioConfig;
   animations: DiceAnimationsConfig;
-  layout: {
-    maxDice: number;
-    diceSize: number;
-  };
   mockData: DiceMockData;
 }
 
@@ -304,6 +430,7 @@ export interface OverlayElement {
   scale: Vector3;
   visible: boolean;
   locked: boolean;
+  zIndex: number; // Ordre des calques (0 = base, valeurs plus hautes = au-dessus)
   properties: ElementProperties;
 }
 

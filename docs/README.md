@@ -10,6 +10,23 @@ If you want to self-host Tumulte or learn how to use it:
 - [Configuration](getting-started/configuration.md) - Environment variables and options
 - [First Campaign](getting-started/first-campaign.md) - Create your first campaign tutorial
 
+## Features
+
+### VTT Integration
+
+Connect Tumulte with your Virtual Tabletop for real-time overlay events:
+
+- [VTT Integration Overview](vtt-integration/overview.md) - Supported platforms and architecture
+- [Foundry VTT Setup Guide](vtt-integration/foundry-module.md) - Install and configure Foundry integration
+- [VTT Webhook API Reference](vtt-integration/api-reference.md) - API documentation for VTT events
+
+### Overlay Studio
+
+Create custom streaming overlays with our visual editor:
+
+- [Overlay Studio Overview](overlay-studio/overview.md) - Features and interface guide
+- [Overlay Customization](overlay-studio/customization.md) - Styling, animations, and branding
+
 ## For Developers
 
 If you want to contribute or understand the codebase:

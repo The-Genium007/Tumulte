@@ -12,37 +12,12 @@
 
     <template v-if="modelValue.enabled">
       <!-- Glow Color -->
-      <div class="field">
-        <label>Couleur</label>
-        <div class="color-input-wrapper">
-          <input
-            type="color"
-            :value="modelValue.color"
-            class="color-picker"
-            @input="handleColorInput"
-          />
-          <UInput
-            :model-value="modelValue.color"
-            size="xs"
-            class="color-text"
-            :ui="inputUi"
-            @update:model-value="(v: string | number) => updateField('color', String(v))"
-          />
-        </div>
-      </div>
-
-      <!-- Color Presets -->
-      <div class="color-presets">
-        <button
-          v-for="preset in colorPresets"
-          :key="preset.value"
-          class="preset-color"
-          :class="{ active: modelValue.color === preset.value }"
-          :style="{ backgroundColor: preset.value, boxShadow: `0 0 10px ${preset.value}` }"
-          :title="preset.label"
-          @click="updateField('color', preset.value)"
-        />
-      </div>
+      <ColorModule
+        :model-value="modelValue.color"
+        label="Couleur"
+        :presets="colorPresetValues"
+        @update:model-value="(v) => updateField('color', v)"
+      />
 
       <!-- Intensity -->
       <div class="slider-field">
@@ -117,6 +92,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import ColorModule from "../appearance/ColorModule.vue";
 
 export interface GlowConfig {
   enabled: boolean;
@@ -143,11 +119,6 @@ const emit = defineEmits<{
   "update:modelValue": [value: GlowConfig];
 }>();
 
-const inputUi = {
-  root: "ring-0 border-0 rounded-lg overflow-hidden",
-  base: "px-2 py-1.5 bg-neutral-100 text-neutral-700 placeholder:text-neutral-400 rounded-lg text-xs",
-};
-
 const colorPresets = [
   { label: "Bleu néon", value: "#00d4ff" },
   { label: "Rose néon", value: "#ff00ff" },
@@ -160,6 +131,8 @@ const colorPresets = [
   { label: "Or", value: "#ffd700" },
   { label: "Argent", value: "#c0c0c0" },
 ];
+
+const colorPresetValues = colorPresets.map((p) => p.value);
 
 const animationOptions = [
   { label: "Aucune", value: "none" },
@@ -181,11 +154,6 @@ const previewStyle = computed(() => {
     animationDuration: `${props.modelValue.animationSpeed || 1}s`,
   };
 });
-
-const handleColorInput = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  updateField("color", target.value);
-};
 
 const updateField = <K extends keyof GlowConfig>(
   field: K,
@@ -250,60 +218,6 @@ const updateField = <K extends keyof GlowConfig>(
   color: var(--color-text-primary);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-}
-
-.color-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.color-picker {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid var(--color-neutral-300);
-  border-radius: 6px;
-  cursor: pointer;
-  flex-shrink: 0;
-  background: transparent;
-}
-
-.color-picker::-webkit-color-swatch-wrapper {
-  padding: 2px;
-}
-
-.color-picker::-webkit-color-swatch {
-  border-radius: 4px;
-  border: none;
-}
-
-.color-text {
-  flex: 1;
-}
-
-.color-presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-}
-
-.preset-color {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.preset-color:hover {
-  transform: scale(1.1);
-}
-
-.preset-color.active {
-  border-color: white;
-  outline: 2px solid var(--color-primary-500);
 }
 
 .glow-preview {

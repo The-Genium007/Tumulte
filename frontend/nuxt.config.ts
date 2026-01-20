@@ -264,8 +264,21 @@ export default defineNuxtConfig({
           href: "https://fonts.gstatic.com",
           crossorigin: "anonymous",
         },
-        // Favicons - SVG moderne + PNG fallback
-        { rel: "icon", type: "image/svg+xml", href: "/pwa-icon.svg" },
+        // Favicon configuration for cross-browser compatibility
+        // Order matters: browsers use first matching format they support
+        //
+        // 1. ICO for Safari (doesn't support SVG favicons) and legacy browsers
+        //    Using "shortcut icon" for maximum compatibility (legacy but widely supported)
+        { rel: "shortcut icon", href: "/favicon.ico" },
+        //
+        // 2. PNG fallbacks for browsers that prefer PNG over ICO
+        //    Safari prefers PNG, Chrome/Firefox use these for specific sizes
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "48x48",
+          href: "/favicon-48x48.png",
+        },
         {
           rel: "icon",
           type: "image/png",
@@ -278,8 +291,16 @@ export default defineNuxtConfig({
           sizes: "16x16",
           href: "/favicon-16x16.png",
         },
-        // Apple Touch Icon
-        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+        //
+        // 3. SVG for modern browsers (Chrome, Firefox, Edge)
+        //    Declared last so browsers that support it will prefer the scalable version
+        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+        // Apple Touch Icon avec taille explicite
+        {
+          rel: "apple-touch-icon",
+          sizes: "180x180",
+          href: "/apple-touch-icon.png",
+        },
         // Apple splash screens pour différents appareils iOS
         {
           rel: "apple-touch-startup-image",

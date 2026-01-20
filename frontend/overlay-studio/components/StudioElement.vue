@@ -4,6 +4,19 @@
     v-if="element.type === 'poll'"
     :element="element"
     :is-selected="isSelected"
+    :render-order="renderOrder"
+    @select="handleSelect"
+    @move-start="handleMoveStart"
+    @move="handleMove"
+    @move-end="handleMoveEnd"
+  />
+
+  <!-- Dice (dés 3D) -->
+  <StudioDiceElement
+    v-else-if="element.type === 'dice'"
+    :element="element"
+    :is-selected="isSelected"
+    :render-order="renderOrder"
     @select="handleSelect"
     @move-start="handleMoveStart"
     @move="handleMove"
@@ -31,6 +44,7 @@ import { StudioDiceElement } from "../dice/components";
 defineProps<{
   element: OverlayElement;
   isSelected: boolean;
+  renderOrder: number;
 }>();
 
 const emit = defineEmits<{

@@ -289,10 +289,27 @@ export interface Character {
   vttCharacterId: string;
 }
 
+export interface OverlayOption {
+  id: string | null;
+  name: string;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
+export interface CampaignOverlay {
+  current: {
+    id: string | null;
+    name: string;
+  };
+  available: OverlayOption[];
+}
+
 export interface CampaignSettings {
   campaign: Campaign;
   assignedCharacter: Character | null;
   canChangeCharacter: boolean;
+  isOwner?: boolean;
+  overlay?: CampaignOverlay;
 }
 
 // Dice Roll types (VTT Integration)

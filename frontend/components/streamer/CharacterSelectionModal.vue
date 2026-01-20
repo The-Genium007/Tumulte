@@ -45,16 +45,6 @@ const handleCancel = () => {
   model.value = false;
 };
 
-// Track which avatars failed to load
-const failedAvatars = ref<Set<string>>(new Set());
-
-const handleAvatarError = (characterId: string) => {
-  failedAvatars.value.add(characterId);
-};
-
-const shouldShowFallback = (character: Character) => {
-  return !character.avatarUrl || failedAvatars.value.has(character.id);
-};
 </script>
 
 <template>
@@ -86,20 +76,8 @@ const shouldShowFallback = (character: Character) => {
               @click="selectedCharacterId = character.id"
             >
               <!-- Avatar -->
-              <div class="shrink-0">
-                <img
-                  v-if="!shouldShowFallback(character)"
-                  :src="character.avatarUrl!"
-                  :alt="character.name"
-                  class="size-12 rounded-full object-cover"
-                  @error="handleAvatarError(character.id)"
-                />
-                <div
-                  v-else
-                  class="size-12 rounded-full bg-primary-100 flex items-center justify-center"
-                >
-                  <UIcon name="i-lucide-user" class="size-6 text-primary-500" />
-                </div>
+              <div class="size-12 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
+                <UIcon name="i-lucide-user" class="size-6 text-primary-500" />
               </div>
 
               <!-- Info -->
@@ -128,12 +106,10 @@ const shouldShowFallback = (character: Character) => {
           </div>
 
           <!-- Empty state -->
-          <div v-else class="py-8 text-center">
-            <div class="bg-neutral-100 p-4 rounded-2xl mb-4 inline-block">
-              <UIcon name="i-lucide-users" class="size-10 text-neutral-400" />
-            </div>
-            <p class="text-muted">Aucun personnage disponible</p>
-            <p class="text-sm text-muted mt-1">
+          <div v-else class="flex flex-col items-center justify-center py-12 text-center">
+            <UIcon name="i-lucide-users" class="size-12 text-neutral-400 mb-4" />
+            <p class="text-base font-normal text-neutral-400">Aucun personnage disponible</p>
+            <p class="text-sm text-neutral-400 mt-1">
               Le MJ doit d'abord importer des personnages depuis le VTT.
             </p>
           </div>
@@ -142,8 +118,8 @@ const shouldShowFallback = (character: Character) => {
         <template #footer>
           <div class="flex flex-col sm:flex-row justify-end gap-3 w-full">
             <UButton
-              color="neutral"
-              variant="outline"
+              color="primary"
+              variant="solid"
               label="Annuler"
               class="w-full sm:w-auto"
               :disabled="loading"

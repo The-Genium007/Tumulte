@@ -107,15 +107,15 @@
           </template>
 
           <!-- Empty State -->
-          <div v-if="characters.length === 0" class="text-center py-12">
+          <div v-if="characters.length === 0" class="flex flex-col items-center justify-center text-center py-12">
             <UIcon
               name="i-lucide-users"
-              class="size-16 text-muted mx-auto mb-4"
+              class="size-12 text-neutral-400 mb-4"
             />
-            <h3 class="text-xl font-semibold text-primary mb-2">
+            <p class="text-base font-normal text-neutral-400">
               Aucun personnage disponible
-            </h3>
-            <p class="text-muted mb-6">
+            </p>
+            <p class="text-sm text-neutral-400 mt-1">
               Le MJ n'a pas encore créé de personnages pour cette campagne
             </p>
           </div>

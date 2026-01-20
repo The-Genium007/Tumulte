@@ -97,24 +97,11 @@
       </div>
 
       <!-- Color -->
-      <div class="field">
-        <label>Couleur</label>
-        <div class="color-input-wrapper">
-          <input
-            type="color"
-            :value="shadowColorHex"
-            class="color-picker"
-            @input="handleColorInput"
-          />
-          <UInput
-            :model-value="modelValue.color"
-            size="xs"
-            class="color-text"
-            :ui="inputUi"
-            @update:model-value="(v: string | number) => updateField('color', String(v))"
-          />
-        </div>
-      </div>
+      <ColorModule
+        :model-value="modelValue.color"
+        label="Couleur"
+        @update:model-value="(v) => updateField('color', v)"
+      />
 
       <!-- Preview -->
       <div v-if="showPreview" class="shadow-preview">
@@ -142,6 +129,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import ColorModule from "../appearance/ColorModule.vue";
 
 export interface BoxShadowConfig {
   enabled: boolean;
@@ -177,11 +165,6 @@ const emit = defineEmits<{
   "update:modelValue": [value: BoxShadowConfig];
 }>();
 
-const inputUi = {
-  root: "ring-0 border-0 rounded-lg overflow-hidden",
-  base: "px-2 py-1.5 bg-neutral-100 text-neutral-700 placeholder:text-neutral-400 rounded-lg text-xs",
-};
-
 const presets: ShadowPreset[] = [
   {
     label: "Subtile",
@@ -210,23 +193,6 @@ const presets: ShadowPreset[] = [
   },
 ];
 
-// Extraire la couleur hex depuis rgba ou hex
-const shadowColorHex = computed(() => {
-  const color = props.modelValue.color;
-  if (color.startsWith("#")) {
-    return color.substring(0, 7); // Garder seulement #RRGGBB
-  }
-  // Parser rgba
-  const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-  if (match) {
-    const r = parseInt(match[1]).toString(16).padStart(2, "0");
-    const g = parseInt(match[2]).toString(16).padStart(2, "0");
-    const b = parseInt(match[3]).toString(16).padStart(2, "0");
-    return `#${r}${g}${b}`;
-  }
-  return "#000000";
-});
-
 const previewStyle = computed(() => {
   const { offsetX, offsetY, blur, spread, color, inset } = props.modelValue;
   const insetStr = inset ? "inset " : "";
@@ -234,18 +200,6 @@ const previewStyle = computed(() => {
     boxShadow: `${insetStr}${offsetX}px ${offsetY}px ${blur}px ${spread}px ${color}`,
   };
 });
-
-const handleColorInput = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  // Convertir en rgba avec opacité préservée
-  const hex = target.value;
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  // Extraire l'opacité actuelle
-  const currentAlpha = props.modelValue.color.match(/[\d.]+\)$/)?.[0]?.replace(")", "") || "0.2";
-  updateField("color", `rgba(${r},${g},${b},${currentAlpha})`);
-};
 
 const updateField = <K extends keyof BoxShadowConfig>(
   field: K,
@@ -348,36 +302,6 @@ const applyPreset = (preset: ShadowPreset) => {
   background: white;
   color: var(--color-text-primary);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.color-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.color-picker {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 1px solid var(--color-neutral-300);
-  border-radius: 6px;
-  cursor: pointer;
-  flex-shrink: 0;
-  background: transparent;
-}
-
-.color-picker::-webkit-color-swatch-wrapper {
-  padding: 2px;
-}
-
-.color-picker::-webkit-color-swatch {
-  border-radius: 4px;
-  border: none;
-}
-
-.color-text {
-  flex: 1;
 }
 
 .shadow-preview {

@@ -41,10 +41,10 @@
             <UIcon name="i-game-icons-dice-twenty-faces-twenty" class="size-10 text-primary animate-spin-slow mx-auto" />
           </div>
 
-          <div v-else-if="authorizationStatuses.length === 0" class="text-center py-12">
-              <UIcon name="i-lucide-shield-off" class="size-12 text-primary" />
-            <p class="text-primary mb-2">Aucune campagne active</p>
-            <p class="text-sm text-primary-400">
+          <div v-else-if="authorizationStatuses.length === 0" class="flex flex-col items-center justify-center text-center py-12">
+            <UIcon name="i-lucide-shield-off" class="size-12 text-neutral-400 mb-4" />
+            <p class="text-base font-normal text-neutral-400">Aucune campagne active</p>
+            <p class="text-sm text-neutral-400 mt-1">
               Acceptez une invitation pour gérer vos autorisations de sondages
             </p>
           </div>
@@ -195,15 +195,33 @@
               />
             </div>
 
-            <!-- Bouton dev pour accéder au studio -->
-            <div v-if="isDev" class="pt-4 border-t border-default">
-              <UButton
-                color="warning"
-                variant="soft"
-                icon="i-lucide-palette"
-                label="Overlay Studio"
-                to="/streamer/studio"
-              />
+            <!-- Overlay Studio (Bêta) -->
+            <div class="pt-4 border-t border-default space-y-3">
+              <div class="flex flex-col sm:flex-row gap-3 sm:items-start">
+                <UButton
+                  color="primary"
+                  variant="solid"
+                  icon="i-lucide-palette"
+                  label="Overlay Studio"
+                  to="/streamer/studio"
+                  size="lg"
+                />
+                <UAlert
+                  color="warning"
+                  variant="soft"
+                  icon="i-lucide-flask-conical"
+                  class="flex-1"
+                >
+                  <template #title>
+                    <span class="font-semibold">Fonctionnalité en bêta</span>
+                  </template>
+                  <template #description>
+                    <p class="text-sm">
+                      Des bugs peuvent survenir. Utilisez le <button class="underline font-medium hover:text-warning-600" @click="openSupport">support</button> pour signaler un problème ou suggérer une amélioration.
+                    </p>
+                  </template>
+                </UAlert>
+              </div>
             </div>
           </div>
         </UCard>
@@ -260,6 +278,7 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { useAuth } from "@/composables/useAuth";
 import { useCampaigns } from "@/composables/useCampaigns";
 import { useSupportTrigger } from "@/composables/useSupportTrigger";
+import { useSupportWidget } from "@/composables/useSupportWidget";
 import type { AuthorizationStatus } from "@/types/index";
 
 definePageMeta({
@@ -272,9 +291,7 @@ const API_URL = config.public.apiBase;
 const { user: _user } = useAuth();
 const { fetchInvitations, getAuthorizationStatus, grantAuthorization, revokeAuthorization } = useCampaigns();
 const { triggerSupportForError } = useSupportTrigger();
-
-// Dev mode
-const isDev = import.meta.dev;
+const { openSupport } = useSupportWidget();
 
 const overlayUrl = ref<string | null>(null);
 const loadingOverlay = ref(false);
