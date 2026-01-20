@@ -56,7 +56,18 @@ jobs:
           # Commit the change (needed for subtree split)
           git add modules-vtt/foundry/scripts/tumulte.js
           git commit -m "ci: inject API URL for ${BRANCH_NAME} environment"
-          
+
+      - name: Debug token presence
+        env:
+          FOUNDRY_REPO_TOKEN: ${{ secrets.FOUNDRY_MODULE_PAT }}
+        run: |
+          if [ -z "${FOUNDRY_REPO_TOKEN}" ]; then
+            echo "❌ Token is empty!"
+            exit 1
+          else
+            echo "✅ Token is present (length: ${#FOUNDRY_REPO_TOKEN})"
+          fi
+
       - name: Extract and push Foundry module
         env:
           FOUNDRY_REPO_TOKEN: ${{ secrets.FOUNDRY_MODULE_PAT }}
