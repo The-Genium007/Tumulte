@@ -805,7 +805,7 @@ const transformLabels: Record<string, string> = {
 
 // Début de transformation (depuis TransformGizmo)
 const handleTransformStart = (mode: "move" | "resize" | "rotate") => {
-  undoRedo.startGroup(transformLabels[mode]);
+  undoRedo.startGroup(transformLabels[mode] || "Transformer");
 };
 
 // Début de déplacement depuis l'élément (depuis StudioElement/StudioPollElement)

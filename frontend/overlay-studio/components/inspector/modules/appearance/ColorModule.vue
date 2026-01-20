@@ -154,9 +154,9 @@ const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
+        r: parseInt(result[1] || "0", 16),
+        g: parseInt(result[2] || "0", 16),
+        b: parseInt(result[3] || "0", 16),
       }
     : null;
 };
@@ -265,9 +265,9 @@ const parseColor = (color: string): { r: number; g: number; b: number; a: number
   );
   if (rgbaMatch) {
     return {
-      r: parseInt(rgbaMatch[1]),
-      g: parseInt(rgbaMatch[2]),
-      b: parseInt(rgbaMatch[3]),
+      r: parseInt(rgbaMatch[1] || "0"),
+      g: parseInt(rgbaMatch[2] || "0"),
+      b: parseInt(rgbaMatch[3] || "0"),
       a: rgbaMatch[4] ? parseFloat(rgbaMatch[4]) : 1,
     };
   }
@@ -287,9 +287,9 @@ const parseColor = (color: string): { r: number; g: number; b: number; a: number
 
   // Format #RGB
   if (color.match(/^#[0-9a-fA-F]{3}$/)) {
-    const r = parseInt(color[1] + color[1], 16);
-    const g = parseInt(color[2] + color[2], 16);
-    const b = parseInt(color[3] + color[3], 16);
+    const r = parseInt((color[1] || "0") + (color[1] || "0"), 16);
+    const g = parseInt((color[2] || "0") + (color[2] || "0"), 16);
+    const b = parseInt((color[3] || "0") + (color[3] || "0"), 16);
     return { r, g, b, a: 1 };
   }
 
@@ -400,8 +400,8 @@ const startAlphaDrag = (e: MouseEvent | TouchEvent) => {
 const updateSaturation = (e: MouseEvent | TouchEvent) => {
   if (!saturationRef.value) return;
   const rect = saturationRef.value.getBoundingClientRect();
-  const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-  const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+  const clientX = "touches" in e ? e.touches[0]?.clientX ?? 0 : e.clientX;
+  const clientY = "touches" in e ? e.touches[0]?.clientY ?? 0 : e.clientY;
 
   const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
   const y = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
@@ -414,7 +414,7 @@ const updateSaturation = (e: MouseEvent | TouchEvent) => {
 const updateHue = (e: MouseEvent | TouchEvent) => {
   if (!hueRef.value) return;
   const rect = hueRef.value.getBoundingClientRect();
-  const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+  const clientX = "touches" in e ? e.touches[0]?.clientX ?? 0 : e.clientX;
 
   const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
   internalHue.value = x * 360;
@@ -424,7 +424,7 @@ const updateHue = (e: MouseEvent | TouchEvent) => {
 const updateAlpha = (e: MouseEvent | TouchEvent) => {
   if (!alphaRef.value) return;
   const rect = alphaRef.value.getBoundingClientRect();
-  const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
+  const clientX = "touches" in e ? e.touches[0]?.clientX ?? 0 : e.clientX;
 
   const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
   internalAlpha.value = x;

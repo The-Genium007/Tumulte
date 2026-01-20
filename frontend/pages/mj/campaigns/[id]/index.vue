@@ -268,8 +268,8 @@
                     v-if="liveStatus[member.streamer.twitchUserId]?.is_live"
                     class="text-xs text-error-500 mt-1 line-clamp-1"
                   >
-                    🔴 En live{{ liveStatus[member.streamer.twitchUserId]?.game_name ? ` sur ${liveStatus[member.streamer.twitchUserId].game_name}` : '' }}
-                    {{ liveStatus[member.streamer.twitchUserId]?.viewer_count !== undefined ? `(${liveStatus[member.streamer.twitchUserId].viewer_count} viewers)` : '' }}
+                    🔴 En live{{ liveStatus[member.streamer.twitchUserId]?.game_name ? ` sur ${liveStatus[member.streamer.twitchUserId]?.game_name}` : '' }}
+                    {{ liveStatus[member.streamer.twitchUserId]?.viewer_count !== undefined ? `(${liveStatus[member.streamer.twitchUserId]?.viewer_count} viewers)` : '' }}
                   </p>
                 </div>
               </div>

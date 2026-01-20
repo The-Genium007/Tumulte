@@ -213,7 +213,7 @@ describe("AuthorizationCard Component", () => {
     });
 
     const buttons = wrapper.findAll("button");
-    const revokeButton = buttons[buttons.length - 1]; // Last button is revoke
+    const revokeButton = buttons[buttons.length - 1]!; // Last button is revoke
 
     await revokeButton.trigger("click");
 
@@ -237,12 +237,12 @@ describe("AuthorizationCard Component", () => {
 
     // Click revoke button to open modal
     const buttons = wrapper.findAll("button");
-    const revokeButton = buttons[buttons.length - 1];
+    const revokeButton = buttons[buttons.length - 1]!;
     await revokeButton.trigger("click");
 
     // Click confirm button in modal
     const modalButtons = wrapper.findAll(".u-modal button.u-button");
-    const confirmButton = modalButtons[modalButtons.length - 1]; // Last button is confirm
+    const confirmButton = modalButtons[modalButtons.length - 1]!; // Last button is confirm
     await confirmButton.trigger("click");
 
     expect(wrapper.emitted("revoke")).toBeTruthy();
@@ -265,12 +265,12 @@ describe("AuthorizationCard Component", () => {
 
     // Click revoke button to open modal
     const buttons = wrapper.findAll("button");
-    const revokeButton = buttons[buttons.length - 1];
+    const revokeButton = buttons[buttons.length - 1]!;
     await revokeButton.trigger("click");
 
     // Click cancel button in modal
     const modalButtons = wrapper.findAll(".u-modal button.u-button");
-    const cancelButton = modalButtons[0]; // First button is cancel
+    const cancelButton = modalButtons[0]!; // First button is cancel
     await cancelButton.trigger("click");
 
     expect(wrapper.emitted("revoke")).toBeFalsy();
@@ -378,7 +378,7 @@ describe("AuthorizationCard Component", () => {
       },
     });
 
-    const cardDiv = wrapper.findAll(".rounded-lg")[0];
+    const cardDiv = wrapper.findAll(".rounded-lg")[0]!;
     expect(cardDiv.classes()).toContain("bg-success-100");
   });
 

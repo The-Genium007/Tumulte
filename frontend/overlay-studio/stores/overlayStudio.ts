@@ -76,7 +76,9 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
       );
       if (selectedIndex !== -1) {
         const [selected] = sorted.splice(selectedIndex, 1);
-        sorted.push(selected);
+        if (selected) {
+          sorted.push(selected);
+        }
       }
     }
 
@@ -388,12 +390,14 @@ export const useOverlayStudioStore = defineStore("overlayStudio", () => {
     const index = elements.value.findIndex((el) => el.id === id);
     if (index !== -1) {
       const element = elements.value[index];
-      // Remplacer l'élément entier pour garantir la réactivité
-      elements.value[index] = {
-        ...element,
-        ...updates,
-      };
-      isDirty.value = true;
+      if (element) {
+        // Remplacer l'élément entier pour garantir la réactivité
+        elements.value[index] = {
+          ...element,
+          ...updates,
+        };
+        isDirty.value = true;
+      }
     }
   }
 

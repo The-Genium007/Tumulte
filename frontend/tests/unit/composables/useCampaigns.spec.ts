@@ -176,7 +176,7 @@ describe("useCampaigns Composable", () => {
       },
     );
     expect(result).toEqual(updatedCampaign);
-    expect(campaigns.value[0].name).toBe("New Name");
+    expect(campaigns.value[0]!.name).toBe("New Name");
   });
 
   test("updateCampaign() should handle errors", async () => {
@@ -220,7 +220,7 @@ describe("useCampaigns Composable", () => {
       },
     );
     expect(campaigns.value).toHaveLength(1);
-    expect(campaigns.value[0].id).toBe("2");
+    expect(campaigns.value[0]!.id).toBe("2");
   });
 
   test("deleteCampaign() should clear selectedCampaign if deleted", async () => {

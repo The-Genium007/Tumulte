@@ -210,7 +210,7 @@ const getActionClasses = (action: ActionRowAction): string => {
     ? 'opacity-50 cursor-not-allowed'
     : '';
 
-  return `${baseClasses} ${colorVariantMap[color]?.[variant] || colorVariantMap.neutral.soft} ${disabledClasses}`;
+  return `${baseClasses} ${colorVariantMap[color]?.[variant] || colorVariantMap.neutral?.soft || ''} ${disabledClasses}`;
 };
 
 const handleClick = () => {

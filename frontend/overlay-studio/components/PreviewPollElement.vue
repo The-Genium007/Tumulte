@@ -111,10 +111,14 @@ const rankings = computed(() => {
   let currentRank = 1;
 
   for (let i = 0; i < sorted.length; i++) {
-    if (i > 0 && sorted[i].percentage < sorted[i - 1].percentage) {
+    const current = sorted[i];
+    const previous = sorted[i - 1];
+    if (current && i > 0 && previous && current.percentage < previous.percentage) {
       currentRank = i + 1;
     }
-    ranks[sorted[i].index] = currentRank;
+    if (current) {
+      ranks[current.index] = currentRank;
+    }
   }
 
   return ranks;

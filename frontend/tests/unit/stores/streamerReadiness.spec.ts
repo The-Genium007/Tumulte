@@ -119,8 +119,8 @@ describe("Streamer Readiness Store", () => {
       store.setReadiness(createMockReadiness());
 
       expect(store.unreadyStreamers).toHaveLength(2);
-      expect(store.unreadyStreamers[0].streamerId).toBe("streamer-2");
-      expect(store.unreadyStreamers[1].streamerId).toBe("streamer-3");
+      expect(store.unreadyStreamers[0]!.streamerId).toBe("streamer-2");
+      expect(store.unreadyStreamers[1]!.streamerId).toBe("streamer-3");
     });
 
     test("readyStreamers should return empty array when readiness is null", () => {
@@ -134,7 +134,7 @@ describe("Streamer Readiness Store", () => {
       store.setReadiness(createMockReadiness());
 
       expect(store.readyStreamers).toHaveLength(1);
-      expect(store.readyStreamers[0].streamerId).toBe("streamer-1");
+      expect(store.readyStreamers[0]!.streamerId).toBe("streamer-1");
     });
 
     test("readyPercentage should return 0 when totalCount is 0", () => {

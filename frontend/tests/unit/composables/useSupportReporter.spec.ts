@@ -481,7 +481,7 @@ describe("useSupportReporter Composable", () => {
         "Error with Bearer abcdefghijklmnopqrstuvwxyz1234567890 in the request",
       );
 
-      const callBody = JSON.parse(mockFetch.mock.calls[1][1].body);
+      const callBody = JSON.parse(mockFetch.mock.calls[1]![1].body);
       expect(callBody.description).toContain("[REDACTED]");
       expect(callBody.description).not.toContain("abcdefghijklmnopqrstuvwxyz");
     });
@@ -507,7 +507,7 @@ describe("useSupportReporter Composable", () => {
         "Found this string: abcdefghijklmnopqrstuvwxyz1234567890abcdef in logs",
       );
 
-      const callBody = JSON.parse(mockFetch.mock.calls[1][1].body);
+      const callBody = JSON.parse(mockFetch.mock.calls[1]![1].body);
       expect(callBody.description).toContain("[REDACTED]");
     });
   });
@@ -530,7 +530,7 @@ describe("useSupportReporter Composable", () => {
 
       await sendBugReport("Test bug", "Valid description for bug report");
 
-      const callBody = JSON.parse(mockFetch.mock.calls[1][1].body);
+      const callBody = JSON.parse(mockFetch.mock.calls[1]![1].body);
 
       expect(callBody.frontend).toMatchObject({
         url: "http://localhost:3000/test-page",
@@ -573,7 +573,7 @@ describe("useSupportReporter Composable", () => {
 
       await sendBugReport("Test bug", "Valid description for bug report");
 
-      const callBody = JSON.parse(mockFetch.mock.calls[1][1].body);
+      const callBody = JSON.parse(mockFetch.mock.calls[1]![1].body);
 
       expect(callBody.frontend.storeState).toBeDefined();
       expect(callBody.frontend.storeState.auth.userId).toBe("user-123");
@@ -602,7 +602,7 @@ describe("useSupportReporter Composable", () => {
 
       await sendBugReport("Test bug", "Valid description for bug report");
 
-      const callBody = JSON.parse(mockFetch.mock.calls[1][1].body);
+      const callBody = JSON.parse(mockFetch.mock.calls[1]![1].body);
 
       expect(callBody.frontend.performance).toBeDefined();
       expect(callBody.frontend.performance.navigation).toMatchObject({
@@ -630,7 +630,7 @@ describe("useSupportReporter Composable", () => {
         includeDiagnostics: false,
       });
 
-      const callBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+      const callBody = JSON.parse(mockFetch.mock.calls[0]![1].body);
 
       expect(callBody.frontend.storeState).toBeUndefined();
       expect(callBody.frontend.consoleLogs).toBeUndefined();
@@ -665,11 +665,11 @@ describe("useSupportReporter Composable", () => {
       await sendBugReport("Test bug", "Valid description for bug report");
 
       // First call should be to /support/logs
-      expect(mockFetch.mock.calls[0][0]).toBe(
+      expect(mockFetch.mock.calls[0]![0]).toBe(
         "http://localhost:3333/api/v2/support/logs",
       );
 
-      const callBody = JSON.parse(mockFetch.mock.calls[1][1].body);
+      const callBody = JSON.parse(mockFetch.mock.calls[1]![1].body);
       expect(callBody.backendLogs).toEqual([
         { level: "info", message: "Backend log 1" },
         { level: "error", message: "Backend log 2" },
@@ -692,7 +692,7 @@ describe("useSupportReporter Composable", () => {
 
       // Should only call report endpoint, not logs endpoint
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockFetch.mock.calls[0][0]).toBe(
+      expect(mockFetch.mock.calls[0]![0]).toBe(
         "http://localhost:3333/api/v2/support/report",
       );
     });

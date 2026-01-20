@@ -197,10 +197,13 @@ export const usePollsStore = defineStore("polls", () => {
       // Update lastLaunchedAt in the polls list
       const index = polls.value.findIndex((p) => p.id === pollId);
       if (index !== -1) {
-        polls.value[index] = {
-          ...polls.value[index],
-          lastLaunchedAt: new Date().toISOString(),
-        };
+        const poll = polls.value[index];
+        if (poll) {
+          polls.value[index] = {
+            ...poll,
+            lastLaunchedAt: new Date().toISOString(),
+          };
+        }
       }
 
       return { pollInstance: data.data, pollId: data.pollId || pollId };

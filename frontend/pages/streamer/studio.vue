@@ -574,9 +574,15 @@ const updateDiceProperty = (path: string, value: unknown) => {
 
   let current: Record<string, unknown> = newProps;
   for (let i = 0; i < keys.length - 1; i++) {
-    current = current[keys[i]] as Record<string, unknown>;
+    const key = keys[i];
+    if (key) {
+      current = current[key] as Record<string, unknown>;
+    }
   }
-  current[keys[keys.length - 1]] = value;
+  const lastKey = keys[keys.length - 1];
+  if (lastKey) {
+    current[lastKey] = value;
+  }
 
   store.updateElement(selectedElement.value.id, { properties: newProps });
   // Utiliser le debounce pour regrouper les changements rapides (sliders, color pickers)
@@ -665,9 +671,15 @@ const updatePollProperty = (path: string, value: unknown) => {
 
   let current: Record<string, unknown> = newProps;
   for (let i = 0; i < keys.length - 1; i++) {
-    current = current[keys[i]] as Record<string, unknown>;
+    const key = keys[i];
+    if (key) {
+      current = current[key] as Record<string, unknown>;
+    }
   }
-  current[keys[keys.length - 1]] = value;
+  const lastKey = keys[keys.length - 1];
+  if (lastKey) {
+    current[lastKey] = value;
+  }
 
   store.updateElement(selectedElement.value.id, { properties: newProps });
   // Utiliser le debounce pour regrouper les changements rapides (sliders, color pickers)

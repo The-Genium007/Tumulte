@@ -109,10 +109,14 @@ const rankings = computed(() => {
   let currentRank = 1;
 
   for (let i = 0; i < sorted.length; i++) {
-    if (i > 0 && sorted[i].percentage < sorted[i - 1].percentage) {
+    const current = sorted[i];
+    const previous = sorted[i - 1];
+    if (current && i > 0 && previous && current.percentage < previous.percentage) {
       currentRank = i + 1;
     }
-    ranks[sorted[i].index] = currentRank;
+    if (current) {
+      ranks[current.index] = currentRank;
+    }
   }
 
   return ranks;
@@ -200,7 +204,7 @@ const optionPercentageStyle = computed(() => {
 
 const getOptionStyle = (index: number) => {
   const box = pollProps.value.optionBoxStyle;
-  const rank = rankings.value[index];
+  const rank = rankings.value[index] ?? 0;
   const medalColor = getMedalColor(rank);
 
   return {
@@ -215,9 +219,9 @@ const getOptionStyle = (index: number) => {
 };
 
 const getBarStyle = (index: number) => {
-  const rank = rankings.value[index];
+  const rank = rankings.value[index] ?? 0;
   const medalColor = getMedalColor(rank);
-  const percentage = mockData.value.percentages[index];
+  const percentage = mockData.value.percentages[index] ?? 0;
 
   return {
     width: `${percentage}%`,

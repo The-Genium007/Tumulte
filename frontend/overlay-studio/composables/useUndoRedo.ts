@@ -200,7 +200,9 @@ export function useUndoRedo(store: OverlayStudioStore) {
 
     currentIndex.value--;
     const entry = history.value[currentIndex.value];
-    store.restoreSnapshot(entry.snapshot);
+    if (entry) {
+      store.restoreSnapshot(entry.snapshot);
+    }
   }
 
   /**
@@ -211,7 +213,9 @@ export function useUndoRedo(store: OverlayStudioStore) {
 
     currentIndex.value++;
     const entry = history.value[currentIndex.value];
-    store.restoreSnapshot(entry.snapshot);
+    if (entry) {
+      store.restoreSnapshot(entry.snapshot);
+    }
   }
 
   /**

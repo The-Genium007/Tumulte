@@ -98,7 +98,7 @@ describe("Campaigns Store", () => {
     await store.fetchCampaigns();
     await store.updateCampaign("1", { name: "New Name" });
 
-    expect(store.campaigns[0].name).toBe("New Name");
+    expect(store.campaigns[0]!.name).toBe("New Name");
   });
 
   test("deleteCampaign() should remove from list", async () => {
@@ -118,7 +118,7 @@ describe("Campaigns Store", () => {
     await store.deleteCampaign("1");
 
     expect(store.campaigns).toHaveLength(1);
-    expect(store.campaigns[0].id).toBe("2");
+    expect(store.campaigns[0]!.id).toBe("2");
   });
 
   test("deleteCampaign() should clear selectedCampaign if same", async () => {
@@ -343,7 +343,7 @@ describe("Campaigns Store", () => {
         "member-1",
       );
       expect(store.selectedCampaign?.members).toHaveLength(1);
-      expect(store.selectedCampaign?.members?.[0].id).toBe("member-2");
+      expect(store.selectedCampaign?.members?.[0]!.id).toBe("member-2");
     });
 
     test("should not modify members if different campaign selected", async () => {

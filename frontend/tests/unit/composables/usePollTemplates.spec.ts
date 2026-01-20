@@ -235,7 +235,7 @@ describe("usePollTemplates Composable", () => {
       },
     );
     expect(result).toEqual(updatedTemplate);
-    expect(templates.value[0].label).toBe("New Label");
+    expect(templates.value[0]!.label).toBe("New Label");
   });
 
   test("updateTemplate() should update template for specific campaign", async () => {
@@ -301,7 +301,7 @@ describe("usePollTemplates Composable", () => {
       },
     );
     expect(templates.value).toHaveLength(1);
-    expect(templates.value[0].id).toBe("2");
+    expect(templates.value[0]!.id).toBe("2");
   });
 
   test("deleteTemplate() should delete template for specific campaign", async () => {

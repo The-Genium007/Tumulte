@@ -268,7 +268,7 @@ const isPlaying = computed(() => {
 // Calcul des bornes min/max pour le résultat
 const getDiceMaxValue = (diceType: DiceType): number => {
   const match = diceType.match(/d(\d+)/);
-  return match ? parseInt(match[1], 10) : 20;
+  return match ? parseInt(match[1] || "20", 10) : 20;
 };
 
 const resultMin = computed(() => diceCount.value);

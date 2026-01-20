@@ -55,9 +55,9 @@ describe("Polls Store (new architecture)", () => {
 
     const sorted = store.sortedPolls;
 
-    expect(sorted[0].id).toBe("2"); // Most recent
-    expect(sorted[1].id).toBe("3");
-    expect(sorted[2].id).toBe("1"); // Oldest
+    expect(sorted[0]!.id).toBe("2"); // Most recent
+    expect(sorted[1]!.id).toBe("3");
+    expect(sorted[2]!.id).toBe("1"); // Oldest
   });
 
   test("fetchPolls() should load polls for a campaign", async () => {
@@ -212,7 +212,7 @@ describe("Polls Store (new architecture)", () => {
       },
     );
     expect(result.question).toBe("New question");
-    expect(store.polls[0].question).toBe("New question");
+    expect(store.polls[0]!.question).toBe("New question");
   });
 
   test("deletePoll() should remove poll from list", async () => {
@@ -236,7 +236,7 @@ describe("Polls Store (new architecture)", () => {
       },
     );
     expect(store.polls).toHaveLength(1);
-    expect(store.polls[0].id).toBe("poll-2");
+    expect(store.polls[0]!.id).toBe("poll-2");
   });
 
   test("launchPoll() should launch a poll and set active instance", async () => {

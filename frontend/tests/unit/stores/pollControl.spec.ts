@@ -857,10 +857,10 @@ describe("Poll Control Store", () => {
       store.saveCurrentPollState();
 
       // Both states should be saved independently
-      expect(store.pollStates[0].status).toBe("sent");
-      expect(store.pollStates[0].results?.totalVotes).toBe(10);
-      expect(store.pollStates[1].status).toBe("running");
-      expect(store.pollStates[1].results?.totalVotes).toBe(5);
+      expect(store.pollStates[0]!.status).toBe("sent");
+      expect(store.pollStates[0]!.results?.totalVotes).toBe(10);
+      expect(store.pollStates[1]!.status).toBe("running");
+      expect(store.pollStates[1]!.results?.totalVotes).toBe(5);
 
       // Restore poll 0
       store.restorePollState(0);
