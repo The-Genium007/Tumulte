@@ -14,8 +14,6 @@
       <div
         class="dice-3d-zone"
         :style="{ position: 'relative', zIndex: isSelected ? 100000 : 'auto' }"
-        @pointerdown.stop="handleDiceZonePointerDown"
-        @click.stop
       >
         <div class="dice-3d-container">
           <ClientOnly>
@@ -86,7 +84,9 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   select: [id: string, meshRef: Object3D];
-  hudSelect: [id: string, meshRef: Object3D];
+  moveStart: [];
+  move: [deltaX: number, deltaY: number];
+  moveEnd: [];
 }>();
 
 const diceZoneRef = ref<Object3D | null>(null);
@@ -184,20 +184,53 @@ const mockDiceRollEvent = computed<DiceRollEvent>(() => {
   };
 });
 
-// Gestion du pointerdown sur la zone 3D - sélection de l'élément dice
-const handleDiceZonePointerDown = (event: PointerEvent) => {
+// État du drag pour le HUD
+const isDragging = ref(false);
+const dragStartX = ref(0);
+const dragStartY = ref(0);
+
+// Gestion du pointerdown sur le HUD - sélection + début du drag
+const handleHudPointerDown = (event: PointerEvent) => {
   event.stopPropagation();
+
+  // Sélectionner l'élément
   if (hudGroupRef.value) {
     emit("select", props.element.id, hudGroupRef.value);
   }
+
+  // Démarrer le drag
+  isDragging.value = true;
+  dragStartX.value = event.clientX;
+  dragStartY.value = event.clientY;
+
+  emit("moveStart");
+  window.addEventListener("pointermove", handlePointerMove);
+  window.addEventListener("pointerup", handlePointerUp);
 };
 
-// Gestion du pointerdown sur le HUD - sélection pour manipulation avec gizmo
-const handleHudPointerDown = (event: PointerEvent) => {
-  event.stopPropagation();
-  if (hudGroupRef.value) {
-    emit("hudSelect", props.element.id, hudGroupRef.value);
+// Gestion du déplacement
+const handlePointerMove = (event: PointerEvent) => {
+  if (!isDragging.value) return;
+
+  const deltaX = event.clientX - dragStartX.value;
+  const deltaY = event.clientY - dragStartY.value;
+
+  // Émettre le delta en pixels écran (sera converti par le parent)
+  emit("move", deltaX, deltaY);
+
+  dragStartX.value = event.clientX;
+  dragStartY.value = event.clientY;
+};
+
+// Fin du drag
+const handlePointerUp = () => {
+  if (isDragging.value) {
+    isDragging.value = false;
+    emit("moveEnd");
   }
+
+  window.removeEventListener("pointermove", handlePointerMove);
+  window.removeEventListener("pointerup", handlePointerUp);
 };
 </script>
 
