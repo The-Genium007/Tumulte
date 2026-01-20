@@ -3,7 +3,7 @@ name: Sync Foundry Module
 # Ce workflow synchronise le contenu de modules-vtt/foundry
 # vers le repo externe Tumulte-Foundry-module
 # - Sur PR : pré-vérification (token + diff) sans push
-# - Sur push (merge) : exécute le subtree push
+# - Sur push (merge) : exécute le subtree push via SSH
 
 on:
   pull_request:
@@ -45,25 +45,17 @@ jobs:
           echo "name=${{ github.base_ref }}" >> $GITHUB_OUTPUT
           echo "📌 Target branch: ${{ github.base_ref }}"
 
-      - name: Check token presence
-        env:
-          FOUNDRY_REPO_TOKEN: ${{ secrets.FOUNDRY_MODULE_PAT }}
-        run: |
-          if [ -z "${FOUNDRY_REPO_TOKEN}" ]; then
-            echo "❌ Token FOUNDRY_MODULE_PAT is missing!"
-            exit 1
-          else
-            echo "✅ Token is present (length: ${#FOUNDRY_REPO_TOKEN})"
-          fi
+      - name: Setup SSH for pre-check
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.FOUNDRY_DEPLOY_KEY }}
 
       - name: Check if sync will be needed
-        env:
-          FOUNDRY_REPO_TOKEN: ${{ secrets.FOUNDRY_MODULE_PAT }}
         run: |
           BRANCH_NAME="${{ steps.branch.outputs.name }}"
           
           git clone --depth 1 --branch ${BRANCH_NAME} \
-            https://x-access-token:${FOUNDRY_REPO_TOKEN}@github.com/The-Genium007/Tumulte-Foundry-module.git \
+            git@github.com:The-Genium007/Tumulte-Foundry-module.git \
             /tmp/foundry-module-target 2>/dev/null || {
               echo "📦 Target branch '${BRANCH_NAME}' doesn't exist yet"
               echo "➡️ Will create branch on merge"
@@ -86,7 +78,7 @@ jobs:
           BRANCH_NAME="${{ steps.branch.outputs.name }}"
           echo "## 🔍 Foundry Module Pre-check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Token is valid" >> $GITHUB_STEP_SUMMARY
+          echo "✅ SSH key is valid" >> $GITHUB_STEP_SUMMARY
           echo "📌 Target: \`${BRANCH_NAME}\` branch in [Tumulte-Foundry-module](https://github.com/The-Genium007/Tumulte-Foundry-module)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "ℹ️ Sync will execute after merge" >> $GITHUB_STEP_SUMMARY
@@ -104,6 +96,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.FOUNDRY_DEPLOY_KEY }}
+
       - name: Determine target branch
         id: branch
         run: |
@@ -116,13 +113,11 @@ jobs:
 
       - name: Check if sync is needed
         id: check_sync
-        env:
-          FOUNDRY_REPO_TOKEN: ${{ secrets.FOUNDRY_MODULE_PAT }}
         run: |
           BRANCH_NAME="${{ steps.branch.outputs.name }}"
           
           git clone --depth 1 --branch ${BRANCH_NAME} \
-            https://x-access-token:${FOUNDRY_REPO_TOKEN}@github.com/The-Genium007/Tumulte-Foundry-module.git \
+            git@github.com:The-Genium007/Tumulte-Foundry-module.git \
             /tmp/foundry-module-target 2>/dev/null || {
               echo "📦 Target branch doesn't exist yet, sync needed"
               echo "needed=true" >> $GITHUB_OUTPUT
@@ -171,8 +166,6 @@ jobs:
 
       - name: Extract and push Foundry module
         if: steps.check_sync.outputs.needed == 'true'
-        env:
-          FOUNDRY_REPO_TOKEN: ${{ secrets.FOUNDRY_MODULE_PAT }}
         run: |
           BRANCH_NAME="${{ steps.branch.outputs.name }}"
           echo "📦 Syncing modules-vtt/foundry to branch: ${BRANCH_NAME}"
@@ -182,7 +175,7 @@ jobs:
 
           echo "🚀 Pushing to Tumulte-Foundry-module..."
           git push --force \
-            https://x-access-token:${FOUNDRY_REPO_TOKEN}@github.com/The-Genium007/Tumulte-Foundry-module.git \
+            git@github.com:The-Genium007/Tumulte-Foundry-module.git \
             temp-foundry-sync:${BRANCH_NAME}
 
           git branch -D temp-foundry-sync
