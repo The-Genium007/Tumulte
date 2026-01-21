@@ -43,7 +43,8 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
   })
   .testRunner()
   .configure(async (app) => {
-    const { plugins, runnerHooks, reporters, suites } = await import('../tests/bootstrap.js')
+    const { plugins, runnerHooks, reporters, suites, configureSuite } =
+      await import('../tests/bootstrap.js')
 
     // Check for --suite parameter to filter suites
     const args = process.argv.slice(2)
@@ -63,6 +64,7 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
       plugins,
       reporters,
       suites: filteredSuites,
+      configureSuite,
       ...runnerHooks,
       teardown: [...(runnerHooks.teardown || []), () => app.terminate()],
     })

@@ -1,12 +1,30 @@
 import { assert } from '@japa/assert'
+import { apiClient } from '@japa/api-client'
 import { pluginAdonisJS } from '@japa/plugin-adonisjs'
+import testUtils from '@adonisjs/core/services/test_utils'
 import app from '@adonisjs/core/services/app'
+import type { Config } from '@japa/runner/types'
 
 /**
  * Configure Japa test runner plugins
- * Note: HTTP client tests are converted to mock-based tests
+ * - assert: Assertion library
+ * - apiClient: HTTP client for functional tests
+ * - pluginAdonisJS: AdonisJS integration (database transactions, encryption, etc.)
  */
-export const plugins = [assert(), pluginAdonisJS(app)]
+export const plugins = [
+  assert(),
+  apiClient(),
+  pluginAdonisJS(app, { baseURL: 'http://localhost:3334' }),
+]
+
+/**
+ * Configure test suites - starts HTTP server for functional and e2e tests
+ */
+export const configureSuite: Config['configureSuite'] = (suite) => {
+  if (['functional', 'e2e'].includes(suite.name)) {
+    return suite.setup(() => testUtils.httpServer().start())
+  }
+}
 
 /**
  * Global test runner hooks
