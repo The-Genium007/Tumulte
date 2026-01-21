@@ -3,7 +3,7 @@ name: Sync Foundry Module
 # Ce workflow synchronise le contenu de modules-vtt/foundry
 # vers le repo externe Tumulte-Foundry-module
 # - Sur PR : pré-vérification (token + diff) sans push
-# - Sur push (merge) : exécute le subtree push via SSH
+# - Sur push (merge) : exécute le subtree push via SSH + crée une release
 
 on:
   pull_request:
@@ -161,8 +161,43 @@ jobs:
 
           echo "✅ API URL injected: ${API_URL}"
 
-          git add modules-vtt/foundry/scripts/tumulte.js
-          git commit -m "ci: inject API URL for ${BRANCH_NAME} environment"
+      - name: Inject manifest and download URLs
+        if: steps.check_sync.outputs.needed == 'true'
+        id: urls
+        run: |
+          BRANCH_NAME="${{ steps.branch.outputs.name }}"
+          VERSION=$(jq -r '.version' modules-vtt/foundry/module.json)
+
+          MANIFEST_URL="https://raw.githubusercontent.com/The-Genium007/Tumulte-Foundry-module/${BRANCH_NAME}/module.json"
+
+          if [ "${BRANCH_NAME}" = "main" ]; then
+            TAG="${VERSION}"
+          else
+            TAG="staging-${VERSION}"
+          fi
+
+          DOWNLOAD_URL="https://github.com/The-Genium007/Tumulte-Foundry-module/releases/download/${TAG}/tumulte-integration.zip"
+
+          # Injection dans module.json
+          sed -i "s|__TUMULTE_MANIFEST_URL__|${MANIFEST_URL}|g" modules-vtt/foundry/module.json
+          sed -i "s|__TUMULTE_DOWNLOAD_URL__|${DOWNLOAD_URL}|g" modules-vtt/foundry/module.json
+
+          # Injection dans README.md
+          sed -i "s|__TUMULTE_MANIFEST_URL__|${MANIFEST_URL}|g" modules-vtt/foundry/README.md
+
+          echo "✅ Manifest URL: ${MANIFEST_URL}"
+          echo "✅ Download URL: ${DOWNLOAD_URL}"
+          echo "✅ Tag: ${TAG}"
+
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Commit injected URLs
+        if: steps.check_sync.outputs.needed == 'true'
+        run: |
+          BRANCH_NAME="${{ steps.branch.outputs.name }}"
+          git add modules-vtt/foundry/
+          git commit -m "ci: inject URLs for ${BRANCH_NAME} environment"
 
       - name: Extract and push Foundry module
         if: steps.check_sync.outputs.needed == 'true'
@@ -182,6 +217,36 @@ jobs:
 
           echo "✅ Successfully synced to ${BRANCH_NAME}"
 
+      - name: Create module ZIP
+        if: steps.check_sync.outputs.needed == 'true'
+        run: |
+          cd modules-vtt/foundry
+          zip -r ../../tumulte-integration.zip . -x "*.git*" -x ".DS_Store"
+          echo "✅ ZIP created: tumulte-integration.zip"
+
+      - name: Delete existing release if any
+        if: steps.check_sync.outputs.needed == 'true'
+        run: |
+          gh release delete "${{ steps.urls.outputs.tag }}" \
+            --repo "The-Genium007/Tumulte-Foundry-module" \
+            --cleanup-tag \
+            --yes || true
+        env:
+          GH_TOKEN: ${{ secrets.FOUNDRY_REPO_TOKEN }}
+
+      - name: Create GitHub Release
+        if: steps.check_sync.outputs.needed == 'true'
+        run: |
+          gh release create "${{ steps.urls.outputs.tag }}" \
+            --repo "The-Genium007/Tumulte-Foundry-module" \
+            --title "Tumulte Integration ${{ steps.urls.outputs.tag }}" \
+            --notes "Module Foundry pour Tumulte - Version ${{ steps.urls.outputs.version }}" \
+            --target "${{ steps.branch.outputs.name }}" \
+            tumulte-integration.zip
+          echo "✅ Release created: ${{ steps.urls.outputs.tag }}"
+        env:
+          GH_TOKEN: ${{ secrets.FOUNDRY_REPO_TOKEN }}
+
       - name: Summary
         run: |
           BRANCH_NAME="${{ steps.branch.outputs.name }}"
@@ -190,6 +255,7 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "- **Source**: \`modules-vtt/foundry\` in Tumulte" >> $GITHUB_STEP_SUMMARY
             echo "- **Target**: \`${BRANCH_NAME}\` branch in [Tumulte-Foundry-module](https://github.com/The-Genium007/Tumulte-Foundry-module)" >> $GITHUB_STEP_SUMMARY
+            echo "- **Release**: \`${{ steps.urls.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             if [ "${BRANCH_NAME}" = "main" ]; then
               echo "🏷️ **Production release** - Ready for Foundry VTT users!" >> $GITHUB_STEP_SUMMARY

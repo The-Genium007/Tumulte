@@ -38,15 +38,24 @@ const matchMediaMock = vi.fn().mockImplementation((query: string) => ({
 vi.stubGlobal('matchMedia', matchMediaMock)
 
 describe('usePwaInstall Composable', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
     localStorageMock.clear()
-    vi.resetModules()
     // Reset navigator mock
     Object.defineProperty(navigator, 'userAgent', {
       value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/120.0.0.0 Safari/537.36',
       configurable: true,
     })
+    Object.defineProperty(navigator, 'platform', {
+      value: 'MacIntel',
+      configurable: true,
+    })
+    Object.defineProperty(navigator, 'maxTouchPoints', {
+      value: 0,
+      configurable: true,
+    })
+    // Reset modules to get fresh singleton state
+    vi.resetModules()
   })
 
   describe('Initial State', () => {
@@ -80,7 +89,10 @@ describe('usePwaInstall Composable', () => {
         configurable: true,
       })
 
-      const { usePwaInstall } = await import('~/composables/usePwaInstall')
+      const { usePwaInstall, _resetForTesting, _initializeForTesting } =
+        await import('~/composables/usePwaInstall')
+      _resetForTesting()
+      _initializeForTesting()
       const { platform } = usePwaInstall()
 
       expect(platform.value).toBe('chrome')
@@ -93,7 +105,10 @@ describe('usePwaInstall Composable', () => {
         configurable: true,
       })
 
-      const { usePwaInstall } = await import('~/composables/usePwaInstall')
+      const { usePwaInstall, _resetForTesting, _initializeForTesting } =
+        await import('~/composables/usePwaInstall')
+      _resetForTesting()
+      _initializeForTesting()
       const { platform } = usePwaInstall()
 
       expect(platform.value).toBe('safari-mac')
@@ -106,7 +121,10 @@ describe('usePwaInstall Composable', () => {
         configurable: true,
       })
 
-      const { usePwaInstall } = await import('~/composables/usePwaInstall')
+      const { usePwaInstall, _resetForTesting, _initializeForTesting } =
+        await import('~/composables/usePwaInstall')
+      _resetForTesting()
+      _initializeForTesting()
       const { platform } = usePwaInstall()
 
       expect(platform.value).toBe('firefox')
@@ -133,7 +151,10 @@ describe('usePwaInstall Composable', () => {
         configurable: true,
       })
 
-      const { usePwaInstall } = await import('~/composables/usePwaInstall')
+      const { usePwaInstall, _resetForTesting, _initializeForTesting } =
+        await import('~/composables/usePwaInstall')
+      _resetForTesting()
+      _initializeForTesting()
       const { canShowGuide } = usePwaInstall()
 
       expect(canShowGuide.value).toBe(true)
@@ -175,7 +196,10 @@ describe('usePwaInstall Composable', () => {
         configurable: true,
       })
 
-      const { usePwaInstall } = await import('~/composables/usePwaInstall')
+      const { usePwaInstall, _resetForTesting, _initializeForTesting } =
+        await import('~/composables/usePwaInstall')
+      _resetForTesting()
+      _initializeForTesting()
       const { shouldShowInstallUI } = usePwaInstall()
 
       expect(shouldShowInstallUI.value).toBe(true)

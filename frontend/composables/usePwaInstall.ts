@@ -206,3 +206,26 @@ export function usePwaInstall() {
     resetDismissed,
   }
 }
+
+/**
+ * Resets the singleton state for testing purposes.
+ * This should only be used in tests to ensure isolation between test cases.
+ * @internal
+ */
+export function _resetForTesting(): void {
+  deferredPrompt.value = null
+  dismissed.value = false
+  platform.value = 'unknown'
+  isInstalled.value = false
+  isHydrated.value = false
+  isInitialized = false
+}
+
+/**
+ * Forces initialization of PWA detection.
+ * This is exposed for testing purposes to simulate onMounted behavior.
+ * @internal
+ */
+export function _initializeForTesting(): void {
+  initializePwa()
+}
