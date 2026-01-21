@@ -30,7 +30,7 @@
             color="primary"
             icon="i-lucide-plus"
             label="Nouvelle connexion"
-            @click="openPairingModal"
+            @click="router.push('/mj/vtt-connections/create')"
           />
         </div>
       </UCard>
@@ -66,7 +66,7 @@
                 icon="i-lucide-dice-6"
                 size="lg"
                 color="primary"
-                @click="openPairingModal"
+                @click="router.push('/mj/vtt-connections/create')"
               />
               <UButton
                 label="Owlbear Rodeo"
@@ -238,139 +238,6 @@
       </template>
     </div>
 
-    <!-- Pairing Modal -->
-    <UModal v-model:open="pairingModalOpen">
-      <template #content>
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between">
-              <h2 class="text-xl font-semibold text-primary">Connecter Foundry VTT</h2>
-              <UButton
-                color="neutral"
-                variant="ghost"
-                icon="i-lucide-x"
-                square
-                @click="closePairingModal"
-              />
-            </div>
-          </template>
-
-          <div class="space-y-6">
-            <!-- Step 1: Choose method -->
-            <div v-if="pairingStep === 'choose'" class="space-y-4">
-              <p class="text-muted">Choisissez comment connecter votre Foundry VTT :</p>
-
-              <div class="grid gap-4">
-                <!-- Code Method -->
-                <button
-                  class="p-4 rounded-lg border-2 border-neutral-200 hover:border-primary-500 transition-colors text-left"
-                  @click="startCodePairing"
-                >
-                  <div class="flex items-center gap-3">
-                    <div class="p-2 rounded-lg bg-primary-100">
-                      <UIcon name="i-lucide-keyboard" class="size-6 text-primary" />
-                    </div>
-                    <div>
-                      <h4 class="font-semibold text-primary">Entrer un code</h4>
-                      <p class="text-sm text-muted">Entrez le code affiché dans Foundry VTT</p>
-                    </div>
-                  </div>
-                </button>
-
-                <!-- URL Method -->
-                <button
-                  class="p-4 rounded-lg border-2 border-neutral-200 hover:border-primary-500 transition-colors text-left"
-                  @click="router.push('/mj/vtt-connections/create')"
-                >
-                  <div class="flex items-center gap-3">
-                    <div class="p-2 rounded-lg bg-neutral-100">
-                      <UIcon name="i-lucide-link" class="size-6 text-neutral-600" />
-                    </div>
-                    <div>
-                      <h4 class="font-semibold text-primary">Coller une URL</h4>
-                      <p class="text-sm text-muted">
-                        Collez l'URL de connexion générée par le module
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            <!-- Step 2: Enter code -->
-            <div v-if="pairingStep === 'code'" class="space-y-6">
-              <UAlert color="primary" variant="soft" icon="i-lucide-info">
-                <template #description>
-                  <ol class="list-decimal list-inside space-y-2 mt-2">
-                    <li>Ouvrez Foundry VTT</li>
-                    <li>Allez dans les paramètres du module Tumulte</li>
-                    <li>Cliquez sur "Connecter à Tumulte"</li>
-                    <li>Entrez le code affiché ci-dessous</li>
-                  </ol>
-                </template>
-              </UAlert>
-
-              <!-- Code Input -->
-              <div>
-                <label class="block text-sm font-bold text-secondary ml-4 uppercase mb-2">
-                  Code de connexion
-                </label>
-                <UInput
-                  v-model="pairingCode"
-                  type="text"
-                  placeholder="ABC-123"
-                  size="xl"
-                  :disabled="pairingInProgress"
-                  :ui="{
-                    root: 'ring-0 border-0 rounded-lg overflow-hidden',
-                    base: 'px-6 py-4 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg font-mono text-2xl text-center tracking-widest uppercase',
-                  }"
-                  @input="formatPairingCode"
-                />
-                <p v-if="pairingError" class="text-xs text-error-500 mt-2 ml-4">
-                  {{ pairingError }}
-                </p>
-              </div>
-
-              <!-- Submit Button -->
-              <div class="flex gap-3">
-                <UButton
-                  color="neutral"
-                  variant="soft"
-                  label="Retour"
-                  :disabled="pairingInProgress"
-                  @click="pairingStep = 'choose'"
-                />
-                <UButton
-                  color="primary"
-                  label="Connecter"
-                  icon="i-lucide-check"
-                  :loading="pairingInProgress"
-                  :disabled="!isCodeValid"
-                  class="flex-1"
-                  @click="submitPairingCode"
-                />
-              </div>
-            </div>
-
-            <!-- Step 3: Success -->
-            <div v-if="pairingStep === 'success'" class="text-center py-6">
-              <div
-                class="size-16 rounded-full bg-success-100 flex items-center justify-center mx-auto mb-4"
-              >
-                <UIcon name="i-lucide-check" class="size-8 text-success-500" />
-              </div>
-              <h3 class="text-xl font-semibold text-primary mb-2">Connexion établie !</h3>
-              <p class="text-muted mb-6">
-                {{ pairingResult?.connection?.name || 'Votre VTT' }} est maintenant connecté.
-              </p>
-              <UButton color="primary" label="Fermer" @click="closePairingModal" />
-            </div>
-          </div>
-        </UCard>
-      </template>
-    </UModal>
-
     <!-- Revoke Confirmation Modal -->
     <UModal v-model:open="revokeModalOpen">
       <template #content>
@@ -409,7 +276,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useVttConnections, type VttConnection } from '@/composables/useVttConnections'
 import { useToast } from '#ui/composables/useToast'
@@ -431,14 +298,6 @@ const importing = ref<string | null>(null)
 
 // Campaign data
 const availableCampaigns = ref<VttCampaignGroup[]>([])
-
-// Pairing modal state
-const pairingModalOpen = ref(false)
-const pairingStep = ref<'choose' | 'code' | 'success'>('choose')
-const pairingCode = ref('')
-const pairingInProgress = ref(false)
-const pairingError = ref('')
-const pairingResult = ref<{ connection?: VttConnection } | null>(null)
 
 // Revoke modal state
 const revokeModalOpen = ref(false)
@@ -463,12 +322,6 @@ interface VttCampaign {
     avatarUrl: string | null
   }>
 }
-
-// Computed
-const isCodeValid = computed(() => {
-  const code = pairingCode.value.replace(/[^A-Z0-9]/gi, '')
-  return code.length === 6
-})
 
 onMounted(async () => {
   await loadData()
@@ -515,77 +368,6 @@ const syncAndFetchCampaigns = async () => {
     availableCampaigns.value = results.filter((r): r is VttCampaignGroup => r !== null)
   } finally {
     syncing.value = false
-  }
-}
-
-// Pairing methods
-const openPairingModal = () => {
-  pairingStep.value = 'choose'
-  pairingCode.value = ''
-  pairingError.value = ''
-  pairingResult.value = null
-  pairingModalOpen.value = true
-}
-
-const closePairingModal = () => {
-  pairingModalOpen.value = false
-  if (pairingStep.value === 'success') {
-    loadData()
-  }
-}
-
-const startCodePairing = () => {
-  pairingStep.value = 'code'
-}
-
-const formatPairingCode = () => {
-  let value = pairingCode.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
-  if (value.length > 3) {
-    value = value.slice(0, 3) + '-' + value.slice(3, 6)
-  }
-  pairingCode.value = value
-}
-
-const submitPairingCode = async () => {
-  if (!isCodeValid.value) return
-
-  pairingInProgress.value = true
-  pairingError.value = ''
-
-  try {
-    const response = await fetch(`${config.public.apiBase}/mj/vtt-connections/pair-with-code`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        code: pairingCode.value,
-      }),
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Échec de la connexion')
-    }
-
-    const data = await response.json()
-    pairingResult.value = data
-    pairingStep.value = 'success'
-
-    toast.add({
-      title: 'Connexion établie',
-      description: data.message || 'Le VTT est maintenant connecté',
-      color: 'success',
-    })
-  } catch (error: unknown) {
-    console.error('Failed to pair:', error)
-    pairingError.value = error instanceof Error ? error.message : 'Erreur inconnue'
-    toast.add({
-      title: 'Erreur',
-      description: pairingError.value,
-      color: 'error',
-    })
-  } finally {
-    pairingInProgress.value = false
   }
 }
 
