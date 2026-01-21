@@ -229,8 +229,6 @@ docker compose exec backend node ace migration:status
 - **v0.5.0** - VTT Integrations 🎲 (In Progress)
   - Backend API & WebSocket ✅
   - Foundry VTT Module ✅
-  - Roll20 API Script 📋
-  - Alchemy RPG Extension 📋
   - Frontend GM Pages 📋
   - Overlay Components 📋
 - **v0.6.0** - Gamification
