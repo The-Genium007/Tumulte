@@ -80,11 +80,10 @@ test.group('Foundry Webhook - Pairing Status', (group) => {
     const worldId = 'cleanup-test-world-' + Date.now()
 
     // Create pairing
-    const createResponse = await client.post('/webhooks/foundry/request-pairing').json({
+    await client.post('/webhooks/foundry/request-pairing').json({
       worldId,
       worldName: 'Cleanup Test World',
     })
-    const code = createResponse.body().code
 
     // Simulate completion
     await redis.setex(
