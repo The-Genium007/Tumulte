@@ -679,14 +679,10 @@ export default class VttWebSocketService {
 
   /**
    * Revoke a connection and notify VTT via WebSocket
+   * Note: If WebSocket server is not initialized (e.g., in tests),
+   * this method will skip the WebSocket notification gracefully.
    */
   async revokeConnection(connectionId: string, reason: string): Promise<void> {
-    if (!this.io) {
-      throw new Error('WebSocket service not initialized')
-    }
-
-    const vttNamespace = this.io.of('/vtt')
-
     // Update connection status (if it still exists)
     const connection = await VttConnection.find(connectionId)
     if (connection) {
@@ -694,6 +690,16 @@ export default class VttWebSocketService {
       connection.tunnelStatus = 'disconnected'
       await connection.save()
     }
+
+    // Skip WebSocket notification if server not initialized
+    if (!this.io) {
+      logger.debug('WebSocket service not initialized, skipping revocation notification', {
+        connectionId,
+      })
+      return
+    }
+
+    const vttNamespace = this.io.of('/vtt')
 
     // Emit revocation event to VTT (even if connection is deleted, sockets may still exist)
     vttNamespace.to(`vtt:${connectionId}`).emit('connection:revoked', {
