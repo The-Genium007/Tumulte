@@ -55,6 +55,9 @@ services:
       # Frontend URL (pour CORS)
       FRONTEND_URL: ${FRONTEND_URL}
 
+      # API URL (pour les webhooks Foundry)
+      API_URL: ${API_URL}
+
       # Sentry (optional)
       SENTRY_DSN: ${SENTRY_DSN}
 
