@@ -61,6 +61,39 @@
             </template>
           </UAlert>
 
+          <!-- Foundry Module Installation Help -->
+          <UAlert
+            v-if="currentProvider === 'foundry'"
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-package"
+            title="Installer le module Foundry VTT"
+          >
+            <template #description>
+              <p class="mt-2">
+                Pour installer le module Tumulte dans Foundry VTT, utilisez ce lien dans le menu
+                <strong>"Install Module"</strong> :
+              </p>
+              <div class="mt-3 flex items-center gap-2">
+                <code
+                  class="flex-1 px-3 py-2 bg-neutral-200 rounded text-xs break-all select-all font-mono"
+                >
+                  {{ foundryModuleUrl }}
+                </code>
+                <UButton
+                  color="neutral"
+                  variant="soft"
+                  size="sm"
+                  square
+                  title="Copier le lien"
+                  @click="copyModuleUrl"
+                >
+                  <UIcon name="i-lucide-copy" class="size-4" />
+                </UButton>
+              </div>
+            </template>
+          </UAlert>
+
           <!-- Code Input -->
           <div class="w-full max-w-64">
             <label class="block text-sm font-bold text-secondary ml-4 uppercase mb-2">
@@ -275,6 +308,10 @@ const route = useRoute()
 const toast = useToast()
 const config = useRuntimeConfig()
 
+// Foundry module URL for installation
+const foundryModuleUrl =
+  'https://raw.githubusercontent.com/The-Genium007/Tumulte-Foundry-module/staging/module.json'
+
 // Provider instructions per VTT type
 type VttProvider = 'foundry' | 'owlbear' | 'talespire'
 
@@ -364,6 +401,24 @@ const pasteFromClipboard = async () => {
     toast.add({
       title: 'Erreur',
       description: "Impossible d'accéder au presse-papier",
+      color: 'error',
+    })
+  }
+}
+
+// Copy module URL to clipboard
+const copyModuleUrl = async () => {
+  try {
+    await navigator.clipboard.writeText(foundryModuleUrl)
+    toast.add({
+      title: 'Copié !',
+      description: 'Le lien du module a été copié dans le presse-papier',
+      color: 'success',
+    })
+  } catch {
+    toast.add({
+      title: 'Erreur',
+      description: "Impossible de copier dans le presse-papier",
       color: 'error',
     })
   }
