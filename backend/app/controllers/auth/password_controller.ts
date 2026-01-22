@@ -47,11 +47,19 @@ export default class PasswordController {
   async resetPassword({ request, response }: HttpContext) {
     const data = await request.validateUsing(resetPasswordValidator)
 
-    const user = await passwordResetService.resetPassword(data.token, data.password)
+    const result = await passwordResetService.resetPassword(data.token, data.password)
 
-    if (!user) {
+    // Token invalid or expired
+    if (result === null) {
       return response.badRequest({
         error: 'Le lien de réinitialisation est invalide ou a expiré.',
+      })
+    }
+
+    // Password validation failed (weak, compromised, etc.)
+    if (result.error) {
+      return response.badRequest({
+        error: result.error,
       })
     }
 

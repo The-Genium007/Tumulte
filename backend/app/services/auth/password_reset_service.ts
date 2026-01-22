@@ -1,10 +1,10 @@
 import { randomBytes } from 'node:crypto'
 import { DateTime } from 'luxon'
-import mail from '@adonisjs/mail/services/main'
 import hash from '@adonisjs/core/services/hash'
 import env from '#start/env'
 import User from '#models/user'
 import logger from '@adonisjs/core/services/logger'
+import passwordSecurityService from './password_security_service.js'
 
 /**
  * Service for handling password reset
@@ -84,7 +84,9 @@ class PasswordResetService {
     }
 
     try {
-      await mail.send((message) => {
+      // Dynamic import to avoid loading mail service before app is booted
+      const mail = await import('@adonisjs/mail/services/main')
+      await mail.default.send((message) => {
         message
           .to(user.email!)
           .subject('Réinitialisation de mot de passe - Tumulte')
@@ -130,12 +132,26 @@ class PasswordResetService {
 
   /**
    * Reset the password using a valid token
+   * Returns user on success, null if token invalid, or error string if password invalid
    */
-  async resetPassword(token: string, newPassword: string): Promise<User | null> {
+  async resetPassword(
+    token: string,
+    newPassword: string
+  ): Promise<{ user: User; error?: never } | { user?: never; error: string } | null> {
     const user = await this.validateToken(token)
 
     if (!user) {
       return null
+    }
+
+    // Validate new password security
+    const passwordValidation = await passwordSecurityService.validatePassword(newPassword, {
+      checkPwned: true,
+      userInputs: [user.email || '', user.displayName],
+    })
+
+    if (!passwordValidation.valid) {
+      return { error: passwordValidation.error! }
     }
 
     // Hash and save new password
@@ -143,7 +159,7 @@ class PasswordResetService {
     await user.clearPasswordResetToken()
 
     logger.info({ userId: user.id }, 'Password reset successfully')
-    return user
+    return { user }
   }
 }
 

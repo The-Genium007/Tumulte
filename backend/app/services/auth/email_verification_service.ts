@@ -1,6 +1,5 @@
 import { randomBytes } from 'node:crypto'
 import { DateTime } from 'luxon'
-import mail from '@adonisjs/mail/services/main'
 import env from '#start/env'
 import User from '#models/user'
 import logger from '@adonisjs/core/services/logger'
@@ -32,7 +31,7 @@ class EmailVerificationService {
    * Build the verification URL for the frontend
    */
   private buildVerificationUrl(token: string): string {
-    return `${this.frontendUrl}/verify-email?token=${token}`
+    return `${this.frontendUrl}/verify-email-callback?token=${token}`
   }
 
   /**
@@ -59,7 +58,9 @@ class EmailVerificationService {
     }
 
     try {
-      await mail.send((message) => {
+      // Dynamic import to avoid loading mail service before app is booted
+      const mail = await import('@adonisjs/mail/services/main')
+      await mail.default.send((message) => {
         message
           .to(user.email!)
           .subject('Vérifiez votre email - Tumulte')

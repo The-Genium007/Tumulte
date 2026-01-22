@@ -143,7 +143,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function login(
     credentials: LoginCredentials
-  ): Promise<{ success: boolean; error?: AuthError }> {
+  ): Promise<{ success: boolean; emailVerified?: boolean; error?: AuthError }> {
     loading.value = true
     authError.value = null
 
@@ -164,7 +164,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       user.value = result.user
       await storeUser(result.user)
-      return { success: true }
+      return { success: true, emailVerified: result.emailVerified }
     } catch (error) {
       const err = { error: 'Une erreur est survenue. Veuillez réessayer.' }
       authError.value = err

@@ -52,6 +52,7 @@ router
       .use(middleware.rateLimit({ maxRequests: 5, windowSeconds: 60, keyPrefix: 'auth_register' }))
     router
       .post('/login', [loginController, 'handle'])
+      .use(middleware.authLockout())
       .use(middleware.rateLimit({ maxRequests: 10, windowSeconds: 60, keyPrefix: 'auth_login' }))
 
     // ---- Email Verification ----

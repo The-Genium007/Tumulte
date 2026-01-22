@@ -34,9 +34,7 @@
         </div>
 
         <div>
-          <label class="block text-sm font-bold text-secondary ml-2 uppercase mb-2">
-            Email
-          </label>
+          <label class="block text-sm font-bold text-secondary ml-2 uppercase mb-2"> Email </label>
           <UInput
             v-model="form.email"
             type="email"
@@ -68,6 +66,14 @@
               base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
             }"
           />
+          <!-- Password strength meter -->
+          <div class="mt-2">
+            <PasswordStrengthMeter
+              :model-value="form.password"
+              @update:score="passwordScore = $event"
+              @update:is-strong="isPasswordStrong = $event"
+            />
+          </div>
           <p v-if="fieldErrors.password" class="text-xs text-error-500 mt-1 ml-2">
             {{ fieldErrors.password }}
           </p>
@@ -85,21 +91,33 @@
             required
             :ui="{
               root: 'ring-0 border-0 rounded-lg overflow-hidden',
-              base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+              base: `px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg ${
+                confirmationTouched && !passwordsMatch ? 'ring-2 ring-error-500' : ''
+              }`,
             }"
           />
+          <!-- Password mismatch indicator -->
+          <p
+            v-if="confirmationTouched && !passwordsMatch"
+            class="text-xs text-error-500 mt-1 ml-2 flex items-center gap-1"
+          >
+            <UIcon name="i-lucide-x-circle" class="size-3.5" />
+            Les mots de passe ne correspondent pas
+          </p>
+          <!-- Password match indicator -->
+          <p
+            v-else-if="confirmationTouched && passwordsMatch && form.password.length > 0"
+            class="text-xs text-success-500 mt-1 ml-2 flex items-center gap-1"
+          >
+            <UIcon name="i-lucide-check-circle" class="size-3.5" />
+            Les mots de passe correspondent
+          </p>
           <p v-if="fieldErrors.passwordConfirmation" class="text-xs text-error-500 mt-1 ml-2">
             {{ fieldErrors.passwordConfirmation }}
           </p>
         </div>
 
-        <UButton
-          type="submit"
-          block
-          size="xl"
-          :loading="loading"
-          :disabled="!isFormValid"
-        >
+        <UButton type="submit" block size="xl" :loading="loading" :disabled="!isFormValid">
           Créer mon compte
         </UButton>
       </form>
@@ -181,12 +199,24 @@ const form = reactive({
 
 const errorMessage = ref<string | null>(null)
 const fieldErrors = reactive<Record<string, string | undefined>>({})
+const passwordScore = ref(0)
+const isPasswordStrong = ref(false)
+
+// Check if passwords match (only show error when confirmation is not empty)
+const passwordsMatch = computed(() => {
+  if (form.passwordConfirmation.length === 0) return true
+  return form.password === form.passwordConfirmation
+})
+
+// Check if password confirmation has been touched
+const confirmationTouched = computed(() => form.passwordConfirmation.length > 0)
 
 const isFormValid = computed(() => {
   return (
     form.displayName.length >= 2 &&
     form.email.includes('@') &&
     form.password.length >= 8 &&
+    isPasswordStrong.value &&
     form.password === form.passwordConfirmation
   )
 })

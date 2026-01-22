@@ -1,7 +1,14 @@
+import { DateTime } from 'luxon'
 import hash from '@adonisjs/core/services/hash'
 import logger from '@adonisjs/core/services/logger'
 import User from '#models/user'
 import emailVerificationService from './email_verification_service.js'
+import passwordSecurityService from './password_security_service.js'
+
+/**
+ * Hours before an unverified account can be replaced by a new registration
+ */
+const UNVERIFIED_ACCOUNT_EXPIRY_HOURS = 24
 
 /**
  * Service for email/password authentication
@@ -34,7 +41,41 @@ class EmailAuthService {
             'Un compte existe déjà avec cet email (connecté via Google ou Twitch). Connectez-vous avec ce provider pour ajouter un mot de passe.',
         }
       }
-      return { error: 'Un compte existe déjà avec cet email.' }
+
+      // If user exists but email is not verified, check if account is expired
+      if (!existingUser.isEmailVerified) {
+        const createdAt = existingUser.createdAt
+        const expiresAt = createdAt.plus({ hours: UNVERIFIED_ACCOUNT_EXPIRY_HOURS })
+
+        if (DateTime.now() > expiresAt) {
+          // Account expired - delete it and allow re-registration
+          logger.info(
+            { userId: existingUser.id, email: existingUser.email },
+            'Deleting expired unverified account for re-registration'
+          )
+          await existingUser.delete()
+          // Continue to create new account below
+        } else {
+          // Account not expired - user should login to access verify-email page
+          return {
+            error:
+              "Un compte existe déjà avec cet email. Connectez-vous pour renvoyer l'email de vérification.",
+          }
+        }
+      } else {
+        // Email is verified - account exists
+        return { error: 'Un compte existe déjà avec cet email.' }
+      }
+    }
+
+    // Validate password security (HIBP check, common passwords, etc.)
+    const passwordValidation = await passwordSecurityService.validatePassword(data.password, {
+      checkPwned: true,
+      userInputs: [normalizedEmail, data.displayName],
+    })
+
+    if (!passwordValidation.valid) {
+      return { error: passwordValidation.error! }
     }
 
     // Create user with hashed password
@@ -59,12 +100,15 @@ class EmailAuthService {
 
   /**
    * Validate login credentials
-   * Returns user if valid, null otherwise
+   * Returns user if valid, with emailVerified flag to indicate if redirect is needed
    */
   async validateCredentials(
     email: string,
     password: string
-  ): Promise<{ user: User; error?: never } | { user?: never; error: string }> {
+  ): Promise<
+    | { user: User; emailVerified: boolean; error?: never }
+    | { user?: never; emailVerified?: never; error: string }
+  > {
     const normalizedEmail = email.toLowerCase().trim()
 
     const user = await User.query().where('email', normalizedEmail).first()
@@ -87,13 +131,12 @@ class EmailAuthService {
       return { error: 'Email ou mot de passe incorrect.' }
     }
 
-    // Check email verification
-    if (!user.isEmailVerified) {
-      return { error: 'Veuillez vérifier votre email avant de vous connecter.' }
-    }
-
-    logger.info({ userId: user.id }, 'User logged in via email')
-    return { user }
+    // Allow login even if email not verified - frontend will redirect to verify-email page
+    logger.info(
+      { userId: user.id, emailVerified: user.isEmailVerified },
+      'User logged in via email'
+    )
+    return { user, emailVerified: user.isEmailVerified }
   }
 
   /**
@@ -110,6 +153,16 @@ class EmailAuthService {
       if (!isValid) {
         return { success: false, error: 'Mot de passe actuel incorrect.' }
       }
+    }
+
+    // Validate new password security
+    const passwordValidation = await passwordSecurityService.validatePassword(newPassword, {
+      checkPwned: true,
+      userInputs: [user.email || '', user.displayName],
+    })
+
+    if (!passwordValidation.valid) {
+      return { success: false, error: passwordValidation.error }
     }
 
     // Hash and save new password
@@ -133,6 +186,16 @@ class EmailAuthService {
         success: false,
         error: 'Ce compte a déjà un mot de passe. Utilisez "Changer le mot de passe".',
       }
+    }
+
+    // Validate new password security
+    const passwordValidation = await passwordSecurityService.validatePassword(newPassword, {
+      checkPwned: true,
+      userInputs: [user.email || '', user.displayName],
+    })
+
+    if (!passwordValidation.valid) {
+      return { success: false, error: passwordValidation.error }
     }
 
     user.password = await hash.make(newPassword)

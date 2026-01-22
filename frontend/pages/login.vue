@@ -156,7 +156,12 @@ async function handleEmailLogin() {
   const result = await login({ email: email.value, password: password.value })
 
   if (result.success) {
-    router.push('/streamer')
+    // Redirect to verify-email if email not verified, otherwise to dashboard
+    if (result.emailVerified === false) {
+      router.push('/verify-email')
+    } else {
+      router.push('/streamer')
+    }
   } else if (result.error) {
     errorMessage.value = result.error.error
   }

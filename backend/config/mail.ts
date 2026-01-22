@@ -10,7 +10,7 @@ import { defineConfig, transports } from '@adonisjs/mail'
  * - Transactional emails
  */
 const mailConfig = defineConfig({
-  default: 'resend',
+  default: env.get('NODE_ENV') === 'production' ? 'resend' : 'smtp',
 
   /**
    * Email sender defaults
