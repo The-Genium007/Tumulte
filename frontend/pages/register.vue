@@ -13,58 +13,90 @@
     <div class="space-y-6">
       <!-- Formulaire d'inscription -->
       <form @submit.prevent="handleRegister" class="space-y-4">
-        <UFormField label="Nom d'affichage" name="displayName" :error="fieldErrors.displayName">
+        <div>
+          <label class="block text-sm font-bold text-secondary ml-2 uppercase mb-2">
+            Nom d'affichage
+          </label>
           <UInput
             v-model="form.displayName"
             type="text"
             placeholder="Votre pseudo"
-            icon="i-lucide-user"
-            size="lg"
+            size="xl"
             required
+            :ui="{
+              root: 'ring-0 border-0 rounded-lg overflow-hidden',
+              base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+            }"
           />
-        </UFormField>
+          <p v-if="fieldErrors.displayName" class="text-xs text-error-500 mt-1 ml-2">
+            {{ fieldErrors.displayName }}
+          </p>
+        </div>
 
-        <UFormField label="Email" name="email" :error="fieldErrors.email">
+        <div>
+          <label class="block text-sm font-bold text-secondary ml-2 uppercase mb-2">
+            Email
+          </label>
           <UInput
             v-model="form.email"
             type="email"
             placeholder="votre@email.com"
-            icon="i-lucide-mail"
-            size="lg"
+            size="xl"
             required
+            :ui="{
+              root: 'ring-0 border-0 rounded-lg overflow-hidden',
+              base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+            }"
           />
-        </UFormField>
+          <p v-if="fieldErrors.email" class="text-xs text-error-500 mt-1 ml-2">
+            {{ fieldErrors.email }}
+          </p>
+        </div>
 
-        <UFormField label="Mot de passe" name="password" :error="fieldErrors.password">
+        <div>
+          <label class="block text-sm font-bold text-secondary ml-2 uppercase mb-2">
+            Mot de passe
+          </label>
           <UInput
             v-model="form.password"
             type="password"
             placeholder="Minimum 8 caractères"
-            icon="i-lucide-lock"
-            size="lg"
+            size="xl"
             required
+            :ui="{
+              root: 'ring-0 border-0 rounded-lg overflow-hidden',
+              base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+            }"
           />
-        </UFormField>
+          <p v-if="fieldErrors.password" class="text-xs text-error-500 mt-1 ml-2">
+            {{ fieldErrors.password }}
+          </p>
+        </div>
 
-        <UFormField
-          label="Confirmer le mot de passe"
-          name="passwordConfirmation"
-          :error="fieldErrors.passwordConfirmation"
-        >
+        <div>
+          <label class="block text-sm font-bold text-secondary ml-2 uppercase mb-2">
+            Confirmer le mot de passe
+          </label>
           <UInput
             v-model="form.passwordConfirmation"
             type="password"
             placeholder="Confirmez votre mot de passe"
-            icon="i-lucide-lock"
-            size="lg"
+            size="xl"
             required
+            :ui="{
+              root: 'ring-0 border-0 rounded-lg overflow-hidden',
+              base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+            }"
           />
-        </UFormField>
+          <p v-if="fieldErrors.passwordConfirmation" class="text-xs text-error-500 mt-1 ml-2">
+            {{ fieldErrors.passwordConfirmation }}
+          </p>
+        </div>
 
         <UButton
           type="submit"
           block
-          size="lg"
+          size="xl"
           :loading="loading"
           :disabled="!isFormValid"
         >
@@ -94,7 +126,7 @@
       <div class="grid grid-cols-2 gap-3">
         <UButton
           block
-          size="lg"
+          size="xl"
           color="neutral"
           variant="outline"
           icon="i-simple-icons-twitch"
@@ -106,7 +138,7 @@
 
         <UButton
           block
-          size="lg"
+          size="xl"
           color="neutral"
           variant="outline"
           icon="i-simple-icons-google"

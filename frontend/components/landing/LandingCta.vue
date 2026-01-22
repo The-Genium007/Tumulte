@@ -28,14 +28,15 @@
             <div
               class="relative grid grid-cols-1 lg:grid-cols-2 gap-8 items-center py-4"
             >
-              <!-- Image -->
+              <!-- Image - Format cinématique 16:9, focalisé sur le cavalier en bas -->
               <div class="order-2 lg:order-1">
-                <ImagePlaceholder
-                  label="cta-adventure.webp - Aventuriers partant"
-                  aspect="wide"
-                  icon="i-lucide-map"
-                  class="w-full max-w-md mx-auto lg:max-w-none"
-                />
+                <div class="relative aspect-video overflow-hidden rounded-2xl shadow-lg">
+                  <img
+                    src="/images/landing/cta-adventure.webp"
+                    alt="Aventurier à cheval partant vers de nouvelles quêtes"
+                    class="w-full h-full object-cover object-bottom"
+                  />
+                </div>
               </div>
 
               <!-- Texte et CTA -->
@@ -89,6 +90,4 @@
   </section>
 </template>
 
-<script setup lang="ts">
-import ImagePlaceholder from './ImagePlaceholder.vue'
-</script>
+<script setup lang="ts"></script>

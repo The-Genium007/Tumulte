@@ -12,11 +12,10 @@
         <!-- Image (mobile: first, desktop: left) -->
         <div v-motion-fade-left :delay="200" class="order-1 lg:order-1">
           <div class="relative">
-            <ImagePlaceholder
-              label="hero.webp - Scène fantasy épique"
-              aspect="hero"
-              icon="i-lucide-sparkles"
-              class="w-full img-zoom"
+            <img
+              src="/images/landing/hero.webp"
+              alt="Scène fantasy épique - Aventuriers face à leur destinée"
+              class="w-full rounded-2xl shadow-xl img-zoom"
             />
             <!-- Glow effect derrière l'image -->
             <div
@@ -77,6 +76,4 @@
   </section>
 </template>
 
-<script setup lang="ts">
-import ImagePlaceholder from './ImagePlaceholder.vue'
-</script>
+<script setup lang="ts"></script>

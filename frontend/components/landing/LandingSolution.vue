@@ -5,12 +5,13 @@
         <!-- Image / Mockup -->
         <div v-motion-fade-right :delay="300" class="order-1 lg:order-1">
           <div class="relative">
-            <ImagePlaceholder
-              label="solution-mockup.webp - Interface Tumulte"
-              aspect="video"
-              icon="i-lucide-layout-dashboard"
-              class="w-full"
-            />
+            <div class="aspect-video overflow-hidden rounded-2xl shadow-lg">
+              <img
+                src="/images/landing/solution-mockup.webp"
+                alt="Interface Tumulte - Dashboard de gestion des sondages"
+                class="w-full h-full object-cover object-center"
+              />
+            </div>
             <!-- Effet de profondeur -->
             <div
               class="absolute -bottom-4 -right-4 w-full h-full bg-secondary-200/30 rounded-2xl -z-10"
@@ -58,8 +59,6 @@
 </template>
 
 <script setup lang="ts">
-import ImagePlaceholder from './ImagePlaceholder.vue'
-
 const benefits = [
   {
     icon: 'i-lucide-zap',

@@ -21,9 +21,16 @@
           :delay="index * 150"
           class="text-center space-y-4"
         >
-          <!-- Image placeholder -->
+          <!-- Image ou placeholder -->
           <div class="relative mx-auto w-full max-w-xs">
+            <img
+              v-if="step.image"
+              :src="step.image"
+              :alt="step.imageLabel"
+              class="w-full aspect-square object-cover rounded-2xl shadow-lg"
+            />
             <ImagePlaceholder
+              v-else
               :label="`step-${index + 1}.webp - ${step.imageLabel}`"
               aspect="square"
               :icon="step.icon"
@@ -58,6 +65,7 @@ const steps = [
       'Créez votre campagne et invitez les streamers de votre table. En quelques clics, votre cercle est formé.',
     icon: 'i-lucide-users-round',
     imageLabel: 'Création campagne',
+    image: '/images/landing/step-1.webp',
   },
   {
     title: 'Déchaîner',
@@ -65,6 +73,7 @@ const steps = [
       'Lancez un sondage. Il apparaît instantanément sur tous les chats Twitch liés. La magie opère.',
     icon: 'i-lucide-send',
     imageLabel: 'Lancement sondage',
+    image: null,
   },
   {
     title: 'Révéler',
@@ -72,6 +81,7 @@ const steps = [
       'Les votes affluent de tous les royaumes. Les résultats s\'agrègent en temps réel. Le destin est scellé.',
     icon: 'i-lucide-bar-chart-3',
     imageLabel: 'Résultats agrégés',
+    image: '/images/landing/step-3.webp',
   },
 ]
 </script>

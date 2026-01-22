@@ -12,24 +12,14 @@
       <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-4">
         <nav class="flex items-center justify-between">
           <!-- Logo -->
-          <NuxtLink to="/" class="flex items-center gap-2 group">
+          <NuxtLink to="/" class="flex items-center gap-3 sm:gap-4 group">
             <img
               src="~/assets/images/logo.png"
               alt="Tumulte"
-              class="size-10 transition-transform group-hover:scale-105"
+              class="size-10 sm:size-12 transition-transform group-hover:scale-105"
             />
-            <span class="text-xl font-bold text-primary hidden sm:block">Tumulte</span>
+            <h1 class="text-lg sm:text-2xl font-bold text-primary hidden sm:block">Tumulte</h1>
           </NuxtLink>
-
-          <!-- Navigation desktop -->
-          <div class="hidden md:flex items-center gap-6">
-            <NuxtLink
-              to="#features"
-              class="text-sm font-medium text-muted hover:text-primary transition-colors link-animated"
-            >
-              Fonctionnalités
-            </NuxtLink>
-          </div>
 
           <!-- CTA -->
           <div class="flex items-center gap-2 sm:gap-3">

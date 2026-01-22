@@ -13,27 +13,39 @@
     <div class="space-y-6">
       <!-- Formulaire email/password -->
       <form @submit.prevent="handleEmailLogin" class="space-y-4">
-        <UFormField label="Email" name="email">
+        <div>
+          <label class="block text-sm font-bold text-secondary ml-2 uppercase mb-2">
+            Email
+          </label>
           <UInput
             v-model="email"
             type="email"
             placeholder="votre@email.com"
-            icon="i-lucide-mail"
-            size="lg"
+            size="xl"
             required
+            :ui="{
+              root: 'ring-0 border-0 rounded-lg overflow-hidden',
+              base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+            }"
           />
-        </UFormField>
+        </div>
 
-        <UFormField label="Mot de passe" name="password">
+        <div>
+          <label class="block text-sm font-bold text-secondary ml-2 uppercase mb-2">
+            Mot de passe
+          </label>
           <UInput
             v-model="password"
             type="password"
             placeholder="Votre mot de passe"
-            icon="i-lucide-lock"
-            size="lg"
+            size="xl"
             required
+            :ui="{
+              root: 'ring-0 border-0 rounded-lg overflow-hidden',
+              base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+            }"
           />
-        </UFormField>
+        </div>
 
         <div class="flex justify-end">
           <NuxtLink to="/forgot-password" class="text-sm text-primary hover:underline">
@@ -44,7 +56,7 @@
         <UButton
           type="submit"
           block
-          size="lg"
+          size="xl"
           :loading="loading"
           :disabled="!email || !password"
         >
@@ -74,7 +86,7 @@
       <div class="grid grid-cols-2 gap-3">
         <UButton
           block
-          size="lg"
+          size="xl"
           color="neutral"
           variant="outline"
           icon="i-simple-icons-twitch"
@@ -86,7 +98,7 @@
 
         <UButton
           block
-          size="lg"
+          size="xl"
           color="neutral"
           variant="outline"
           icon="i-simple-icons-google"
