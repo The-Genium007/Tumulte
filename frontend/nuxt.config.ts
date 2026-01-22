@@ -17,7 +17,39 @@ export default defineNuxtConfig({
     '@tresjs/nuxt',
     '@nuxt/fonts',
     '@sentry/nuxt/module',
+    '@vueuse/motion/nuxt',
   ],
+
+  // VueUse Motion - Animation presets
+  motion: {
+    directives: {
+      // Fade in depuis le bas (sections principales)
+      'fade-up': {
+        initial: { opacity: 0, y: 50 },
+        visibleOnce: { opacity: 1, y: 0, transition: { duration: 600, ease: 'easeOut' } },
+      },
+      // Fade in depuis la gauche
+      'fade-left': {
+        initial: { opacity: 0, x: -50 },
+        visibleOnce: { opacity: 1, x: 0, transition: { duration: 600, ease: 'easeOut' } },
+      },
+      // Fade in depuis la droite
+      'fade-right': {
+        initial: { opacity: 0, x: 50 },
+        visibleOnce: { opacity: 1, x: 0, transition: { duration: 600, ease: 'easeOut' } },
+      },
+      // Scale up (pour les cards)
+      'scale-up': {
+        initial: { opacity: 0, scale: 0.9 },
+        visibleOnce: { opacity: 1, scale: 1, transition: { duration: 500, ease: 'easeOut' } },
+      },
+      // Pop (pour les icônes/badges) - avec spring
+      'pop': {
+        initial: { opacity: 0, scale: 0.5 },
+        visibleOnce: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 20 } },
+      },
+    },
+  },
 
   sentry: {
     sourceMapsUploadOptions: {

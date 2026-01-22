@@ -104,4 +104,37 @@ export default await Env.create(new URL('../', import.meta.url), {
   VAPID_PUBLIC_KEY: Env.schema.string.optional(),
   VAPID_PRIVATE_KEY: Env.schema.string.optional(),
   VAPID_SUBJECT: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Admin users (comma-separated list of emails)
+  |----------------------------------------------------------
+  */
+  ADMIN_EMAILS: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Google OAuth
+  |----------------------------------------------------------
+  */
+  GOOGLE_CLIENT_ID: Env.schema.string.optional(),
+  GOOGLE_CLIENT_SECRET: Env.schema.string.optional(),
+  GOOGLE_REDIRECT_URI: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | Email service (Resend)
+  |----------------------------------------------------------
+  */
+  RESEND_API_KEY: Env.schema.string.optional(),
+  MAIL_FROM_ADDRESS: Env.schema.string.optional(),
+  MAIL_FROM_NAME: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------
+  | SMTP (development fallback - Mailhog, etc.)
+  |----------------------------------------------------------
+  */
+  SMTP_HOST: Env.schema.string.optional(),
+  SMTP_PORT: Env.schema.string.optional(),
 })

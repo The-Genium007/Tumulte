@@ -101,6 +101,6 @@
 
 <script setup lang="ts">
 definePageMeta({
-  layout: 'default' as const,
+  layout: 'landing' as const,
 })
 </script>

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import type { User } from '@/types'
+import type { User, LoginCredentials, RegisterData, AuthError } from '@/types'
 import { useSupportTrigger } from '@/composables/useSupportTrigger'
 import { usePushNotificationsStore } from '@/stores/pushNotifications'
 import { storeUser, getStoredUser, clearUserData } from '@/utils/offline-storage'
@@ -16,9 +16,13 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const loading = ref<boolean>(false)
   const isOfflineData = ref<boolean>(false)
+  const authError = ref<AuthError | null>(null)
 
   // Computed
   const isAuthenticated = computed(() => user.value !== null)
+  const isAdmin = computed(() => user.value?.isAdmin ?? false)
+  const isPremium = computed(() => user.value?.isPremium ?? false)
+  const isEmailVerified = computed(() => user.value?.emailVerifiedAt !== null)
 
   /**
    * Load user from offline storage (IndexedDB)
@@ -90,6 +94,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       user.value = null
       isOfflineData.value = false
+      authError.value = null
       _router.push({ name: 'login' })
     } catch (error) {
       console.error('Logout failed:', error)
@@ -98,18 +103,198 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Register a new user with email/password
+   */
+  async function register(data: RegisterData): Promise<{ success: boolean; error?: AuthError }> {
+    loading.value = true
+    authError.value = null
+
+    try {
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        authError.value = result
+        return { success: false, error: result }
+      }
+
+      user.value = result.user
+      await storeUser(result.user)
+      return { success: true }
+    } catch (error) {
+      const err = { error: 'Une erreur est survenue. Veuillez réessayer.' }
+      authError.value = err
+      triggerSupportForError('auth_register', error)
+      return { success: false, error: err }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Login with email/password
+   */
+  async function login(
+    credentials: LoginCredentials
+  ): Promise<{ success: boolean; error?: AuthError }> {
+    loading.value = true
+    authError.value = null
+
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(credentials),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        authError.value = result
+        return { success: false, error: result }
+      }
+
+      user.value = result.user
+      await storeUser(result.user)
+      return { success: true }
+    } catch (error) {
+      const err = { error: 'Une erreur est survenue. Veuillez réessayer.' }
+      authError.value = err
+      triggerSupportForError('auth_login', error)
+      return { success: false, error: err }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Redirect to OAuth provider for login
+   */
+  function loginWithOAuth(provider: 'twitch' | 'google'): void {
+    window.location.href = `${API_URL}/auth/${provider}/redirect`
+  }
+
+  /**
+   * Request password reset email
+   */
+  async function forgotPassword(email: string): Promise<{ success: boolean; error?: AuthError }> {
+    loading.value = true
+
+    try {
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        return { success: false, error: result }
+      }
+
+      return { success: true }
+    } catch (error) {
+      triggerSupportForError('auth_forgot_password', error)
+      return { success: false, error: { error: 'Une erreur est survenue.' } }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Reset password with token
+   */
+  async function resetPassword(
+    token: string,
+    password: string,
+    passwordConfirmation: string
+  ): Promise<{ success: boolean; error?: AuthError }> {
+    loading.value = true
+
+    try {
+      const response = await fetch(`${API_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password, passwordConfirmation }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        return { success: false, error: result }
+      }
+
+      return { success: true }
+    } catch (error) {
+      triggerSupportForError('auth_reset_password', error)
+      return { success: false, error: { error: 'Une erreur est survenue.' } }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  /**
+   * Resend verification email
+   */
+  async function resendVerificationEmail(): Promise<{ success: boolean; error?: AuthError }> {
+    try {
+      const response = await fetch(`${API_URL}/auth/resend-verification`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        return { success: false, error: result }
+      }
+
+      return { success: true }
+    } catch (error) {
+      triggerSupportForError('auth_resend_verification', error)
+      return { success: false, error: { error: 'Une erreur est survenue.' } }
+    }
+  }
+
+  /**
+   * Clear any auth errors
+   */
+  function clearError(): void {
+    authError.value = null
+  }
+
   return {
     // State
     user,
     loading,
     isOfflineData,
+    authError,
 
     // Computed
     isAuthenticated,
+    isAdmin,
+    isPremium,
+    isEmailVerified,
 
     // Actions
     fetchMe,
     loginWithTwitch,
+    loginWithOAuth,
+    login,
+    register,
     logout,
+    forgotPassword,
+    resetPassword,
+    resendVerificationEmail,
+    clearError,
   }
 })

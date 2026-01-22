@@ -7,14 +7,29 @@ import { storeToRefs } from 'pinia'
  */
 export function useAuth() {
   const authStore = useAuthStore()
-  const { user, loading, isAuthenticated } = storeToRefs(authStore)
+  const { user, loading, isAuthenticated, isAdmin, isPremium, isEmailVerified, authError } =
+    storeToRefs(authStore)
 
   return {
+    // State
     user,
     loading,
     isAuthenticated,
+    isAdmin,
+    isPremium,
+    isEmailVerified,
+    authError,
+
+    // Actions
     fetchMe: authStore.fetchMe,
     loginWithTwitch: authStore.loginWithTwitch,
+    loginWithOAuth: authStore.loginWithOAuth,
+    login: authStore.login,
+    register: authStore.register,
     logout: authStore.logout,
+    forgotPassword: authStore.forgotPassword,
+    resetPassword: authStore.resetPassword,
+    resendVerificationEmail: authStore.resendVerificationEmail,
+    clearError: authStore.clearError,
   }
 }

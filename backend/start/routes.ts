@@ -11,8 +11,16 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 
+// Legacy auth controller (will be deprecated)
 const authController = () => import('#controllers/auth_controller')
 const supportController = () => import('#controllers/support_controller')
+
+// New auth controllers
+const registerController = () => import('#controllers/auth/register_controller')
+const loginController = () => import('#controllers/auth/login_controller')
+const verificationController = () => import('#controllers/auth/verification_controller')
+const passwordController = () => import('#controllers/auth/password_controller')
+const oauthController = () => import('#controllers/auth/oauth_controller')
 
 // ==========================================
 // Health check & API Info
@@ -38,11 +46,69 @@ router.get('/health', async ({ response }) => {
 // ==========================================
 router
   .group(() => {
-    router.get('/twitch/redirect', [authController, 'redirect'])
-    // Rate limit OAuth callback to prevent brute force attacks on state
+    // ---- Email/Password Auth ----
     router
-      .get('/twitch/callback', [authController, 'callback'])
+      .post('/register', [registerController, 'handle'])
+      .use(middleware.rateLimit({ maxRequests: 5, windowSeconds: 60, keyPrefix: 'auth_register' }))
+    router
+      .post('/login', [loginController, 'handle'])
+      .use(middleware.rateLimit({ maxRequests: 10, windowSeconds: 60, keyPrefix: 'auth_login' }))
+
+    // ---- Email Verification ----
+    router.post('/verify-email', [verificationController, 'verify'])
+    router
+      .post('/resend-verification', [verificationController, 'resend'])
+      .use(middleware.auth({ guards: ['web', 'api'] }))
+
+    // ---- Password Reset ----
+    router.post('/forgot-password', [passwordController, 'forgotPassword']).use(
+      middleware.rateLimit({
+        maxRequests: 3,
+        windowSeconds: 60,
+        keyPrefix: 'auth_forgot_password',
+      })
+    )
+    router.get('/validate-reset-token', [passwordController, 'validateResetToken'])
+    router.post('/reset-password', [passwordController, 'resetPassword'])
+
+    // ---- Password Management (authenticated) ----
+    router
+      .post('/change-password', [passwordController, 'changePassword'])
+      .use(middleware.auth({ guards: ['web', 'api'] }))
+    router
+      .post('/set-password', [passwordController, 'setPassword'])
+      .use(middleware.auth({ guards: ['web', 'api'] }))
+
+    // ---- OAuth: Google ----
+    router.get('/google/redirect', [oauthController, 'googleRedirect'])
+    router
+      .get('/google/callback', [oauthController, 'googleCallback'])
       .use(middleware.rateLimit({ maxRequests: 10, windowSeconds: 60, keyPrefix: 'auth_callback' }))
+
+    // ---- OAuth: Twitch (new unified controller) ----
+    router.get('/twitch/redirect', [oauthController, 'twitchRedirect'])
+    router
+      .get('/twitch/callback', [oauthController, 'twitchCallback'])
+      .use(middleware.rateLimit({ maxRequests: 10, windowSeconds: 60, keyPrefix: 'auth_callback' }))
+
+    // ---- OAuth: Link/Unlink providers (authenticated) ----
+    router
+      .get('/link/google', [oauthController, 'linkGoogle'])
+      .use(middleware.auth({ guards: ['web', 'api'] }))
+    router
+      .get('/link/google/callback', [oauthController, 'linkGoogleCallback'])
+      .use(middleware.auth({ guards: ['web', 'api'] }))
+    router
+      .get('/link/twitch', [oauthController, 'linkTwitch'])
+      .use(middleware.auth({ guards: ['web', 'api'] }))
+    router
+      .get('/link/twitch/callback', [oauthController, 'linkTwitchCallback'])
+      .use(middleware.auth({ guards: ['web', 'api'] }))
+    router
+      .post('/unlink', [oauthController, 'unlinkProvider'])
+      .use(middleware.auth({ guards: ['web', 'api'] }))
+
+    // ---- Legacy routes (keep for backward compatibility) ----
     router
       .post('/logout', [authController, 'logout'])
       .use(middleware.auth({ guards: ['web', 'api'] }))
@@ -303,6 +369,19 @@ router
   })
   .prefix('/account')
   .use(middleware.auth({ guards: ['web', 'api'] }))
+
+// ==========================================
+// Routes Admin (réservées aux administrateurs)
+// ==========================================
+router
+  .group(() => {
+    router.get('/metrics', '#controllers/admin/metrics_controller.overview')
+    router.get('/metrics/growth', '#controllers/admin/metrics_controller.growth')
+    router.get('/metrics/subscriptions', '#controllers/admin/metrics_controller.subscriptions')
+  })
+  .prefix('/admin')
+  .use(middleware.auth({ guards: ['web', 'api'] }))
+  .use(middleware.admin())
 
 // ==========================================
 // Routes Support (accessible à tous les rôles authentifiés)

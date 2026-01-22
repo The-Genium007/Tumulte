@@ -40,16 +40,37 @@ export default class AuthController {
   /**
    * Formate la réponse utilisateur (évite la duplication)
    */
-  private formatUserResponse(user: User) {
+  private async formatUserResponse(user: User) {
+    // Load auth providers if not loaded
+    if (!user.$preloaded.authProviders) {
+      await user.load('authProviders')
+    }
+
     return {
       id: user.id,
       displayName: user.displayName,
       email: user.email,
+      emailVerifiedAt: user.emailVerifiedAt?.toISO() ?? null,
+      tier: user.tier,
+      avatarUrl: user.avatarUrl,
+      isAdmin: user.isAdmin,
+      isPremium: await user.isPremium(),
+      hasPassword: user.password !== null,
+      authProviders:
+        user.authProviders?.map((p) => ({
+          id: p.id,
+          provider: p.provider,
+          providerUserId: p.providerUserId,
+          providerEmail: p.providerEmail,
+          providerDisplayName: p.providerDisplayName,
+          createdAt: p.createdAt.toISO(),
+        })) ?? [],
       streamer: user.streamer
         ? {
             id: user.streamer.id,
             userId: user.streamer.userId,
             twitchUserId: user.streamer.twitchUserId,
+            twitchUsername: user.streamer.twitchLogin,
             twitchDisplayName: user.streamer.twitchDisplayName,
             twitchLogin: user.streamer.twitchLogin,
             profileImageUrl: user.streamer.profileImageUrl,
@@ -57,6 +78,7 @@ export default class AuthController {
             broadcasterType: user.streamer.broadcasterType,
           }
         : null,
+      createdAt: user.createdAt.toISO(),
     }
   }
 
@@ -298,9 +320,9 @@ export default class AuthController {
   async me({ auth }: HttpContext) {
     const user = auth.user!
 
-    // Charger le streamer pour tous les utilisateurs (MJ et STREAMER)
-    await user.load((loader) => loader.load('streamer'))
+    // Charger le streamer et les auth providers
+    await user.load((loader) => loader.load('streamer').load('authProviders'))
 
-    return this.formatUserResponse(user)
+    return await this.formatUserResponse(user)
   }
 }

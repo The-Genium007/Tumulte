@@ -112,6 +112,16 @@
             <!-- Divider -->
             <div class="my-1 border-t border-default"></div>
 
+            <!-- Mon compte -->
+            <NuxtLink
+              to="/account"
+              @click="isOpen = false"
+              class="flex items-center gap-3 px-4 py-2 text-sm text-primary-500 hover:bg-neutral-100 rounded-lg transition-colors"
+            >
+              <UIcon name="i-lucide-user" class="size-4" />
+              <span>Mon compte</span>
+            </NuxtLink>
+
             <!-- Réglages -->
             <NuxtLink
               to="/settings"
@@ -120,6 +130,17 @@
             >
               <UIcon name="i-lucide-settings" class="size-4" />
               <span>Réglages</span>
+            </NuxtLink>
+
+            <!-- Admin Dashboard (admin only) -->
+            <NuxtLink
+              v-if="isAdmin"
+              to="/admin"
+              @click="isOpen = false"
+              class="flex items-center gap-3 px-4 py-2 text-sm text-error-500 hover:bg-error-100 rounded-lg transition-colors"
+            >
+              <UIcon name="i-lucide-shield" class="size-4" />
+              <span>Dashboard Admin</span>
             </NuxtLink>
 
             <!-- Support -->
@@ -159,7 +180,7 @@ import { usePwaInstall } from '@/composables/usePwaInstall'
 import { useSupportWidget } from '@/composables/useSupportWidget'
 
 const router = useRouter()
-const { user, logout } = useAuth()
+const { user, logout, isAdmin } = useAuth()
 const { invitationCount, hasInvitations } = useNotifications()
 const { canInstall, install } = usePwaInstall()
 const { openSupport } = useSupportWidget()

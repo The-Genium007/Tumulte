@@ -269,4 +269,4 @@ class TwitchAuthService {
   }
 }
 
-export { TwitchAuthService as twitchAuthService }
+export { TwitchAuthService, TwitchAuthService as twitchAuthService }

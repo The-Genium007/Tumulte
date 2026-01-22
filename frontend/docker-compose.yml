@@ -2,7 +2,11 @@ services:
   # Frontend - Nuxt dashboard
   # ENV_SUFFIX differentiates environments: "prod" or "staging"
   # Cloudflare tunnel uses: tumulte-frontend-prod:3000 or tumulte-frontend-staging:3000
+  #
+  # SWARM MODE: Deploy with `docker stack deploy -c docker-compose.yml tumulte`
+  # COMPOSE MODE: Deploy with `docker compose up -d` (replicas ignored)
   frontend:
+    # container_name is ignored in Swarm mode (dynamic naming with replicas)
     container_name: tumulte-frontend-${ENV_SUFFIX:-prod}
     hostname: tumulte-frontend-${ENV_SUFFIX:-prod}
     build:
@@ -37,6 +41,9 @@ services:
       retries: 3
       start_period: 15s
     deploy:
+      # Number of replicas (Swarm mode only)
+      # Frontend is stateless, safe to scale horizontally
+      replicas: ${FRONTEND_REPLICAS:-2}
       resources:
         limits:
           cpus: '1'
@@ -44,10 +51,30 @@ services:
         reservations:
           cpus: '0.5'
           memory: 512M
+      # Rolling update configuration
       update_config:
         parallelism: 1
         delay: 10s
         failure_action: rollback
+        order: start-first
+        monitor: 30s
+      # Automatic rollback on failure
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: pause
+        order: start-first
+      # Restart policy (Swarm mode - replaces 'restart: unless-stopped')
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      # Placement constraints (optional - for multi-node clusters)
+      # placement:
+      #   constraints:
+      #     - node.role == worker
+      #     - node.labels.type == frontend
 
 # Networks
 networks:

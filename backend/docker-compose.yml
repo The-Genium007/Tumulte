@@ -2,7 +2,11 @@ services:
   # Backend - AdonisJS API + WebSocket
   # ENV_SUFFIX differentiates environments: "prod" or "staging"
   # Cloudflare tunnel uses: tumulte-backend-prod:3333 or tumulte-backend-staging:3333
+  #
+  # SWARM MODE: Deploy with `docker stack deploy -c docker-compose.yml tumulte`
+  # COMPOSE MODE: Deploy with `docker compose up -d` (replicas ignored)
   backend:
+    # container_name is ignored in Swarm mode (dynamic naming with replicas)
     container_name: tumulte-backend-${ENV_SUFFIX:-prod}
     hostname: tumulte-backend-${ENV_SUFFIX:-prod}
     build:
@@ -75,6 +79,10 @@ services:
       retries: 3
       start_period: 40s
     deploy:
+      # Number of replicas (Swarm mode only)
+      # Set to 1 for backend due to migration handling in entrypoint
+      # Can be increased after initial deployment if migrations are handled separately
+      replicas: ${BACKEND_REPLICAS:-1}
       resources:
         limits:
           cpus: '2'
@@ -82,10 +90,30 @@ services:
         reservations:
           cpus: '1'
           memory: 1G
+      # Rolling update configuration
       update_config:
         parallelism: 1
         delay: 10s
         failure_action: rollback
+        order: start-first
+        monitor: 30s
+      # Automatic rollback on failure
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: pause
+        order: start-first
+      # Restart policy (Swarm mode - replaces 'restart: unless-stopped')
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      # Placement constraints (optional - for multi-node clusters)
+      # placement:
+      #   constraints:
+      #     - node.role == worker
+      #     - node.labels.type == backend
 
 # Networks
 networks:
