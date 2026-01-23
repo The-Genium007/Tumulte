@@ -20,33 +20,38 @@ export default defineNuxtConfig({
     '@vueuse/motion/nuxt',
   ],
 
-  // VueUse Motion - Animation presets
+  // VueUse Motion - Animation presets (bidirectional: play on scroll up & down)
   motion: {
     directives: {
       // Fade in depuis le bas (sections principales)
       'fade-up': {
         initial: { opacity: 0, y: 50 },
-        visibleOnce: { opacity: 1, y: 0, transition: { duration: 600, ease: 'easeOut' } },
+        visible: { opacity: 1, y: 0, transition: { duration: 600, ease: 'easeOut' } },
+        leave: { opacity: 0, y: 50, transition: { duration: 400, ease: 'easeIn' } },
       },
       // Fade in depuis la gauche
       'fade-left': {
         initial: { opacity: 0, x: -50 },
-        visibleOnce: { opacity: 1, x: 0, transition: { duration: 600, ease: 'easeOut' } },
+        visible: { opacity: 1, x: 0, transition: { duration: 600, ease: 'easeOut' } },
+        leave: { opacity: 0, x: -50, transition: { duration: 400, ease: 'easeIn' } },
       },
       // Fade in depuis la droite
       'fade-right': {
         initial: { opacity: 0, x: 50 },
-        visibleOnce: { opacity: 1, x: 0, transition: { duration: 600, ease: 'easeOut' } },
+        visible: { opacity: 1, x: 0, transition: { duration: 600, ease: 'easeOut' } },
+        leave: { opacity: 0, x: 50, transition: { duration: 400, ease: 'easeIn' } },
       },
       // Scale up (pour les cards)
       'scale-up': {
         initial: { opacity: 0, scale: 0.9 },
-        visibleOnce: { opacity: 1, scale: 1, transition: { duration: 500, ease: 'easeOut' } },
+        visible: { opacity: 1, scale: 1, transition: { duration: 500, ease: 'easeOut' } },
+        leave: { opacity: 0, scale: 0.9, transition: { duration: 300, ease: 'easeIn' } },
       },
       // Pop (pour les icônes/badges) - avec spring
       'pop': {
         initial: { opacity: 0, scale: 0.5 },
-        visibleOnce: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 20 } },
+        visible: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 20 } },
+        leave: { opacity: 0, scale: 0.5, transition: { duration: 200, ease: 'easeIn' } },
       },
     },
   },
@@ -90,9 +95,12 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3333',
       sentryDsn: process.env.NUXT_PUBLIC_SENTRY_DSN || '',
       envSuffix: process.env.ENV_SUFFIX || 'dev',
+      appVersion: process.env.npm_package_version || '1.0.0',
       // PostHog Analytics (EU)
       posthogKey: process.env.NUXT_PUBLIC_POSTHOG_KEY || '',
       posthogHost: process.env.NUXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
+      // Google Tag Manager (marketing pixels)
+      gtmId: process.env.NUXT_PUBLIC_GTM_ID || '',
     },
   },
 
@@ -260,16 +268,16 @@ export default defineNuxtConfig({
           'http-equiv': 'Content-Security-Policy',
           content: [
             "default-src 'self'",
-            // Scripts: self + inline (Vue/Nuxt needs it)
+            // Scripts: self + inline (Vue/Nuxt needs it) + GTM
             // Note: unsafe-eval only needed in dev for HMR, removed in production for security
-            `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'development' ? "'unsafe-eval'" : ''}`,
+            `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com ${process.env.NODE_ENV === 'development' ? "'unsafe-eval'" : ''}`,
             // Styles: self + inline (Tailwind/Vue needs it)
             "style-src 'self' 'unsafe-inline'",
             // Images: self + data URIs + Twitch CDN for profile images
             "img-src 'self' data: https: blob:",
-            // Connect: API backend + Twitch API + GitHub API + WebSocket + Iconify + PostHog
+            // Connect: API backend + Twitch API + GitHub API + WebSocket + Iconify + PostHog + GTM
             // Note: Backend URL is dynamic based on environment
-            `connect-src 'self' ${process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3333'} https://*.twitch.tv wss://*.twitch.tv https://api.github.com https://api.iconify.design https://*.traefik.me https://eu.i.posthog.com https://eu-assets.i.posthog.com`,
+            `connect-src 'self' ${process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3333'} https://*.twitch.tv wss://*.twitch.tv https://api.github.com https://api.iconify.design https://*.traefik.me https://eu.i.posthog.com https://eu-assets.i.posthog.com https://www.googletagmanager.com https://www.google-analytics.com https://analytics.google.com`,
             // Fonts: self + data URIs
             "font-src 'self' data:",
             // Workers: self + blob (for PWA service worker)

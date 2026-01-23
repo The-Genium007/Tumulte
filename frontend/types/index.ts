@@ -401,3 +401,19 @@ export interface DiceRollEvent {
   abilityRaw: string | null // Raw ability name for display (e.g., "Dextérité")
   modifiers: string[] | null // Detected modifiers (e.g., ["+2", "-1"])
 }
+
+// Cookie Consent types (RGPD)
+export type ConsentCategory = 'required' | 'analytics' | 'marketing'
+
+export interface CookieConsentPreferences {
+  /** Cookies essentiels - toujours actifs */
+  required: true
+  /** Cookies analytiques (PostHog) */
+  analytics: boolean
+  /** Cookies marketing (GTM, pixels publicitaires) */
+  marketing: boolean
+  /** Version du consentement pour re-prompter si politique change */
+  consentVersion: string
+  /** Timestamp ISO du consentement */
+  consentTimestamp: string
+}

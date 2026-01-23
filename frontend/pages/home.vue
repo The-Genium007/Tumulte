@@ -19,6 +19,7 @@ import LandingUseCases from '~/components/landing/LandingUseCases.vue'
 import LandingTestimonials from '~/components/landing/LandingTestimonials.vue'
 import LandingCta from '~/components/landing/LandingCta.vue'
 import { useAnalytics } from '~/composables/useAnalytics'
+import { useJsonLd } from '~/composables/useJsonLd'
 
 definePageMeta({
   layout: 'landing' as const,
@@ -38,14 +39,50 @@ onMounted(() => {
   })
 })
 
-// SEO
+// SEO - Meta tags complets pour referencement et partage social
+const baseUrl = 'https://tumulte.app'
+const ogImageUrl = `${baseUrl}/images/og-image.png`
+
 useSeoMeta({
-  title: 'Tumulte - Forgez des Légendes avec vos Communautés',
+  // Meta de base
+  title: 'Tumulte - Forgez des Legendes avec vos Communautes',
   description:
-    'Transformez vos viewers en acteurs de l\'aventure JDR. Sondages Twitch synchronisés sur plusieurs chaînes, décisions collectives, chaos mémorable.',
-  ogTitle: 'Tumulte - Forgez des Légendes avec vos Communautés',
+    "Transformez vos viewers en acteurs de l'aventure JDR. Sondages Twitch synchronises sur plusieurs chaines, decisions collectives, chaos memorable.",
+
+  // Open Graph (Facebook, LinkedIn, Discord)
+  ogTitle: 'Tumulte - Forgez des Legendes avec vos Communautes',
   ogDescription:
-    'Transformez vos viewers en acteurs de l\'aventure JDR. Sondages Twitch synchronisés sur plusieurs chaînes.',
+    "Transformez vos viewers en acteurs de l'aventure JDR. Sondages Twitch synchronises sur plusieurs chaines.",
   ogType: 'website',
+  ogImage: ogImageUrl,
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
+  ogImageAlt: 'Tumulte - Plateforme de sondages multi-streams pour JDR',
+  ogUrl: baseUrl,
+  ogSiteName: 'Tumulte',
+  ogLocale: 'fr_FR',
+
+  // Twitter Cards
+  twitterCard: 'summary_large_image',
+  twitterTitle: 'Tumulte - Forgez des Legendes avec vos Communautes',
+  twitterDescription:
+    "Transformez vos viewers en acteurs de l'aventure JDR. Sondages Twitch synchronises.",
+  twitterImage: ogImageUrl,
+  twitterImageAlt: 'Tumulte - Plateforme de sondages multi-streams pour JDR',
+  // twitterSite: '@tumulte_app', // Decommenter quand le compte Twitter existe
+  // twitterCreator: '@tumulte_app',
+
+  // SEO supplementaire
+  robots: 'index, follow',
+  author: 'Tumulte',
 })
+
+// URL canonique pour eviter le duplicate content
+useHead({
+  link: [{ rel: 'canonical', href: baseUrl }],
+})
+
+// JSON-LD - Donnees structurees pour Google
+const { injectLandingPageSchemas } = useJsonLd()
+injectLandingPageSchemas()
 </script>
