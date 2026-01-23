@@ -111,8 +111,8 @@ export default defineNuxtConfig({
       name: 'Tumulte - Multi-Stream Polling',
       short_name: 'Tumulte',
       description: 'Gestion de sondages multi-chaînes pour MJ de JDR',
-      theme_color: '#a855f7',
-      background_color: '#ffffff',
+      theme_color: '#0f0b04',
+      background_color: '#f2e4d4',
       display: 'standalone',
       orientation: 'portrait',
       scope: '/',
@@ -261,8 +261,8 @@ export default defineNuxtConfig({
         { name: 'apple-mobile-web-app-title', content: 'Tumulte' },
         { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'format-detection', content: 'telephone=no' },
-        // Theme color - Light mode only
-        { name: 'theme-color', content: '#a855f7' },
+        // Theme color - Brand color (marron foncé)
+        { name: 'theme-color', content: '#0f0b04' },
         // Content Security Policy for defense in depth
         {
           'http-equiv': 'Content-Security-Policy',

@@ -155,8 +155,10 @@
   --color-bg-muted: #ffffff;
   --color-bg-elevated: #ffffff;
   --color-bg-inverse: #0f172a;
-  --color-bg-brand-light: #f5f3ff;
-  --color-bg-primary-light: #f5f3ff;
+  --color-bg-brand-light: #f5f3f0;
+  --color-bg-primary-light: #f5f3f0;
+  --color-bg-brand-medium: #e8e4dd;
+  --color-bg-primary-medium: #e8e4dd;
   --color-bg-success-light: #f0fdf4;
   --color-bg-error-light: #fef2f2;
   --color-bg-warning-light: #fffbeb;
@@ -220,33 +222,168 @@
 }
 
 /* ============================================================================
-   THÈME CLAIR PERMANENT
+   GRADIENT UTILITIES - Classes utilitaires cross-browser
+   Compatible: Chrome 89+, Firefox 83+, Safari 15+, Edge 89+
    ============================================================================ */
 
+/* Gradient Brand - Dégradé principal marron/doré */
+.gradient-brand {
+  background: linear-gradient(135deg, var(--color-gradient-brand-start), var(--color-gradient-brand-end));
+}
+
+.gradient-brand-vertical {
+  background: linear-gradient(180deg, var(--color-gradient-brand-start), var(--color-gradient-brand-end));
+}
+
+.gradient-brand-horizontal {
+  background: linear-gradient(90deg, var(--color-gradient-brand-start), var(--color-gradient-brand-end));
+}
+
+/* Gradient avec 3 couleurs */
+.gradient-brand-full {
+  background: linear-gradient(
+    135deg,
+    var(--color-gradient-brand-start) 0%,
+    var(--color-gradient-brand-middle) 50%,
+    var(--color-gradient-brand-end) 100%
+  );
+}
+
+/* Gradient Secondary - Pour les accents */
+.gradient-secondary {
+  background: linear-gradient(135deg, var(--color-secondary-400), var(--color-secondary-600));
+}
+
+/* Gradient Text - Texte avec dégradé */
+.gradient-text-brand {
+  background: linear-gradient(135deg, var(--color-secondary-600), var(--color-secondary-400));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Gradient Page Background - Pour les pages sombres */
+.gradient-page-dark {
+  background: linear-gradient(135deg, var(--color-brand-950), var(--color-secondary-950), var(--color-brand-950));
+}
+
+/* Gradient Glow - Effet lumineux derrière les éléments */
+.gradient-glow {
+  background: linear-gradient(135deg, var(--color-secondary-300), var(--color-secondary-500));
+  filter: blur(40px);
+  opacity: 0.3;
+}
+
+/* ============================================================================
+   THEMING SYSTEM - Light/Dark Mode Support
+   ============================================================================
+
+   Variables sémantiques qui s'adaptent au thème.
+   Pour activer le dark mode :
+   1. Retirer colorMode.preference: 'light' dans nuxt.config.ts
+   2. Les variables ci-dessous s'adapteront automatiquement
+
+   ============================================================================ */
+
+/* === LIGHT THEME (Default) === */
 :root {
   color-scheme: light;
+
+  /* Semantic Colors - These change based on theme */
+  --theme-bg: var(--color-bg-page);
+  --theme-bg-subtle: var(--color-bg-subtle);
+  --theme-bg-muted: var(--color-bg-muted);
+  --theme-bg-elevated: var(--color-bg-elevated);
+  --theme-bg-inverse: var(--color-bg-inverse);
+
+  --theme-text: var(--color-text-primary);
+  --theme-text-secondary: var(--color-text-secondary);
+  --theme-text-muted: var(--color-text-muted);
+  --theme-text-disabled: var(--color-text-disabled);
+  --theme-text-inverse: var(--color-text-inverse);
+
+  --theme-border: var(--color-neutral-200);
+  --theme-border-muted: var(--color-neutral-100);
+  --theme-border-strong: var(--color-neutral-300);
+
+  /* Card & Surface */
+  --theme-card-bg: #ffffff;
+  --theme-card-border: var(--color-neutral-200);
+  --theme-card-shadow: rgba(0, 0, 0, 0.05);
+
+  /* Input */
+  --theme-input-bg: var(--color-primary-100);
+  --theme-input-border: var(--color-primary-200);
+  --theme-input-text: var(--color-primary-500);
+  --theme-input-placeholder: var(--color-primary-400);
 }
 
+/* === DARK THEME === */
+/* Prêt pour activation future - Retire "html.dark { color-scheme: light; }" pour activer */
+html.dark {
+  color-scheme: dark;
+
+  /* Dark semantic colors */
+  --theme-bg: var(--color-dark-bg-base);
+  --theme-bg-subtle: var(--color-dark-bg-surface);
+  --theme-bg-muted: var(--color-dark-bg-surface);
+  --theme-bg-elevated: var(--color-dark-bg-elevated);
+  --theme-bg-inverse: var(--color-bg-page);
+
+  --theme-text: var(--color-dark-text-primary);
+  --theme-text-secondary: var(--color-dark-text-secondary);
+  --theme-text-muted: var(--color-dark-text-muted);
+  --theme-text-disabled: var(--color-dark-text-subtle);
+  --theme-text-inverse: var(--color-text-primary);
+
+  --theme-border: var(--color-dark-border);
+  --theme-border-muted: rgba(42, 37, 32, 0.5);
+  --theme-border-strong: rgba(58, 51, 44, 1);
+
+  /* Card & Surface */
+  --theme-card-bg: var(--color-dark-bg-surface);
+  --theme-card-border: var(--color-dark-border);
+  --theme-card-shadow: rgba(0, 0, 0, 0.3);
+
+  /* Input */
+  --theme-input-bg: var(--color-dark-bg-elevated);
+  --theme-input-border: var(--color-dark-border);
+  --theme-input-text: var(--color-dark-text-primary);
+  --theme-input-placeholder: var(--color-dark-text-muted);
+}
+
+/* Nuxt UI Dark Mode Override - Force les composants UI à utiliser nos couleurs */
+.dark {
+  --ui-text-dimmed: var(--color-dark-text-subtle);
+  --ui-text-muted: var(--color-dark-text-muted);
+  --ui-text-toned: var(--color-dark-text-secondary);
+  --ui-text: var(--color-dark-text-primary);
+  --ui-text-highlighted: var(--color-dark-text-primary);
+  --ui-text-inverted: var(--color-text-primary);
+  --ui-bg: var(--color-dark-bg-surface);
+  --ui-bg-muted: var(--color-dark-bg-base);
+  --ui-bg-elevated: var(--color-dark-bg-elevated);
+  --ui-bg-accented: var(--color-dark-bg-hover);
+  --ui-bg-inverted: var(--color-bg-page);
+  --ui-border: var(--color-dark-border);
+  --ui-border-muted: var(--color-dark-border);
+  --ui-border-accented: var(--color-dark-bg-hover);
+  --ui-border-inverted: var(--color-bg-page);
+}
+
+/* === TEMPORARY: Force Light Mode === */
+/* TODO: Supprimer ce bloc quand le dark mode sera prêt */
 html.dark {
   color-scheme: light;
-}
 
-.dark {
-  --ui-text-dimmed: var(--ui-color-neutral-400);
-  --ui-text-muted: var(--ui-color-neutral-500);
-  --ui-text-toned: var(--ui-color-neutral-600);
-  --ui-text: var(--ui-color-neutral-700);
-  --ui-text-highlighted: var(--ui-color-neutral-900);
-  --ui-text-inverted: var(--color-white);
-  --ui-bg: var(--color-white);
-  --ui-bg-muted: var(--ui-color-neutral-50);
-  --ui-bg-elevated: var(--ui-color-neutral-100);
-  --ui-bg-accented: var(--ui-color-neutral-200);
-  --ui-bg-inverted: var(--ui-color-neutral-900);
-  --ui-border: var(--ui-color-neutral-200);
-  --ui-border-muted: var(--ui-color-neutral-200);
-  --ui-border-accented: var(--ui-color-neutral-300);
-  --ui-border-inverted: var(--ui-color-neutral-900);
+  --theme-bg: var(--color-bg-page);
+  --theme-bg-subtle: var(--color-bg-subtle);
+  --theme-bg-muted: var(--color-bg-muted);
+  --theme-bg-elevated: var(--color-bg-elevated);
+  --theme-text: var(--color-text-primary);
+  --theme-text-secondary: var(--color-text-secondary);
+  --theme-text-muted: var(--color-text-muted);
+  --theme-card-bg: #ffffff;
 }
 
 /* ============================================================================
@@ -325,6 +462,43 @@ h6 {
 }
 .bg-warning-light {
   background-color: var(--color-bg-warning-light);
+}
+.bg-warning-medium {
+  background-color: var(--color-warning-200);
+}
+.bg-brand-medium {
+  background-color: var(--color-bg-brand-medium);
+}
+.bg-primary-medium {
+  background-color: var(--color-bg-primary-medium);
+}
+
+/* Borders sémantiques */
+.border-brand-light {
+  border-color: var(--color-brand-200);
+}
+.border-primary-light {
+  border-color: var(--color-primary-200);
+}
+.border-warning-light {
+  border-color: var(--color-warning-200);
+}
+.border-success-light {
+  border-color: var(--color-success-200);
+}
+.border-error-light {
+  border-color: var(--color-error-200);
+}
+.border-info-light {
+  border-color: var(--color-info-200);
+}
+
+/* Rings sémantiques */
+.ring-brand-light {
+  --tw-ring-color: var(--color-brand-200);
+}
+.ring-primary-light {
+  --tw-ring-color: var(--color-primary-200);
 }
 .bg-info-light {
   background-color: var(--color-bg-info-light);

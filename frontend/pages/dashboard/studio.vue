@@ -433,6 +433,10 @@ definePageMeta({
   middleware: ['auth'],
 })
 
+useHead({
+  title: 'Studio Overlay - Tumulte',
+})
+
 const { isDesktop } = useDevice()
 
 const store = useOverlayStudioStore()

@@ -8,7 +8,7 @@
           class="inline-flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors mb-4"
         >
           <UIcon name="i-lucide-arrow-left" class="size-4" />
-          Retour a l'accueil
+          Retour à l'accueil
         </NuxtLink>
 
         <slot />

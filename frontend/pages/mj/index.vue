@@ -168,6 +168,10 @@ definePageMeta({
   middleware: ['auth'],
 })
 
+useHead({
+  title: 'Mes Campagnes - Tumulte',
+})
+
 const config = useRuntimeConfig()
 const API_URL = config.public.apiBase
 const route = useRoute()

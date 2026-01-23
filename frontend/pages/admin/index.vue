@@ -239,6 +239,14 @@ definePageMeta({
   middleware: 'auth',
 })
 
+useHead({
+  title: 'Admin - Tumulte',
+})
+
+useSeoMeta({
+  robots: 'noindex, nofollow',
+})
+
 interface AdminMetrics {
   users: {
     total: number

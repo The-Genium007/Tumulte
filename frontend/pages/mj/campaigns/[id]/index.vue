@@ -13,6 +13,7 @@
               square
               class="group shrink-0"
               to="/mj"
+              aria-label="Retour aux campagnes"
             >
               <template #leading>
                 <UIcon

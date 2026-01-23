@@ -41,7 +41,7 @@
             <!-- Author -->
             <div class="flex items-center gap-3 pt-2 border-t border-primary-100">
               <div
-                class="size-10 rounded-full bg-linear-to-br from-secondary-400 to-primary-500 flex items-center justify-center text-white font-bold text-sm"
+                class="size-10 rounded-full bg-linear-to-br from-secondary-400 to-secondary-600 flex items-center justify-center text-white font-bold text-sm"
               >
                 {{ testimonial.initials }}
               </div>

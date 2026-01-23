@@ -490,6 +490,10 @@ definePageMeta({
   middleware: ['auth'],
 })
 
+useHead({
+  title: 'Paramètres - Tumulte',
+})
+
 const route = useRoute()
 const router = useRouter()
 const { user, logout, resendVerificationEmail } = useAuth()

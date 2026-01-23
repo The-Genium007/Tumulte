@@ -45,6 +45,7 @@ const rowClass = computed(() => {
       v-if="isActive"
       class="flex items-center justify-center w-12 sm:w-14 bg-error-500 hover:bg-error-600 text-white transition-colors shrink-0 disabled:opacity-70 disabled:cursor-not-allowed"
       :disabled="cancelling"
+      aria-label="Annuler le sondage"
       @click="emit('cancel')"
     >
       <UIcon
@@ -58,6 +59,7 @@ const rowClass = computed(() => {
       v-else
       class="flex items-center justify-center w-12 sm:w-14 bg-primary hover:bg-primary-600 text-white transition-colors shrink-0"
       :disabled="launching"
+      aria-label="Lancer le sondage"
       @click="emit('launch', poll.id)"
     >
       <UIcon

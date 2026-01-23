@@ -318,6 +318,10 @@ definePageMeta({
   middleware: ['auth'],
 })
 
+useHead({
+  title: 'Dashboard Streamer - Tumulte',
+})
+
 const config = useRuntimeConfig()
 const API_URL = config.public.apiBase
 const { user: _user } = useAuth()
