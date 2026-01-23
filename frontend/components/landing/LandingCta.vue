@@ -69,11 +69,7 @@
                   >
                     <span class="flex items-center gap-1">
                       <UIcon name="i-lucide-check" class="size-4 text-success-500" />
-                      Sans carte bancaire
-                    </span>
-                    <span class="flex items-center gap-1">
-                      <UIcon name="i-lucide-check" class="size-4 text-success-500" />
-                      Gratuit pour commencer
+                      Gratuit
                     </span>
                     <span class="flex items-center gap-1">
                       <UIcon name="i-lucide-check" class="size-4 text-success-500" />

@@ -61,19 +61,24 @@
 <script setup lang="ts">
 const benefits = [
   {
-    icon: 'i-lucide-zap',
-    title: 'Lancement instantané',
-    description: 'Un clic lance le sondage sur toutes les chaînes simultanément.',
+    icon: 'i-lucide-vote',
+    title: 'Sondages multi-streams',
+    description: 'Lancez des votes synchronisés sur toutes les chaînes. Résultats agrégés en temps réel.',
   },
   {
-    icon: 'i-lucide-target',
-    title: 'Votes unifiés',
-    description: 'Les votes de chaque communauté comptent ensemble vers un même résultat.',
+    icon: 'i-lucide-swords',
+    title: 'Interactions en jeu',
+    description: 'Vos viewers influencent directement l\'aventure : choix narratifs, actions des personnages.',
   },
   {
-    icon: 'i-lucide-activity',
-    title: 'Résultats en temps réel',
-    description: 'Agrégation instantanée, visualisation en direct sur votre dashboard.',
+    icon: 'i-lucide-user-plus',
+    title: 'Création de PNJ',
+    description: 'Laissez la communauté façonner les personnages qui peupleront votre univers.',
+  },
+  {
+    icon: 'i-lucide-sparkles',
+    title: 'Événements aléatoires',
+    description: 'Déclenchez des rebondissements votés par le public pour pimenter vos sessions.',
   },
 ]
 </script>

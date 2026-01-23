@@ -21,11 +21,11 @@
               <!-- Header avec image -->
               <div class="flex flex-col sm:flex-row gap-4 items-start">
                 <div class="w-full sm:w-32 shrink-0">
-                  <ImagePlaceholder
-                    label="persona-gm.webp"
-                    aspect="square"
-                    icon="i-lucide-crown"
-                    class="w-full"
+                  <img
+                    src="/images/landing/persona-gm.webp"
+                    alt="Maître du Jeu orchestrant une partie de JDR"
+                    class="w-full rounded-xl"
+                    loading="lazy"
                   />
                 </div>
                 <div class="space-y-2">
@@ -68,11 +68,11 @@
               <!-- Header avec image -->
               <div class="flex flex-col sm:flex-row gap-4 items-start">
                 <div class="w-full sm:w-32 shrink-0">
-                  <ImagePlaceholder
-                    label="persona-streamer.webp"
-                    aspect="square"
-                    icon="i-simple-icons-twitch"
-                    class="w-full"
+                  <img
+                    src="/images/landing/persona-streamer.webp"
+                    alt="Streamer Twitch engageant sa communauté"
+                    class="w-full rounded-xl"
+                    loading="lazy"
                   />
                 </div>
                 <div class="space-y-2">
@@ -116,19 +116,20 @@
 </template>
 
 <script setup lang="ts">
-import ImagePlaceholder from './ImagePlaceholder.vue'
-
 const gmFeatures = [
-  'Créez des campagnes multi-streams en quelques clics',
-  'Préparez des sondages qui changent le cours de l\'histoire',
-  'Suivez l\'engagement de toutes les communautés en temps réel',
-  'Programmez vos interventions à l\'avance',
+  'Forgez des campagnes multi-streams en quelques incantations',
+  'Préparez des sondages qui bouleversent le destin des héros',
+  'Observez l\'engagement de toutes les communautés en temps réel',
+  'Orchestrez vos interventions comme un stratège légendaire',
+  'Offrez à chaque viewer un rôle clé dans l\'épopée',
 ]
 
 const streamerFeatures = [
-  'Rejoignez une campagne en un seul clic',
-  'Engagez votre communauté dans l\'aventure collective',
-  'Overlay OBS personnalisable pour l\'immersion',
-  'Zéro friction, zéro configuration technique',
+  'Ralliez votre chaîne à une campagne d\'un simple clic',
+  'Embarquez votre communauté dans une quête collective',
+  'Offrez à chaque viewer un rôle clé dans la légende',
+  'Overlay enchanteur pour une immersion totale',
+  'Gardez le contrôle : déconnectez-vous à tout moment',
+  'Permissions minimales, sécurité maximale',
 ]
 </script>

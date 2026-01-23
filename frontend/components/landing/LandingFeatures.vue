@@ -62,7 +62,7 @@ const steps = [
   {
     title: 'Invoquer',
     description:
-      'Créez votre campagne et invitez les streamers de votre table. En quelques clics, votre cercle est formé.',
+      'Rassemblez vos alliés streamers sous une même bannière. Formez le cercle qui scellera le destin de vos aventures.',
     icon: 'i-lucide-users-round',
     imageLabel: 'Création campagne',
     image: '/images/landing/step-1.webp',
@@ -70,15 +70,15 @@ const steps = [
   {
     title: 'Déchaîner',
     description:
-      'Lancez un sondage. Il apparaît instantanément sur tous les chats Twitch liés. La magie opère.',
+      'Lancez votre sondage. En un instant, tous les royaumes reçoivent l\'appel. Les communautés unies tremblent d\'anticipation.',
     icon: 'i-lucide-send',
     imageLabel: 'Lancement sondage',
-    image: null,
+    image: '/images/landing/step-2.webp',
   },
   {
     title: 'Révéler',
     description:
-      'Les votes affluent de tous les royaumes. Les résultats s\'agrègent en temps réel. Le destin est scellé.',
+      'Les voix convergent depuis chaque royaume. Le verdict tombe, forgé par des centaines de volontés. L\'histoire s\'écrit.',
     icon: 'i-lucide-bar-chart-3',
     imageLabel: 'Résultats agrégés',
     image: '/images/landing/step-3.webp',

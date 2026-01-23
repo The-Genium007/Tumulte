@@ -39,11 +39,11 @@
 
         <!-- Image -->
         <div v-motion-scale-up :delay="200" class="order-1 lg:order-2">
-          <ImagePlaceholder
-            label="problem.webp - Confusion multi-communautés"
-            aspect="square"
-            icon="i-lucide-cloud-lightning"
-            class="w-full max-w-md mx-auto lg:max-w-none"
+          <img
+            src="/images/landing/problem.webp"
+            alt="Illustration du chaos des communautés fragmentées - plusieurs chats Twitch déconnectés"
+            class="w-full max-w-md mx-auto lg:max-w-none rounded-2xl shadow-xl"
+            loading="lazy"
           />
         </div>
       </div>
@@ -52,8 +52,6 @@
 </template>
 
 <script setup lang="ts">
-import ImagePlaceholder from './ImagePlaceholder.vue'
-
 const painPoints = [
   {
     icon: 'i-lucide-split',
