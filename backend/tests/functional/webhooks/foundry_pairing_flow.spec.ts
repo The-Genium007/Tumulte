@@ -86,7 +86,7 @@ test.group('Foundry Webhook - Complete Pairing Flow', (group) => {
     assert.equal(completedResponse.body().connectionId, connection.id)
     assert.exists(completedResponse.body().sessionToken)
     assert.exists(completedResponse.body().refreshToken)
-    assert.equal(completedResponse.body().serverUrl, 'https://api.tumulte.app')
+    assert.equal(completedResponse.body().serverUrl, 'https://api-app.tumulte.app')
 
     // Step 5: Module can now use ping endpoint
     const pingResponse = await client.post('/webhooks/foundry/ping').json({
