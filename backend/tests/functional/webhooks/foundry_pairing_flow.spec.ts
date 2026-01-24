@@ -74,7 +74,7 @@ test.group('Foundry Webhook - Complete Pairing Flow', (group) => {
       sessionToken: 'test_session_' + faker.string.alphanumeric(40),
       refreshToken: 'test_refresh_' + faker.string.alphanumeric(40),
       expiresIn: 3600,
-      serverUrl: 'https://api.tumulte.app',
+      serverUrl: 'https://api-app.tumulte.app',
     }
     await redis.setex(`pairing:completed:${worldId}`, 300, JSON.stringify(completedData))
 
