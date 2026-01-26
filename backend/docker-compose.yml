@@ -30,6 +30,8 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_DATABASE: ${DB_DATABASE}
+      DB_POOL_MIN: ${DB_POOL_MIN:-2}
+      DB_POOL_MAX: ${DB_POOL_MAX:-20}
 
       # Redis
       REDIS_CONNECTION: ${REDIS_CONNECTION:-main}
@@ -42,6 +44,11 @@ services:
       TWITCH_CLIENT_ID: ${TWITCH_CLIENT_ID}
       TWITCH_CLIENT_SECRET: ${TWITCH_CLIENT_SECRET}
       TWITCH_REDIRECT_URI: ${TWITCH_REDIRECT_URI}
+
+      # Google OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI}
 
       # Discord Support
       DISCORD_SUPPORT_WEBHOOK_URL: ${DISCORD_SUPPORT_WEBHOOK_URL}
@@ -69,6 +76,14 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
       VAPID_SUBJECT: ${VAPID_SUBJECT}
+
+      # Email (Resend)
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-noreply@tumulte.app}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Tumulte}
+
+      # Administrators
+      ADMIN_EMAILS: ${ADMIN_EMAILS}
     networks:
       - dokploy-network
     restart: unless-stopped
