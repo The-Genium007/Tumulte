@@ -1,8 +1,26 @@
 // User types
+export type UserTier = 'free' | 'premium' | 'admin'
+
+export interface AuthProvider {
+  id: string
+  provider: 'twitch' | 'google'
+  providerUserId: string
+  providerEmail: string | null
+  providerDisplayName: string | null
+  createdAt: string
+}
+
 export interface User {
   id: string
   displayName: string
   email: string | null
+  emailVerifiedAt: string | null
+  tier: UserTier
+  avatarUrl: string | null
+  isAdmin: boolean
+  isPremium: boolean
+  hasPassword: boolean
+  authProviders: AuthProvider[]
   streamer: {
     id: string
     userId: string
@@ -14,6 +32,30 @@ export interface User {
     isActive: boolean
     broadcasterType: string
   } | null
+  createdAt: string
+}
+
+// Auth-related types
+export interface LoginCredentials {
+  email: string
+  password: string
+}
+
+export interface RegisterData {
+  displayName: string
+  email: string
+  password: string
+  passwordConfirmation: string
+}
+
+export interface AuthResponse {
+  user: User
+  message?: string
+}
+
+export interface AuthError {
+  error: string
+  errors?: Record<string, string[]>
 }
 
 // Campaign types
@@ -358,4 +400,20 @@ export interface DiceRollEvent {
   ability: string | null // Normalized ability key (e.g., "dexterity")
   abilityRaw: string | null // Raw ability name for display (e.g., "Dextérité")
   modifiers: string[] | null // Detected modifiers (e.g., ["+2", "-1"])
+}
+
+// Cookie Consent types (RGPD)
+export type ConsentCategory = 'required' | 'analytics' | 'marketing'
+
+export interface CookieConsentPreferences {
+  /** Cookies essentiels - toujours actifs */
+  required: true
+  /** Cookies analytiques (PostHog) */
+  analytics: boolean
+  /** Cookies marketing (GTM, pixels publicitaires) */
+  marketing: boolean
+  /** Version du consentement pour re-prompter si politique change */
+  consentVersion: string
+  /** Timestamp ISO du consentement */
+  consentTimestamp: string
 }

@@ -26,8 +26,12 @@
       >
         <DiceBox
           :notation="currentDiceNotation"
-          :sounds="true"
-          :volume="50"
+          :custom-colorset="diceBoxConfig?.customColorset"
+          :texture="diceBoxConfig?.texture"
+          :material="diceBoxConfig?.material"
+          :light-intensity="diceBoxConfig?.lightIntensity"
+          :sounds="diceAudioConfig?.rollSound.enabled ?? true"
+          :volume="(diceAudioConfig?.rollSound.volume ?? 0.7) * 100"
           @roll-complete="handleDiceRollComplete"
         />
       </div>
@@ -97,6 +101,28 @@ const diceHudConfig = computed(() => {
 const diceCriticalColors = computed(() => {
   if (!diceElement.value) return undefined
   return (diceElement.value.properties as DiceProperties).colors
+})
+
+// Config DiceBox (couleurs, texture, matériau) depuis l'élément dice
+const diceBoxConfig = computed(() => {
+  if (!diceElement.value) return undefined
+  const props = diceElement.value.properties as DiceProperties
+  return {
+    customColorset: {
+      foreground: props.diceBox.colors.foreground,
+      background: props.diceBox.colors.background,
+      outline: props.diceBox.colors.outline,
+    },
+    texture: props.diceBox.texture,
+    material: props.diceBox.material,
+    lightIntensity: props.diceBox.lightIntensity,
+  }
+})
+
+// Config audio depuis l'élément dice
+const diceAudioConfig = computed(() => {
+  if (!diceElement.value) return undefined
+  return (diceElement.value.properties as DiceProperties).audio
 })
 
 // Style de positionnement du HUD basé sur hudTransform
