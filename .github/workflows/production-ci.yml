@@ -59,7 +59,7 @@ jobs:
         run: |
           rm -rf node_modules
           npm cache clean --force
-          npm ci
+          npm install
 
       - name: Prepare Nuxt (generate .nuxt types)
         working-directory: ./frontend
@@ -194,7 +194,7 @@ jobs:
         run: |
           rm -rf node_modules
           npm cache clean --force
-          npm ci
+          npm install
 
       - name: Prepare Nuxt (generate .nuxt types)
         working-directory: ./frontend
@@ -455,7 +455,7 @@ jobs:
         run: |
           rm -rf node_modules
           npm cache clean --force
-          npm ci
+          npm install
 
       - name: Build frontend for production
         working-directory: ./frontend
@@ -588,7 +588,7 @@ jobs:
         run: |
           rm -rf node_modules
           npm cache clean --force
-          npm ci
+          npm install
 
       - name: Install Playwright
         working-directory: ./frontend
