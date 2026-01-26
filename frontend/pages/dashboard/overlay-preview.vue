@@ -99,12 +99,29 @@
               <DiceBox
                 :ref="(el: unknown) => setDiceBoxRef(element.id, el)"
                 :notation="selectedElementId === element.id ? currentDiceNotation : ''"
-                :sounds="true"
-                :volume="50"
+                :custom-colorset="getDiceConfigFromElement(element)?.diceBox.customColorset"
+                :texture="getDiceConfigFromElement(element)?.diceBox.texture"
+                :material="getDiceConfigFromElement(element)?.diceBox.material"
+                :light-intensity="getDiceConfigFromElement(element)?.diceBox.lightIntensity"
+                :sounds="getDiceConfigFromElement(element)?.audio.rollSound.enabled ?? true"
+                :volume="(getDiceConfigFromElement(element)?.audio.rollSound.volume ?? 0.7) * 100"
                 @roll-complete="handleDiceRollComplete"
                 @ready="() => handleDiceBoxReady(element.id)"
               />
             </div>
+          </template>
+
+          <!-- Dice Roll HUD Overlay (pour la preview) -->
+          <template v-for="element in visibleElements" :key="`hud-${element.id}`">
+            <DiceRollOverlay
+              v-if="element.type === 'dice' && selectedElementId === element.id"
+              :dice-roll="currentPreviewDiceRoll"
+              :visible="isPreviewDiceHudVisible"
+              :hud-config="getDiceConfigFromElement(element)?.hud"
+              :critical-colors="getDiceConfigFromElement(element)?.criticalColors"
+              :style="getDiceHudStyleFromElement(element) as CSSProperties"
+              @hidden="isPreviewDiceHudVisible = false"
+            />
           </template>
 
           <!-- Message si aucune configuration -->
@@ -139,12 +156,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick, type CSSProperties } from 'vue'
 import PreviewPollElement from '@/overlay-studio/components/PreviewPollElement.vue'
 import PreviewControls from '@/overlay-studio/components/PreviewControls.vue'
+import DiceRollOverlay from '@/components/overlay/DiceRollOverlay.vue'
 import { useOverlayStudioStore } from '@/overlay-studio/stores/overlayStudio'
 import { useOverlayStudioApi } from '@/overlay-studio/composables/useOverlayStudioApi'
-import type { PollProperties, DiceRollEvent, OverlayElement } from '@/overlay-studio/types'
+import { getDiceConfigFromElement, getDiceHudStyleFromElement } from '@/composables/useOverlayElement'
+import type { PollProperties, DiceProperties, DiceRollEvent, OverlayElement } from '@/overlay-studio/types'
 import type { AnimationState } from '@/overlay-studio/composables/useAnimationController'
 
 definePageMeta({
@@ -216,6 +235,11 @@ const elementRefs = ref<Record<string, any>>({})
 const diceBoxRefs = ref<Record<string, any>>({})
 const currentDiceNotation = ref('')
 const diceBoxReady = ref(false)
+
+// État pour le HUD de dés dans la preview
+const currentPreviewDiceRoll = ref<DiceRollEvent | null>(null)
+const isPreviewDiceHudVisible = ref(false)
+let diceHudTimeout: ReturnType<typeof setTimeout> | null = null
 
 // Éléments de la configuration
 const elements = computed(() => store.elements)
@@ -426,6 +450,10 @@ onUnmounted(() => {
     resizeObserver.disconnect()
     resizeObserver = null
   }
+  if (diceHudTimeout) {
+    clearTimeout(diceHudTimeout)
+    diceHudTimeout = null
+  }
 })
 
 // Surveiller les changements d'éléments pour mettre à jour les états
@@ -628,6 +656,15 @@ const handleRollDice = async (data: DiceRollEvent) => {
   // Mettre à jour l'état
   elementStates.value[selectedElementId.value] = 'active'
 
+  // Afficher le HUD avec les données du roll
+  currentPreviewDiceRoll.value = data
+  isPreviewDiceHudVisible.value = true
+
+  // Annuler le timeout précédent si existant
+  if (diceHudTimeout) {
+    clearTimeout(diceHudTimeout)
+  }
+
   // Construire la notation avec les résultats forcés si disponibles
   // Format DiceBox: "2d20@5,15" pour forcer les résultats à 5 et 15
   let notation = data.rollFormula
@@ -654,6 +691,15 @@ const handleRollDice = async (data: DiceRollEvent) => {
     // Fallback: utiliser la prop notation
     currentDiceNotation.value = notation
   }
+
+  // Récupérer la durée d'affichage depuis les propriétés de l'élément
+  const diceConfig = getDiceConfigFromElement(selectedElement)
+  const displayDuration = (diceConfig?.animations.settle.timeout ?? 5) * 1000
+
+  // Cacher le HUD après la durée configurée
+  diceHudTimeout = setTimeout(() => {
+    isPreviewDiceHudVisible.value = false
+  }, displayDuration)
 }
 </script>
 
