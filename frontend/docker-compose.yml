@@ -86,6 +86,13 @@ services:
       SENTRY_ORG: ${SENTRY_ORG}
       SENTRY_PROJECT: ${SENTRY_PROJECT}
       SENTRY_AUTH_TOKEN: ${SENTRY_AUTH_TOKEN}
+
+      # Analytics (PostHog)
+      NUXT_PUBLIC_POSTHOG_KEY: ${NUXT_PUBLIC_POSTHOG_KEY}
+      NUXT_PUBLIC_POSTHOG_HOST: ${NUXT_PUBLIC_POSTHOG_HOST:-https://eu.i.posthog.com}
+
+      # Analytics (GTM - optional)
+      NUXT_PUBLIC_GTM_ID: ${NUXT_PUBLIC_GTM_ID}
     networks:
       - dokploy-network
     restart: unless-stopped
