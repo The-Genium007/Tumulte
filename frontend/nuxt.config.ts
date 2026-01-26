@@ -399,4 +399,38 @@ export default defineNuxtConfig({
       exclude: ['@adonisjs/transmit-client'],
     },
   },
+
+  // Nitro server configuration for Docker Swarm scaling
+  nitro: {
+    // Enable compression at build time for static assets
+    compressPublicAssets: {
+      gzip: true,
+      brotli: true,
+    },
+
+    // Route rules for caching (complements middleware)
+    routeRules: {
+      // Health endpoints - no caching
+      '/health/**': {
+        cache: false,
+        headers: { 'Cache-Control': 'no-store' },
+      },
+
+      // Metrics endpoint - no caching
+      '/metrics': {
+        cache: false,
+        headers: { 'Cache-Control': 'no-store' },
+      },
+
+      // Static assets - aggressive caching
+      '/_nuxt/**': {
+        headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
+      },
+
+      // PWA manifest
+      '/manifest.webmanifest': {
+        headers: { 'Cache-Control': 'public, max-age=86400' },
+      },
+    },
+  },
 })
