@@ -1,25 +1,25 @@
 {{--
-  Bulletproof button for emails
+  Epic CTA button for emails - Fantasy adventure style
   @param {string} url - The button URL
   @param {string} text - The button text
-  @param {string} [variant='primary'] - Button variant: 'primary' or 'outline'
+  @param {string} [variant='primary'] - Button variant: 'primary' (gold) or 'secondary' (dark)
 --}}
 @set('variant', variant || 'primary')
-@set('bgColor', variant === 'primary' ? '#0f0b04' : '#ffffff')
-@set('textColor', variant === 'primary' ? '#ffffff' : '#0f0b04')
-@set('borderColor', '#0f0b04')
+@set('bgColor', variant === 'primary' ? '#c9a227' : '#2d251c')
+@set('textColor', variant === 'primary' ? '#1a1612' : '#d8b790')
+@set('hoverBg', variant === 'primary' ? '#b8911f' : '#3d3228')
 
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 24px auto;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 0 auto;">
   <tr>
-    <td style="border-radius: 8px; background-color: {{ bgColor }}; border: 2px solid {{ borderColor }};">
+    <td style="border-radius: 10px; background-color: {{ bgColor }};">
       <!--[if mso]>
-      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ url }}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="17%" strokecolor="{{ borderColor }}" fillcolor="{{ bgColor }}">
+      <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ url }}" style="height:52px;v-text-anchor:middle;width:240px;" arcsize="19%" fillcolor="{{ bgColor }}">
         <w:anchorlock/>
-        <center style="color:{{ textColor }};font-family:sans-serif;font-size:16px;font-weight:600;">{{ text }}</center>
+        <center style="color:{{ textColor }};font-family:sans-serif;font-size:16px;font-weight:700;">{{ text }}</center>
       </v:roundrect>
       <![endif]-->
       <!--[if !mso]><!-->
-      <a href="{{ url }}" style="display: inline-block; padding: 14px 32px; font-size: 16px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: {{ textColor }}; text-decoration: none; border-radius: 8px; background-color: {{ bgColor }}; line-height: 1.2;">
+      <a href="{{ url }}" style="display: inline-block; padding: 16px 36px; font-size: 16px; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; color: {{ textColor }}; text-decoration: none; border-radius: 10px; background-color: {{ bgColor }}; line-height: 1.2; letter-spacing: 0.3px;">
         {{ text }}
       </a>
       <!--<![endif]-->

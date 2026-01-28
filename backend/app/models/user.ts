@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, hasOne, hasMany, computed, beforeSave } from '@adonisjs/lucid/orm'
+import { BaseModel, column, hasOne, hasMany, computed } from '@adonisjs/lucid/orm'
 import { DbRememberMeTokensProvider } from '@adonisjs/auth/session'
 import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
@@ -35,15 +35,8 @@ const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
  * - Admin status is determined by ADMIN_EMAILS env variable
  */
 class User extends compose(BaseModel, AuthFinder) {
-  /**
-   * Hash password before saving to database
-   */
-  @beforeSave()
-  static async hashPasswordBeforeSave(user: User) {
-    if (user.$dirty.password && user.password) {
-      user.password = await hash.make(user.password)
-    }
-  }
+  // Note: Password hashing is handled automatically by the AuthFinder mixin
+  // Do NOT add a @beforeSave hook for password hashing - it would cause double hashing
 
   @column({ isPrimary: true })
   declare id: string

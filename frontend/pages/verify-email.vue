@@ -12,37 +12,27 @@
     </template>
 
     <div class="space-y-6">
-      <!-- État authentifié : affiche l'email -->
-      <template v-if="isAuthenticated && user?.email">
-        <p class="text-center text-muted">
-          Nous avons envoyé un email de vérification à
-          <span class="font-medium text-default">{{ user.email }}</span
-          >.
-        </p>
+      <!-- Message d'information sur la vérification -->
+      <p class="text-center text-muted">
+        Nous avons envoyé un email de vérification à
+        <span class="font-medium text-default">{{ user?.email }}</span
+        >.
+      </p>
 
-        <p class="text-center text-sm text-muted">
-          Cliquez sur le lien dans l'email pour activer votre compte. Si vous ne trouvez pas
-          l'email, vérifiez vos spams.
-        </p>
-      </template>
+      <p class="text-center text-sm text-muted">
+        Cliquez sur le lien dans l'email pour activer votre compte. Si vous ne trouvez pas
+        l'email, vérifiez vos spams.
+      </p>
 
-      <!-- État non authentifié : message informatif -->
-      <template v-else-if="!loading">
-        <UAlert
-          color="warning"
-          variant="soft"
-          icon="i-lucide-log-in"
-          title="Connexion requise"
-          description="Connectez-vous pour renvoyer l'email de vérification à votre adresse."
-        />
-      </template>
-
-      <!-- État de chargement -->
-      <template v-else>
-        <div class="flex justify-center py-4">
-          <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted" />
-        </div>
-      </template>
+      <!-- Info sur la redirection après vérification -->
+      <UAlert
+        v-if="route.query.redirect"
+        color="info"
+        variant="soft"
+        icon="i-lucide-info"
+        title="Vérification requise"
+        description="Vérifiez votre email pour accéder à cette page."
+      />
 
       <UAlert
         v-if="successMessage"
@@ -67,9 +57,8 @@
       </UAlert>
 
       <div class="space-y-3">
-        <!-- Bouton Renvoyer : visible uniquement si authentifié -->
+        <!-- Bouton Renvoyer l'email -->
         <UButton
-          v-if="isAuthenticated"
           block
           size="lg"
           variant="outline"
@@ -81,21 +70,9 @@
           <template v-else> Renvoyer l'email </template>
         </UButton>
 
-        <!-- Bouton Se connecter : visible si non authentifié -->
-        <UButton v-else block size="lg" to="/login"> Se connecter </UButton>
-
-        <UButton
-          v-if="isAuthenticated"
-          block
-          size="lg"
-          variant="ghost"
-          to="/login"
-          @click="handleLogout"
-        >
+        <!-- Utiliser un autre compte -->
+        <UButton block size="lg" variant="ghost" @click="handleLogout">
           Utiliser un autre compte
-        </UButton>
-        <UButton v-else block size="lg" variant="ghost" to="/register">
-          Créer un compte
         </UButton>
       </div>
     </div>
@@ -108,9 +85,11 @@ import { useAuth } from '@/composables/useAuth'
 
 definePageMeta({
   layout: 'auth' as const,
+  middleware: 'auth-unverified',
 })
 
-const { user, isAuthenticated, loading, fetchMe, resendVerificationEmail, logout } = useAuth()
+const { user, resendVerificationEmail, logout } = useAuth()
+const route = useRoute()
 
 const resending = ref(false)
 const cooldown = ref(0)
@@ -120,27 +99,18 @@ const isSessionExpired = ref(false)
 
 let cooldownInterval: ReturnType<typeof setInterval> | null = null
 
-// Tenter de récupérer l'utilisateur au montage
-onMounted(async () => {
-  if (!user.value) {
-    try {
-      await fetchMe()
-    } catch {
-      // Pas de session, l'utilisateur devra se connecter
+// Le middleware auth-unverified s'occupe de l'authentification
+// Si on arrive ici, l'utilisateur est forcément connecté (sinon redirigé vers /login)
+onMounted(() => {
+  // Cooldown initial pour éviter le spam d'envoi d'emails
+  cooldown.value = 10
+  cooldownInterval = setInterval(() => {
+    cooldown.value--
+    if (cooldown.value <= 0 && cooldownInterval) {
+      clearInterval(cooldownInterval)
+      cooldownInterval = null
     }
-  }
-
-  // Cooldown initial seulement si authentifié
-  if (isAuthenticated.value) {
-    cooldown.value = 10
-    cooldownInterval = setInterval(() => {
-      cooldown.value--
-      if (cooldown.value <= 0 && cooldownInterval) {
-        clearInterval(cooldownInterval)
-        cooldownInterval = null
-      }
-    }, 1000)
-  }
+  }, 1000)
 })
 
 async function handleResend() {

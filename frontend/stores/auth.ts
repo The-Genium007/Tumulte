@@ -77,6 +77,15 @@ export const useAuthStore = defineStore('auth', () => {
         credentials: 'include',
       })
 
+      // Handle 401 Unauthorized - session expired or invalid
+      // CRITICAL: Always clear offline data on 401 to prevent "ghost account" state
+      if (response.status === 401) {
+        user.value = null
+        isOfflineData.value = false
+        await clearUserData()
+        throw new Error('Session expired')
+      }
+
       if (!response.ok) {
         throw new Error('Failed to fetch user')
       }
@@ -93,7 +102,8 @@ export const useAuthStore = defineStore('auth', () => {
       // Identify user in PostHog analytics
       identifyUserInAnalytics(freshUser)
     } catch (error) {
-      // If we have offline data, don't clear the user
+      // On network error (offline), keep offline data if available
+      // But if we explicitly got a 401, user is already cleared above
       if (!isOfflineData.value) {
         user.value = null
       }

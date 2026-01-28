@@ -4,6 +4,7 @@ import env from '#start/env'
 import User from '#models/user'
 import logger from '@adonisjs/core/services/logger'
 import mailService from '#services/mail/mail_service'
+import welcomeEmailService from '#services/mail/welcome_email_service'
 
 /**
  * Service for handling email verification
@@ -91,6 +92,12 @@ class EmailVerificationService {
     await user.markEmailAsVerified()
 
     logger.info({ userId: user.id, email: user.email }, 'Email verified successfully')
+
+    // Send welcome email now that email is verified (non-blocking)
+    welcomeEmailService.sendWelcomeEmail(user).catch((error) => {
+      logger.error({ userId: user.id, error }, 'Failed to send welcome email after verification')
+    })
+
     return user
   }
 

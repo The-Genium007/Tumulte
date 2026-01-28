@@ -4,6 +4,7 @@ import logger from '@adonisjs/core/services/logger'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { Edge } from 'edge.js'
+import { migrate } from 'edge.js/plugins/migrate'
 
 // Calculate views path relative to this file
 const __filename = fileURLToPath(import.meta.url)
@@ -32,6 +33,9 @@ class MailService {
     // Initialize Edge with views directory
     this.edge = new Edge()
     this.edge.mount(viewsPath)
+
+    // Enable legacy @layout/@section syntax support (required for Edge.js v6)
+    this.edge.use(migrate)
   }
 
   /**
