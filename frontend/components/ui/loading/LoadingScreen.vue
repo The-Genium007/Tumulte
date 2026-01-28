@@ -6,7 +6,7 @@
         'loading-screen',
         'fixed inset-0 z-50',
         'flex items-center justify-center',
-        isDark ? 'dark-theme' : 'light-theme'
+        isDark ? 'dark-theme' : 'light-theme',
       ]"
     >
       <!-- Motif décoratif en arrière-plan -->
@@ -24,9 +24,7 @@
         />
 
         <!-- Texte de chargement -->
-        <p class="loading-text text-sm font-medium tracking-wider uppercase">
-          Chargement...
-        </p>
+        <p class="loading-text text-sm font-medium tracking-wider uppercase">Chargement...</p>
       </div>
     </div>
   </Transition>
@@ -121,7 +119,8 @@ const isDark = computed(() => colorMode.value === 'dark')
 
 /* === ANIMATIONS === */
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.4;
   }
@@ -132,7 +131,8 @@ const isDark = computed(() => colorMode.value === 'dark')
 }
 
 @keyframes pulse-glow-dark {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.3;
   }

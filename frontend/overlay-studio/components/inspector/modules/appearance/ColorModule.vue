@@ -661,7 +661,8 @@ watch(
 .alpha-checkerboard {
   position: absolute;
   inset: 0;
-  background: repeating-conic-gradient(var(--ui-bg-accented) 0% 25%, var(--ui-bg) 0% 50%) 50% / 8px 8px;
+  background: repeating-conic-gradient(var(--ui-bg-accented) 0% 25%, var(--ui-bg) 0% 50%) 50% / 8px
+    8px;
   border-radius: 6px;
 }
 

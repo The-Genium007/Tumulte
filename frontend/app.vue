@@ -1,9 +1,6 @@
 <template>
   <UApp>
-    <UiLoadingScreen
-      :is-visible="isLoading"
-      @transition-end="onTransitionEnd"
-    />
+    <UiLoadingScreen :is-visible="isLoading" @transition-end="onTransitionEnd" />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
