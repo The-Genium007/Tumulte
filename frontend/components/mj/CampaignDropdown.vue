@@ -109,7 +109,7 @@ onUnmounted(() => {
 <template>
   <div
     ref="triggerRef"
-    class="relative w-full bg-neutral-100 rounded-lg cursor-pointer transition-all"
+    class="relative w-full bg-muted rounded-lg cursor-pointer transition-all"
     :class="{ 'rounded-b-none': isOpen }"
     :style="{ minHeight: height || '70px' }"
   >
@@ -132,7 +132,7 @@ onUnmounted(() => {
             class="text-sm text-muted flex items-center gap-2"
           >
             <span>Foundry VTT</span>
-            <span class="text-neutral-300">•</span>
+            <span class="text-muted">•</span>
             <span class="flex items-center gap-1.5">
               <span
                 class="w-2 h-2 rounded-full"
@@ -172,7 +172,7 @@ onUnmounted(() => {
       <div
         v-if="isOpen"
         ref="dropdownRef"
-        class="fixed bg-white border border-neutral-200 border-t-0 rounded-b-lg shadow-lg z-50 max-h-64 overflow-y-auto"
+        class="fixed bg-elevated border border-default border-t-0 rounded-b-lg shadow-lg z-50 max-h-64 overflow-y-auto"
         :style="{
           top: dropdownStyle.top,
           left: dropdownStyle.left,
@@ -189,7 +189,7 @@ onUnmounted(() => {
           v-for="campaign in campaigns"
           v-else
           :key="campaign.id"
-          class="flex items-center gap-4 px-5 py-4 hover:bg-neutral-50 cursor-pointer transition-colors border-t border-neutral-100 first:border-t-0"
+          class="flex items-center gap-4 px-5 py-4 hover:bg-muted cursor-pointer transition-colors border-t border-default first:border-t-0"
           :class="{
             'bg-brand-50': campaign.id === modelValue,
           }"
@@ -206,7 +206,7 @@ onUnmounted(() => {
             <!-- VTT info if connected, otherwise player count -->
             <p v-if="campaign.vttConnection" class="text-xs text-muted flex items-center gap-1.5">
               <span>Foundry VTT</span>
-              <span class="text-neutral-300">•</span>
+              <span class="text-muted">•</span>
               <span class="flex items-center gap-1">
                 <span
                   class="w-1.5 h-1.5 rounded-full"

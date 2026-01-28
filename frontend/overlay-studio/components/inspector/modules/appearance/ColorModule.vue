@@ -132,8 +132,8 @@ const isDraggingHue = ref(false)
 const isDraggingAlpha = ref(false)
 
 const inputUi = {
-  root: 'ring-0 border-0 rounded-lg overflow-hidden',
-  base: 'px-2 py-1.5 bg-neutral-100 text-neutral-700 placeholder:text-neutral-400 rounded-lg text-xs font-mono',
+  root: 'ring-0 rounded-lg overflow-hidden',
+  base: 'px-2 py-1.5 bg-(--ui-bg-elevated) text-(--ui-text) border border-(--ui-border) placeholder:text-(--ui-text-muted) rounded-lg text-xs font-mono',
 }
 
 // === Color conversion utilities ===
@@ -708,13 +708,20 @@ watch(
   font-family: ui-monospace, monospace;
   color: var(--ui-text);
   background: var(--ui-bg-elevated);
-  border: none;
+  border: 1px solid var(--ui-border);
   border-radius: 6px;
   outline: none;
-  transition: box-shadow 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.picker-input:hover {
+  border-color: var(--ui-primary);
 }
 
 .picker-input:focus {
+  border-color: var(--ui-primary);
   box-shadow: 0 0 0 2px var(--ui-primary);
 }
 

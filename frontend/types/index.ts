@@ -220,6 +220,7 @@ export interface PollStartEvent {
   durationSeconds: number
   startedAt: string
   endsAt: string
+  campaign_id?: string
 }
 
 export interface PollEndEvent {
@@ -240,7 +241,7 @@ export interface LiveStatus {
   title?: string
   // eslint-disable-next-line @typescript-eslint/naming-convention
   viewer_count?: number
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+
   started_at?: string
 }
 
@@ -382,6 +383,7 @@ export interface CampaignSettings {
 // Dice Roll types (VTT Integration)
 export interface DiceRollEvent {
   id: string
+  campaignId?: string
   characterId: string
   characterName: string
   characterAvatar: string | null

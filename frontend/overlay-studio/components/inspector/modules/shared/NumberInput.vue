@@ -145,12 +145,17 @@ onUnmounted(() => {
   font-weight: 500;
   color: var(--ui-text);
   background: var(--ui-bg-elevated);
-  border: none;
+  border: 1px solid var(--ui-border);
   border-radius: 6px;
   text-align: center;
   font-variant-numeric: tabular-nums;
   -moz-appearance: textfield;
   appearance: textfield;
+  transition: border-color 0.15s ease;
+}
+
+.number-input:hover {
+  border-color: var(--ui-primary);
 }
 
 .number-input::-webkit-inner-spin-button,
@@ -167,15 +172,16 @@ onUnmounted(() => {
 
 .spin-buttons {
   position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
   display: flex;
   flex-direction: column;
   width: 20px;
   border-left: 1px solid var(--ui-border);
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 5px 5px 0;
   overflow: hidden;
+  background: var(--ui-bg-elevated);
 }
 
 .spin-button {
@@ -194,11 +200,12 @@ onUnmounted(() => {
 .spin-button:hover {
   background: var(--ui-bg-accented);
   color: var(--ui-primary);
+  border-color: var(--ui-primary);
 }
 
 .spin-button:active {
-  background: var(--ui-bg-accented);
-  color: var(--ui-primary);
+  background: var(--ui-primary);
+  color: white;
 }
 
 .spin-button-up {

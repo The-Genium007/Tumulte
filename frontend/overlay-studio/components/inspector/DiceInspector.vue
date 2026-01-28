@@ -525,7 +525,10 @@
             v-model="previewDiceType"
             :items="diceTypeOptions"
             size="xs"
-            :ui="{ base: 'w-24 bg-neutral-100', trailingIcon: 'text-primary-700' }"
+            :ui="{
+              base: 'w-24 bg-(--ui-bg-elevated) border border-(--ui-border)',
+              trailingIcon: 'text-(--ui-primary)',
+            }"
           />
         </div>
 
@@ -697,10 +700,10 @@ const diceTypeOptions: { label: string; value: DiceType; maxValue: number }[] = 
 
 // Configuration UI pour les selects (fond neutre comme les inputs, chevron coloré)
 const selectUiConfig = {
-  base: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300',
-  trailingIcon: 'text-primary-700 dark:text-primary-400',
-  content: 'bg-white dark:bg-neutral-800',
-  item: 'text-neutral-700 dark:text-neutral-200 data-highlighted:bg-neutral-100 dark:data-highlighted:bg-neutral-700',
+  base: 'bg-(--ui-bg-elevated) text-(--ui-text) border border-(--ui-border)',
+  trailingIcon: 'text-(--ui-primary)',
+  content: 'bg-(--ui-bg-elevated) border border-(--ui-border)',
+  item: 'text-(--ui-text) data-highlighted:bg-(--ui-bg-accented)',
 }
 
 // ===== DiceBox Updates =====

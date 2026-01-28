@@ -70,8 +70,8 @@ const statusConfig = computed(() => {
       return {
         icon: 'i-lucide-plug-zap',
         color: 'neutral',
-        bgClass: 'bg-neutral-100',
-        iconClass: 'text-neutral-400',
+        bgClass: 'bg-muted',
+        iconClass: 'text-muted',
         label: 'Foundry',
         value: 'Déconnecté',
       }
@@ -147,7 +147,7 @@ const tooltipText = computed(() => {
       >
         <UIcon :name="statusConfig.icon" :class="['size-7', statusConfig.iconClass]" />
         <div class="flex flex-col items-center">
-          <p class="text-xs text-primary-500 font-medium">{{ statusConfig.label }}</p>
+          <p class="text-xs text-primary font-medium">{{ statusConfig.label }}</p>
           <p class="text-xl font-bold text-primary">{{ statusConfig.value }}</p>
         </div>
       </div>
@@ -167,7 +167,7 @@ const tooltipText = computed(() => {
           <UIcon :name="statusConfig.icon" :class="['size-5', statusConfig.iconClass]" />
         </div>
         <div class="flex-1">
-          <p class="text-xs text-primary-500 font-medium">{{ statusConfig.label }}</p>
+          <p class="text-xs text-primary font-medium">{{ statusConfig.label }}</p>
           <p class="text-lg font-bold text-primary">{{ statusConfig.value }}</p>
         </div>
       </div>

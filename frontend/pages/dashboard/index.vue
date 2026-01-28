@@ -48,8 +48,8 @@
           v-else-if="authorizationStatuses.length === 0"
           class="flex flex-col items-center justify-center text-center py-12"
         >
-          <UIcon name="i-lucide-shield-off" class="size-12 text-neutral-400 mb-4" />
-          <p class="text-body text-neutral-400">Aucune campagne active</p>
+          <UIcon name="i-lucide-shield-off" class="size-12 text-muted mb-4" />
+          <p class="text-body text-muted">Aucune campagne active</p>
           <p class="text-caption mt-1">
             Acceptez une invitation pour gérer vos autorisations de sondages
           </p>

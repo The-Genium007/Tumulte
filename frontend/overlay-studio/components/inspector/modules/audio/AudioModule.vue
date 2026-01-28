@@ -92,9 +92,9 @@ const emit = defineEmits<{
 
 // UI customization for selects
 const selectUi = {
-  base: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300',
-  content: 'bg-white dark:bg-neutral-800',
-  item: 'text-neutral-700 dark:text-neutral-200 data-highlighted:bg-neutral-100 dark:data-highlighted:bg-neutral-700',
+  base: 'bg-(--ui-bg-elevated) text-(--ui-text) border border-(--ui-border)',
+  content: 'bg-(--ui-bg-elevated) border border-(--ui-border)',
+  item: 'text-(--ui-text) data-highlighted:bg-(--ui-bg-accented)',
 }
 
 const isPlaying = ref(false)
@@ -200,7 +200,7 @@ onUnmounted(() => {
   justify-content: center;
   width: 28px;
   height: 28px;
-  border: none;
+  border: 1px solid var(--ui-border);
   background: var(--ui-bg);
   border-radius: 6px;
   cursor: pointer;
@@ -212,6 +212,7 @@ onUnmounted(() => {
 .volume-button:hover:not(:disabled) {
   background: var(--ui-bg-accented);
   color: var(--ui-text);
+  border-color: var(--ui-primary);
 }
 
 .volume-button:disabled {

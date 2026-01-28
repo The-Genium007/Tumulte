@@ -279,8 +279,8 @@ const applyPreset = (preset: ShadowPreset) => {
 .toggle-button {
   flex: 1;
   padding: 0.375rem 0.5rem;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--ui-border);
+  background: var(--ui-bg);
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.75rem;
@@ -290,11 +290,13 @@ const applyPreset = (preset: ShadowPreset) => {
 
 .toggle-button:hover {
   color: var(--ui-text);
+  border-color: var(--ui-border);
 }
 
 .toggle-button.active {
   background: var(--ui-bg);
   color: var(--ui-text);
+  border-color: var(--ui-primary);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
