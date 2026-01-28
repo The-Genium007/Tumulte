@@ -25,7 +25,7 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "build": "node ace build",
-    "build:docker": "tsc && cp adonisrc.js build/adonisrc.js && cp package*.json build/ && cp -r database build/"
+    "build:docker": "tsc && cp adonisrc.js build/adonisrc.js && cp package*.json build/ && cp -r database build/ && cp -r resources build/"
   },
   "imports": {
     "#controllers/*": "./app/controllers/*.js",
