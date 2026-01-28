@@ -57,9 +57,9 @@
               :items="tabs"
               class="w-full"
               :ui="{
-                list: 'bg-[var(--theme-input-bg)]',
+                list: 'bg-[var(--theme-input-bg)] border border-[var(--theme-border)]',
                 trigger:
-                  'data-[state=inactive]:bg-transparent data-[state=inactive]:text-[var(--theme-text-muted)]',
+                  'data-[state=inactive]:bg-transparent data-[state=inactive]:text-[var(--theme-text-muted)] data-[state=inactive]:hover:bg-[var(--theme-card-bg-hover)] transition-colors',
               }"
             />
 
@@ -69,7 +69,11 @@
                 <label class="text-sm font-semibold text-secondary pl-2">
                   Titre du bug <span class="text-error-400">*</span>
                 </label>
-                <UInput v-model="bugTitle" placeholder="Ex: Impossible de lancer un sondage" />
+                <UInput
+                  v-model="bugTitle"
+                  placeholder="Ex: Impossible de lancer un sondage"
+                  class="support-input"
+                />
               </div>
 
               <div class="space-y-2">
@@ -80,6 +84,7 @@
                   v-model="bugDescription"
                   :rows="4"
                   placeholder="Ce qui s'est passé, étapes pour reproduire..."
+                  class="support-input"
                 />
               </div>
 
@@ -108,7 +113,11 @@
                 <label class="text-sm font-semibold text-secondary pl-2">
                   Titre de la suggestion <span class="text-error-400">*</span>
                 </label>
-                <UInput v-model="suggestionTitle" placeholder="Ex: Ajouter un mode sombre" />
+                <UInput
+                  v-model="suggestionTitle"
+                  placeholder="Ex: Ajouter un mode sombre"
+                  class="support-input"
+                />
               </div>
 
               <div class="space-y-2">
@@ -119,6 +128,7 @@
                   v-model="suggestionDescription"
                   :rows="4"
                   placeholder="Décris ton idée en détail..."
+                  class="support-input"
                 />
               </div>
 
@@ -267,3 +277,18 @@ const handleSend = async () => {
   }
 }
 </script>
+
+<style scoped>
+/* Bordures visibles pour les inputs en dark mode */
+:deep(.support-input input),
+:deep(.support-input textarea) {
+  border: 1px solid var(--theme-border) !important;
+  border-radius: 0.5rem;
+}
+
+:deep(.support-input input:focus),
+:deep(.support-input textarea:focus) {
+  border-color: var(--color-dark-accent, var(--color-secondary-400)) !important;
+  outline: none;
+}
+</style>
