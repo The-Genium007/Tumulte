@@ -76,6 +76,7 @@ export default [
         useDevice: 'readonly',
         usePwaInstall: 'readonly',
         useLoadingScreen: 'readonly',
+        useTimeFormat: 'readonly',
       },
     },
   },
