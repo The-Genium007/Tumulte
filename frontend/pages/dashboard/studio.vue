@@ -247,7 +247,7 @@
             autofocus
             :ui="{
               root: 'ring-0 border-0 rounded-lg overflow-hidden',
-              base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+              base: 'px-3.5 py-2.5 bg-(--theme-input-bg) text-(--theme-input-text) placeholder:text-(--theme-input-placeholder) rounded-lg',
             }"
             @keyup.enter="createNewConfig"
           />

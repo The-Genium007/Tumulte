@@ -70,7 +70,7 @@ const handleCancel = () => {
               class="w-full flex items-center gap-4 p-3 rounded-lg border-2 transition-all text-left hover:border-primary-400"
               :class="{
                 'border-primary-500 bg-primary-50': selectedCharacterId === character.id,
-                'border-neutral-200 bg-white': selectedCharacterId !== character.id,
+                'border-default bg-elevated': selectedCharacterId !== character.id,
               }"
               @click="selectedCharacterId = character.id"
             >
@@ -108,9 +108,9 @@ const handleCancel = () => {
 
           <!-- Empty state -->
           <div v-else class="flex flex-col items-center justify-center py-12 text-center">
-            <UIcon name="i-lucide-users" class="size-12 text-neutral-400 mb-4" />
-            <p class="text-base font-normal text-neutral-400">Aucun personnage disponible</p>
-            <p class="text-sm text-neutral-400 mt-1">
+            <UIcon name="i-lucide-users" class="size-12 text-muted mb-4" />
+            <p class="text-base font-normal text-muted">Aucun personnage disponible</p>
+            <p class="text-sm text-muted mt-1">
               Le MJ doit d'abord importer des personnages depuis le VTT.
             </p>
           </div>

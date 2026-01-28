@@ -134,7 +134,7 @@
             'p-3 rounded-lg border transition-all duration-300',
             isWinningOption(option)
               ? 'bg-linear-to-br from-warning-400 to-warning-200 border-warning-300 shadow-lg shadow-warning-500/20'
-              : 'bg-neutral-100 border-default',
+              : 'bg-muted border-default',
           ]"
         >
           <div class="flex items-center justify-between mb-2">

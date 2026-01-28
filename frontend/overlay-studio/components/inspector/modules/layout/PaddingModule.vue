@@ -172,8 +172,8 @@ const updateSide = (side: keyof PaddingConfig, value: number) => {
   justify-content: center;
   gap: 0.375rem;
   padding: 0.5rem;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--ui-border);
+  background: var(--ui-bg);
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.75rem;
@@ -183,11 +183,13 @@ const updateSide = (side: keyof PaddingConfig, value: number) => {
 
 .mode-button:hover {
   color: var(--ui-text);
+  border-color: var(--ui-border);
 }
 
 .mode-button.active {
   background: var(--ui-bg);
   color: var(--ui-text);
+  border-color: var(--ui-primary);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 

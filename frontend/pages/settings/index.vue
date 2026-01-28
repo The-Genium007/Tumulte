@@ -179,11 +179,11 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Services futurs VTT -->
-          <div class="p-4 rounded-lg bg-neutral-100 border border-default opacity-60">
+          <div class="p-4 rounded-lg bg-elevated border border-default opacity-60">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <div class="p-2">
-                  <UIcon name="i-lucide-video" class="size-6 text-neutral-500" />
+                  <UIcon name="i-lucide-video" class="size-6 text-muted" />
                 </div>
                 <div>
                   <h3 class="font-semibold text-primary">OBS Studio</h3>
@@ -195,7 +195,7 @@
           </div>
 
           <button
-            class="w-full p-4 rounded-lg bg-neutral-100 dark:bg-neutral-800 border border-default hover:border-primary hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors cursor-pointer text-left"
+            class="w-full p-4 rounded-lg bg-elevated border border-default hover:border-primary hover:bg-muted transition-colors cursor-pointer text-left"
             @click="showFoundrySlideover = true"
           >
             <div class="flex items-center justify-between">
@@ -212,11 +212,11 @@
             </div>
           </button>
 
-          <div class="p-4 rounded-lg bg-neutral-100 border border-default opacity-60">
+          <div class="p-4 rounded-lg bg-elevated border border-default opacity-60">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <div class="p-2">
-                  <UIcon name="i-lucide-flask-conical" class="size-6 text-neutral-500" />
+                  <UIcon name="i-lucide-flask-conical" class="size-6 text-muted" />
                 </div>
                 <div>
                   <h3 class="font-semibold text-primary">TaleSpire</h3>
@@ -227,11 +227,11 @@
             </div>
           </div>
 
-          <div class="p-4 rounded-lg bg-neutral-100 border border-default opacity-60">
+          <div class="p-4 rounded-lg bg-elevated border border-default opacity-60">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <div class="p-2">
-                  <UIcon name="i-lucide-dice-6" class="size-6 text-neutral-500" />
+                  <UIcon name="i-lucide-dice-6" class="size-6 text-muted" />
                 </div>
                 <div>
                   <h3 class="font-semibold text-primary">Owlbear Rodeo</h3>
@@ -333,7 +333,7 @@
             size="xl"
             :ui="{
               root: 'relative',
-              base: 'bg-neutral-50 border-neutral-200 focus:border-primary focus:ring-primary',
+              base: 'bg-(--theme-input-bg) text-(--theme-input-text) placeholder:text-(--theme-input-placeholder) focus:border-primary focus:ring-primary',
             }"
             required
           />
@@ -354,7 +354,7 @@
             size="xl"
             :ui="{
               root: 'relative',
-              base: 'bg-neutral-50 border-neutral-200 focus:border-primary focus:ring-primary',
+              base: 'bg-(--theme-input-bg) text-(--theme-input-text) placeholder:text-(--theme-input-placeholder) focus:border-primary focus:ring-primary',
             }"
             required
           />
@@ -374,7 +374,7 @@
             size="xl"
             :ui="{
               root: 'relative',
-              base: 'bg-neutral-50 border-neutral-200 focus:border-primary focus:ring-primary',
+              base: 'bg-(--theme-input-bg) text-(--theme-input-text) placeholder:text-(--theme-input-placeholder) focus:border-primary focus:ring-primary',
             }"
             required
           />
@@ -461,7 +461,7 @@
             size="lg"
             :ui="{
               root: 'ring-0 border-0 rounded-lg overflow-hidden',
-              base: 'px-3.5 py-2.5 bg-primary-100 text-primary-500 placeholder:text-primary-400 rounded-lg',
+              base: 'px-3.5 py-2.5 bg-(--theme-input-bg) text-(--theme-input-text) placeholder:text-(--theme-input-placeholder) rounded-lg',
             }"
           />
         </div>

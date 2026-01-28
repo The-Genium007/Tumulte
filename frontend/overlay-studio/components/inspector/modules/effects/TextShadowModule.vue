@@ -176,6 +176,7 @@ const updateField = <K extends keyof TextShadowConfig>(field: K, value: TextShad
   align-items: center;
   padding: 1.5rem;
   background: #1a1a2e;
+  border: 1px solid var(--ui-border);
   border-radius: 8px;
 }
 

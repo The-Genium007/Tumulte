@@ -29,9 +29,9 @@ const formatDuration = (seconds: number): string => {
  * Row background class based on state
  */
 const rowClass = computed(() => {
-  if (props.isActive) return 'bg-brand-50 border-brand-200'
-  if (props.isLastLaunched) return 'bg-neutral-100 border-neutral-200'
-  return 'bg-white border-neutral-100'
+  if (props.isActive) return 'bg-brand-light border-brand-light'
+  if (props.isLastLaunched) return 'bg-elevated border-default'
+  return 'bg-(--theme-card-bg) border-(--theme-border-muted)'
 })
 </script>
 
@@ -101,7 +101,7 @@ const rowClass = computed(() => {
 
     <!-- Actions button - full height square -->
     <div
-      class="flex items-center justify-center w-12 sm:w-14 bg-neutral-100 hover:bg-neutral-200 transition-colors shrink-0"
+      class="flex items-center justify-center w-12 sm:w-14 bg-elevated hover:bg-muted transition-colors shrink-0"
       :class="{ 'opacity-50': isActive }"
     >
       <MjEventActionsDropdown

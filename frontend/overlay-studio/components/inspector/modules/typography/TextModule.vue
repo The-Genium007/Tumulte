@@ -238,9 +238,9 @@ const textAlignOptions = [
 
 // UI customization for selects to make them more visible
 const selectUi = {
-  base: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300',
-  content: 'bg-white dark:bg-neutral-800',
-  item: 'text-neutral-700 dark:text-neutral-200 data-highlighted:bg-neutral-100 dark:data-highlighted:bg-neutral-700',
+  base: 'bg-(--ui-bg-elevated) text-(--ui-text) border border-(--ui-border)',
+  content: 'bg-(--ui-bg-elevated) border border-(--ui-border)',
+  item: 'text-(--ui-text) data-highlighted:bg-(--ui-bg-accented)',
 }
 
 const updateField = <K extends keyof TextStyleConfig>(field: K, value: TextStyleConfig[K]) => {
@@ -316,8 +316,8 @@ const toggleTextDecoration = (decoration: 'underline' | 'line-through') => {
   justify-content: center;
   width: 28px;
   height: 28px;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--ui-border);
+  background: var(--ui-bg);
   border-radius: 6px;
   cursor: pointer;
   color: var(--ui-text-muted);
@@ -327,10 +327,12 @@ const toggleTextDecoration = (decoration: 'underline' | 'line-through') => {
 .toggle-button:hover {
   background: var(--ui-bg-accented);
   color: var(--ui-text);
+  border-color: var(--ui-border);
 }
 
 .toggle-button.active {
   background: var(--ui-primary);
   color: white;
+  border-color: var(--ui-primary);
 }
 </style>
