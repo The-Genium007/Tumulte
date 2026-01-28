@@ -38,6 +38,18 @@ export default class Handler extends ExceptionHandler {
    * @note You should not attempt to send a response from this method.
    */
   async report(error: unknown, ctx: HttpContext) {
+    // Always log errors in test environment to help debug CI failures
+    if (app.inTest) {
+      const errorInfo = {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack?.split('\n').slice(0, 5).join('\n') : undefined,
+        method: ctx.request.method(),
+        url: ctx.request.url(true),
+      }
+      console.error('[ExceptionHandler] Error in test:', JSON.stringify(errorInfo, null, 2))
+    }
+
     if (this.shouldReport(error as any)) {
       logger.error(
         {
