@@ -1,6 +1,7 @@
 import app from '@adonisjs/core/services/app'
 import { HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import logger from '@adonisjs/core/services/logger'
+import { ValidationException } from '#middleware/validate_middleware'
 
 export default class Handler extends ExceptionHandler {
   /**
@@ -14,6 +15,16 @@ export default class Handler extends ExceptionHandler {
    * response to the client
    */
   async handle(error: unknown, ctx: HttpContext) {
+    /**
+     * Handle ValidationException with proper JSON response
+     */
+    if (error instanceof ValidationException) {
+      return ctx.response.status(400).json({
+        error: 'Validation failed',
+        details: error.details,
+      })
+    }
+
     /**
      * Forward rest of the exceptions to the parent class
      */
