@@ -381,6 +381,9 @@ export interface CampaignSettings {
 }
 
 // Dice Roll types (VTT Integration)
+// Import universal dice types
+import type { TermData, SystemData, SymbolResult } from './dice'
+
 export interface DiceRollEvent {
   id: string
   campaignId?: string
@@ -402,7 +405,17 @@ export interface DiceRollEvent {
   ability: string | null // Normalized ability key (e.g., "dexterity")
   abilityRaw: string | null // Raw ability name for display (e.g., "Dextérité")
   modifiers: string[] | null // Detected modifiers (e.g., ["+2", "-1"])
+  // NEW: Universal dice system data
+  /** Extracted term data from Foundry Roll (for advanced rendering) */
+  terms?: TermData[]
+  /** System-specific metadata (pools, narrative dice, etc.) */
+  systemData?: SystemData
+  /** Game system ID (dnd5e, wod5e, blades-in-the-dark, etc.) */
+  systemId?: string
 }
+
+// Re-export dice types for convenience
+export type { TermData, SystemData, SymbolResult } from './dice'
 
 // Gamification types (Overlay Events)
 export interface GamificationInstanceEvent {
