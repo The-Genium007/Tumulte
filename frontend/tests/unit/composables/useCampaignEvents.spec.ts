@@ -3,33 +3,45 @@ import { useCampaignEvents } from '~/composables/useCampaignEvents'
 import type { CampaignEvent } from '@/types/campaign-events'
 
 describe('useCampaignEvents', () => {
-  const mockEvents: CampaignEvent[] = [
+  // Use partial mocks with type assertions since CampaignEvent types are complex
+  const mockEvents = [
     {
-      id: 'event-1',
+      id: 'poll_event-1',
       type: 'poll',
-      title: 'Test Poll',
-      status: 'completed',
-      createdAt: '2024-01-15T10:00:00Z',
+      name: 'Test Poll',
       completedAt: '2024-01-15T10:05:00Z',
+      icon: 'i-lucide-bar-chart-2',
+      iconColor: 'text-success-600',
+      primaryResult: { text: 'Option A', success: true },
       metadata: {
-        pollId: 'poll-1',
-        winningOption: 'Option A',
+        pollInstanceId: 'poll-1',
+        options: ['Option A', 'Option B'],
+        winningOptions: ['Option A'],
         totalVotes: 150,
+        votesByOption: { 'Option A': 100, 'Option B': 50 },
       },
     },
     {
-      id: 'event-2',
-      type: 'gamification',
-      title: 'Dice Reverse',
-      status: 'active',
-      createdAt: '2024-01-15T10:10:00Z',
+      id: 'gamification_event-2',
+      type: 'gamification_dice_reverse',
+      name: 'Dice Reverse',
+      completedAt: '2024-01-15T10:10:00Z',
+      icon: 'i-lucide-dice-5',
+      iconColor: 'text-orange-500',
+      primaryResult: { text: 'Success', success: true },
       metadata: {
         eventSlug: 'gamification_dice_reverse',
+        eventName: 'Dice Reverse',
         instanceId: 'instance-1',
-        progress: 75,
+        objectiveTarget: 100,
+        currentProgress: 75,
+        progressPercentage: 75,
+        duration: 300,
+        triggerData: null,
+        resultData: null,
       },
     },
-  ]
+  ] as unknown as CampaignEvent[]
 
   let originalFetch: typeof global.fetch
 

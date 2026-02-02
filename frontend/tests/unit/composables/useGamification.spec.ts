@@ -7,7 +7,8 @@ import type {
 } from '@/types/api'
 
 describe('useGamification', () => {
-  const mockEvents: GamificationEvent[] = [
+  // Use partial mocks with type assertions since API types are complex
+  const mockEvents = [
     {
       id: 'event-1',
       name: 'Dice Reverse',
@@ -15,7 +16,6 @@ describe('useGamification', () => {
       description: 'Inverse le résultat du prochain jet de dé',
       actionType: 'dice_invert',
       isActive: true,
-      cooldownSeconds: 300,
       defaultCost: 1000,
     },
     {
@@ -25,36 +25,30 @@ describe('useGamification', () => {
       description: 'Ajoute des points de vie',
       actionType: 'stat_modify',
       isActive: true,
-      cooldownSeconds: 600,
       defaultCost: 500,
     },
-  ]
+  ] as unknown as GamificationEvent[]
 
-  const mockConfigs: CampaignGamificationConfig[] = [
+  const mockConfigs = [
     {
       id: 'config-1',
       campaignId: 'campaign-123',
       eventId: 'event-1',
-      eventName: 'Dice Reverse',
-      eventSlug: 'gamification_dice_reverse',
-      eventDescription: 'Inverse le résultat du prochain jet de dé',
-      actionType: 'dice_invert',
       isEnabled: true,
-      customCost: 1500,
-      cooldownSeconds: 300,
+      cost: 1500,
+      cooldown: 300,
+      effectiveCost: 1500,
     },
-  ]
+  ] as unknown as CampaignGamificationConfig[]
 
-  const mockInstance: GamificationInstance = {
+  const mockInstance = {
     id: 'instance-1',
     campaignId: 'campaign-123',
     eventId: 'event-1',
-    eventName: 'Dice Reverse',
-    eventSlug: 'gamification_dice_reverse',
     status: 'active',
     triggerData: {},
     createdAt: '2024-01-15T10:00:00Z',
-  }
+  } as unknown as GamificationInstance
 
   let originalFetch: typeof global.fetch
 
@@ -151,18 +145,15 @@ describe('useGamification', () => {
 
   describe('enableEvent', () => {
     it('should enable an event and add to configs', async () => {
-      const newConfig: CampaignGamificationConfig = {
+      const newConfig = {
         id: 'config-2',
         campaignId: 'campaign-123',
         eventId: 'event-2',
-        eventName: 'Bonus HP',
-        eventSlug: 'bonus_hp',
-        eventDescription: 'Ajoute des points de vie',
-        actionType: 'stat_modify',
         isEnabled: true,
-        customCost: 500,
-        cooldownSeconds: 600,
-      }
+        cost: 500,
+        cooldown: 600,
+        effectiveCost: 500,
+      } as unknown as CampaignGamificationConfig
 
       global.fetch = vi.fn().mockResolvedValueOnce({
         ok: true,
@@ -182,10 +173,11 @@ describe('useGamification', () => {
     })
 
     it('should update existing config if event already exists', async () => {
-      const updatedConfig: CampaignGamificationConfig = {
+      const updatedConfig = {
         ...mockConfigs[0],
-        customCost: 2000,
-      }
+        cost: 2000,
+        effectiveCost: 2000,
+      } as unknown as CampaignGamificationConfig
 
       // First, add a config
       global.fetch = vi.fn().mockResolvedValueOnce({
@@ -205,7 +197,7 @@ describe('useGamification', () => {
       await enableEvent('campaign-123', 'event-1')
 
       expect(configs.value).toHaveLength(1)
-      expect(configs.value[0].customCost).toBe(2000)
+      expect(configs.value[0]?.effectiveCost).toBe(2000)
     })
 
     it('should handle enable error with API message', async () => {
@@ -223,11 +215,12 @@ describe('useGamification', () => {
 
   describe('updateConfig', () => {
     it('should update an existing config', async () => {
-      const updatedConfig: CampaignGamificationConfig = {
+      const updatedConfig = {
         ...mockConfigs[0],
-        customCost: 2500,
-        cooldownSeconds: 400,
-      }
+        cost: 2500,
+        cooldown: 400,
+        effectiveCost: 2500,
+      } as unknown as CampaignGamificationConfig
 
       // First, fetch configs to populate the state
       global.fetch = vi
@@ -245,8 +238,8 @@ describe('useGamification', () => {
       await fetchCampaignConfigs('campaign-123')
 
       const result = await updateConfig('campaign-123', 'event-1', {
-        customCost: 2500,
-        cooldownSeconds: 400,
+        cost: 2500,
+        cooldown: 400,
       })
 
       expect(global.fetch).toHaveBeenLastCalledWith(
@@ -255,11 +248,11 @@ describe('useGamification', () => {
           method: 'PUT',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ customCost: 2500, cooldownSeconds: 400 }),
+          body: JSON.stringify({ cost: 2500, cooldown: 400 }),
         }
       )
       expect(result).toEqual(updatedConfig)
-      expect(configs.value[0].customCost).toBe(2500)
+      expect(configs.value[0]?.effectiveCost).toBe(2500)
     })
 
     it('should handle update error', async () => {
@@ -270,7 +263,7 @@ describe('useGamification', () => {
 
       const { error, updateConfig } = useGamification()
 
-      await expect(updateConfig('campaign-123', 'event-1', { customCost: -100 })).rejects.toThrow(
+      await expect(updateConfig('campaign-123', 'event-1', { cost: -100 })).rejects.toThrow(
         'Invalid cost'
       )
       expect(error.value).toBe('Invalid cost')
