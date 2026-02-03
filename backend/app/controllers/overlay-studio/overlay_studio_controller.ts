@@ -240,6 +240,39 @@ export default class OverlayStudioController {
   }
 
   /**
+   * Récupère les propriétés par défaut pour un type d'élément
+   * GET /overlay-studio/defaults/:type
+   * Endpoint public - pas besoin d'authentification
+   *
+   * Types supportés: poll, dice, diceReverseGoalBar, diceReverseImpactHud
+   */
+  async getElementDefaults({ params, response }: HttpContext) {
+    const { type } = params
+
+    const defaultsMap: Record<string, () => Record<string, unknown>> = {
+      poll: () => OverlayConfig.getDefaultPollProperties(),
+      dice: () => OverlayConfig.getDefaultDiceProperties(),
+      diceReverseGoalBar: () => OverlayConfig.getDefaultGoalBarProperties(),
+      diceReverseImpactHud: () => OverlayConfig.getDefaultImpactHudProperties(),
+    }
+
+    const getDefaults = defaultsMap[type]
+    if (!getDefaults) {
+      return response.badRequest({
+        error: `Unknown element type: ${type}`,
+        supportedTypes: Object.keys(defaultsMap),
+      })
+    }
+
+    return response.ok({
+      data: {
+        type,
+        properties: getDefaults(),
+      },
+    })
+  }
+
+  /**
    * Récupère la configuration active d'un streamer (endpoint public)
    * GET /overlay/:streamerId/config
    * Query params:

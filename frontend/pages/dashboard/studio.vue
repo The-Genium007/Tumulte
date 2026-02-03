@@ -977,8 +977,12 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('keydown', handleKeydown)
+
+  // Charger les propriétés par défaut depuis l'API (en parallèle)
+  store.loadDefaults()
+
   loadConfigs()
 
   // Initialiser l'historique

@@ -53,6 +53,25 @@ export const useOverlayStudioApi = () => {
   }
 
   /**
+   * Récupère les propriétés par défaut pour un type d'élément
+   * Endpoint public - pas besoin d'authentification
+   * @param type - Type d'élément: poll, dice, diceReverseGoalBar, diceReverseImpactHud
+   */
+  const fetchElementDefaults = async (
+    type: 'poll' | 'dice' | 'diceReverseGoalBar' | 'diceReverseImpactHud'
+  ): Promise<Record<string, unknown>> => {
+    try {
+      const response = await fetch(`${API_URL}/overlay-studio/defaults/${type}`)
+      if (!response.ok) throw new Error(`Failed to fetch defaults for ${type}`)
+      const data = await response.json()
+      return data.data.properties
+    } catch (error) {
+      console.error(`Failed to fetch defaults for ${type}:`, error)
+      throw error
+    }
+  }
+
+  /**
    * Récupère toutes les configurations du streamer
    */
   const fetchConfigs = async (): Promise<OverlayConfig[]> => {
@@ -364,6 +383,7 @@ export const useOverlayStudioApi = () => {
 
     // Methods
     fetchDefaultConfig,
+    fetchElementDefaults,
     fetchConfigs,
     fetchConfig,
     createConfig,

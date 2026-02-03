@@ -620,6 +620,12 @@ router.get(
   '#controllers/overlay-studio/overlay_studio_controller.getDefaultConfig'
 )
 
+// Route publique pour les propriétés par défaut d'un type d'élément
+router.get(
+  '/overlay-studio/defaults/:type',
+  '#controllers/overlay-studio/overlay_studio_controller.getElementDefaults'
+)
+
 router
   .group(() => {
     router.get('/:streamerId', '#controllers/streamer/overlay_controller.streamerInfo')

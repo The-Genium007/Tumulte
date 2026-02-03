@@ -55,6 +55,11 @@ const DEFAULT_POLL_GAMIFICATION: PollGamificationConfig = {
 }
 
 /**
+ * Types pour le cache des defaults
+ */
+type DefaultsType = 'poll' | 'dice' | 'diceReverseGoalBar' | 'diceReverseImpactHud'
+
+/**
  * Store principal pour l'Overlay Studio
  * Gère l'état de l'éditeur et les éléments de l'overlay
  */
@@ -76,6 +81,15 @@ export const useOverlayStudioStore = defineStore('overlayStudio', () => {
   // ===== État de sauvegarde =====
   const isDirty = ref(false)
   const lastSavedSnapshot = ref<string | null>(null)
+
+  // ===== Cache des propriétés par défaut (chargées depuis l'API) =====
+  const defaultsCache = ref<Record<DefaultsType, Record<string, unknown> | null>>({
+    poll: null,
+    dice: null,
+    diceReverseGoalBar: null,
+    diceReverseImpactHud: null,
+  })
+  const defaultsLoaded = ref(false)
 
   // ===== Canvas =====
   const canvasWidth = ref(1920)
@@ -120,6 +134,42 @@ export const useOverlayStudioStore = defineStore('overlayStudio', () => {
     return sorted
   })
 
+  // ===== Actions - Chargement des defaults =====
+
+  /**
+   * Charge les propriétés par défaut depuis l'API backend
+   * Doit être appelé au démarrage de l'Overlay Studio
+   */
+  async function loadDefaults(): Promise<void> {
+    if (defaultsLoaded.value) return
+
+    const config = useRuntimeConfig()
+    const API_URL = config.public.apiBase
+    const types: DefaultsType[] = ['poll', 'dice', 'diceReverseGoalBar', 'diceReverseImpactHud']
+
+    try {
+      const results = await Promise.allSettled(
+        types.map(async (type) => {
+          const response = await fetch(`${API_URL}/overlay-studio/defaults/${type}`)
+          if (!response.ok) throw new Error(`Failed to fetch defaults for ${type}`)
+          const data = await response.json()
+          return { type, properties: data.data.properties }
+        })
+      )
+
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          defaultsCache.value[result.value.type] = result.value.properties
+        }
+      }
+
+      defaultsLoaded.value = true
+      console.log('[OverlayStudio] Defaults loaded from API')
+    } catch (error) {
+      console.warn('[OverlayStudio] Failed to load defaults from API, using local fallback:', error)
+    }
+  }
+
   // ===== Actions - Éléments =====
 
   /**
@@ -131,9 +181,24 @@ export const useOverlayStudioStore = defineStore('overlayStudio', () => {
 
   /**
    * Crée les propriétés par défaut selon le type d'élément
-   * NOTE: Ajouter de nouveaux types ici
+   * Utilise le cache API si disponible, sinon fallback sur les valeurs locales
    */
   function getDefaultProperties(type: OverlayElementType): ElementProperties {
+    // Vérifier si on a des defaults chargés depuis l'API
+    const apiDefaults = defaultsCache.value[type as DefaultsType]
+    if (apiDefaults) {
+      return apiDefaults as unknown as ElementProperties
+    }
+
+    // Fallback sur les valeurs locales (utilisé si l'API n'a pas répondu)
+    return getLocalDefaultProperties(type)
+  }
+
+  /**
+   * Propriétés par défaut locales (fallback si l'API échoue)
+   * NOTE: Ces valeurs doivent rester synchronisées avec le backend
+   */
+  function getLocalDefaultProperties(type: OverlayElementType): ElementProperties {
     switch (type) {
       case 'poll':
         return {
@@ -946,12 +1011,16 @@ export const useOverlayStudioStore = defineStore('overlayStudio', () => {
     canvasWidth,
     canvasHeight,
     isDirty,
+    defaultsLoaded,
 
     // Computed
     selectedElement,
     activeConfig,
     visibleElements,
     sortedVisibleElements,
+
+    // Actions - Initialisation
+    loadDefaults,
 
     // Actions - Éléments
     addElement,
