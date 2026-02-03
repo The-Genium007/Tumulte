@@ -68,16 +68,80 @@ const isActive = (character: GmCharacter) => activeCharacter.value?.id === chara
           <p class="text-xs text-muted">Sélectionnez le personnage que vous incarnez</p>
         </div>
 
-        <!-- Bouton voir tous si beaucoup de personnages -->
-        <UButton
-          v-if="hasMoreCharacters && !loading"
-          color="primary"
-          variant="soft"
-          size="xs"
-          @click="showAllCharactersModal = true"
-        >
-          Voir tout ({{ characters.length }})
-        </UButton>
+        <!-- Actions en haut à droite -->
+        <div class="flex items-center gap-2">
+          <!-- Bouton voir tous si beaucoup de personnages -->
+          <UButton
+            v-if="hasMoreCharacters && !loading"
+            color="primary"
+            variant="soft"
+            size="xs"
+            @click="showAllCharactersModal = true"
+          >
+            Voir tout ({{ characters.length }})
+          </UButton>
+
+          <!-- Bouton d'information -->
+          <UPopover>
+            <UButton
+              color="info"
+              variant="soft"
+              icon="i-lucide-help-circle"
+              size="sm"
+            />
+            <template #content>
+              <div class="p-4 max-w-xs space-y-3">
+                <div class="flex items-center gap-2">
+                  <UIcon name="i-lucide-info" class="size-4 text-info-500" />
+                  <span class="font-semibold text-primary">Comment ça fonctionne ?</span>
+                </div>
+
+                <p class="text-sm text-secondary">
+                  Le système d'incarnation permet d'attribuer automatiquement les interactions du
+                  chat (jets de dés, sondages...) au personnage que vous incarnez en tant que MJ.
+                </p>
+
+                <div class="space-y-2">
+                  <p class="text-xs font-medium text-muted uppercase tracking-wide">
+                    Signification des pastilles
+                  </p>
+
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="size-5 rounded-full bg-success-500 flex items-center justify-center text-[10px] font-bold text-white"
+                    >
+                      J
+                    </div>
+                    <span class="text-sm text-secondary"
+                      ><strong>Joueur</strong> — Personnage joué par un joueur (PJ)</span
+                    >
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="size-5 rounded-full bg-warning-500 flex items-center justify-center text-[10px] font-bold text-white"
+                    >
+                      N
+                    </div>
+                    <span class="text-sm text-secondary"
+                      ><strong>Non-joueur</strong> — Personnage contrôlé par le MJ (PNJ)</span
+                    >
+                  </div>
+                </div>
+
+                <div
+                  class="pt-2 border-t border-default text-xs text-muted flex items-start gap-1.5"
+                >
+                  <UIcon name="i-lucide-lightbulb" class="size-3.5 text-warning-500 mt-0.5" />
+                  <span>
+                    Sélectionnez "Aucun" pour attribuer manuellement les jets via le modal
+                    d'attribution.
+                  </span>
+                </div>
+              </div>
+            </template>
+          </UPopover>
+        </div>
       </div>
     </template>
 
