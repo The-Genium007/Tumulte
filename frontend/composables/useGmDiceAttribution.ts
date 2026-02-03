@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { GmCharacter } from './useGmCharacters'
+import type { GmCharacter as _GmCharacter } from './useGmCharacters'
 
 export interface PendingDiceRoll {
   id: string

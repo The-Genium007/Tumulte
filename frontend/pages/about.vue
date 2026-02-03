@@ -90,9 +90,7 @@
                   <UIcon name="i-lucide-palette" class="size-5 text-secondary-500" />
                   <div>
                     <h3 class="font-semibold">Overlay Studio</h3>
-                    <p class="text-sm text-muted">
-                      Personnalisez l'affichage pour vos streams
-                    </p>
+                    <p class="text-sm text-muted">Personnalisez l'affichage pour vos streams</p>
                   </div>
                 </div>
                 <div class="feature-card">

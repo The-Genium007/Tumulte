@@ -109,7 +109,7 @@ const symbolDice = computed(() => {
 })
 
 /** Check if we need 2D fallback */
-const needsFallback = computed(() => {
+const _needsFallback = computed(() => {
   return fallbackDice.value.length > 0 || !mappedRoll.value?.has3D
 })
 

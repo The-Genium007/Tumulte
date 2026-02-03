@@ -382,7 +382,7 @@ export interface CampaignSettings {
 
 // Dice Roll types (VTT Integration)
 // Import universal dice types
-import type { TermData, SystemData, SymbolResult } from './dice'
+import type { TermData, SystemData, SymbolResult as _SymbolResult } from './dice'
 
 export interface DiceRollEvent {
   id: string

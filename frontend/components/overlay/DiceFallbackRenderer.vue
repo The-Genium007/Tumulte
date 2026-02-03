@@ -67,7 +67,7 @@ const totalValue = computed(() => {
 })
 
 /** Check if any die has critical results */
-const hasCritical = computed(() => {
+const _hasCritical = computed(() => {
   return props.dice.some((die) => die.results.some((r) => r.active && r.isCritical))
 })
 

@@ -83,12 +83,7 @@ const isActive = (character: GmCharacter) => activeCharacter.value?.id === chara
 
           <!-- Bouton d'information -->
           <UPopover>
-            <UButton
-              color="info"
-              variant="soft"
-              icon="i-lucide-help-circle"
-              size="sm"
-            />
+            <UButton color="info" variant="soft" icon="i-lucide-help-circle" size="sm" />
             <template #content>
               <div class="p-4 max-w-xs space-y-3">
                 <div class="flex items-center gap-2">

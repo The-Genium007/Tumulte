@@ -213,7 +213,9 @@ onUnmounted(() => {
           v-if="displayDetail"
           class="impact-detail"
           :style="{
-            fontFamily: customStyles?.typography?.detail?.fontFamily ?? `'JetBrains Mono', 'Fira Code', monospace`,
+            fontFamily:
+              customStyles?.typography?.detail?.fontFamily ??
+              `'JetBrains Mono', 'Fira Code', monospace`,
             fontSize: `${customStyles?.typography?.detail?.fontSize ?? 42}px`,
             fontWeight: customStyles?.typography?.detail?.fontWeight ?? 800,
             color: customStyles?.typography?.detail?.color ?? '#ffffff',

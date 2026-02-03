@@ -413,11 +413,7 @@
 
               <p>
                 En cas de litige, vous pouvez deposer une reclamation aupres de la
-                <a
-                  href="https://www.cnil.fr/fr/plaintes"
-                  target="_blank"
-                  class="link-styled"
-                >
+                <a href="https://www.cnil.fr/fr/plaintes" target="_blank" class="link-styled">
                   CNIL
                 </a>
                 .
@@ -534,9 +530,7 @@
               Contact
             </h2>
             <div class="prose-content">
-              <p>
-                Pour toute question concernant cette politique ou vos donnees personnelles :
-              </p>
+              <p>Pour toute question concernant cette politique ou vos donnees personnelles :</p>
               <ul class="info-list">
                 <li>
                   Email DPO :

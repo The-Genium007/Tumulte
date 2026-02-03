@@ -12,9 +12,7 @@
           >
             <UIcon name="i-lucide-scroll-text" class="size-10 text-secondary-500" />
           </div>
-          <h1
-            class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight"
-          >
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight leading-tight">
             Conditions Generales
             <span
               class="text-transparent bg-clip-text bg-linear-to-r from-secondary-600 to-secondary-400"
@@ -45,15 +43,15 @@
             </h2>
             <div class="prose-content">
               <p>
-                Les presentes Conditions Generales d'Utilisation (ci-apres « CGU ») ont pour objet de
-                definir les modalites et conditions d'utilisation de la plateforme Tumulte (ci-apres
-                « la Plateforme »), ainsi que les droits et obligations des utilisateurs.
+                Les presentes Conditions Generales d'Utilisation (ci-apres « CGU ») ont pour objet
+                de definir les modalites et conditions d'utilisation de la plateforme Tumulte
+                (ci-apres « la Plateforme »), ainsi que les droits et obligations des utilisateurs.
               </p>
               <p>
                 Tumulte est une plateforme de gestion de sondages Twitch synchronises multi-streams,
                 concue pour les sessions de jeux de role (JDR) diffusees sur plusieurs chaines
-                simultanement. Elle permet aux Maitres du Jeu (MJ) de creer des campagnes, lancer des
-                sondages, et aux Streamers de participer a ces campagnes avec leur communaute.
+                simultanement. Elle permet aux Maitres du Jeu (MJ) de creer des campagnes, lancer
+                des sondages, et aux Streamers de participer a ces campagnes avec leur communaute.
               </p>
             </div>
           </article>
@@ -112,9 +110,9 @@
             </h2>
             <div class="prose-content">
               <p>
-                L'utilisation de la Plateforme implique l'acceptation pleine et entiere des presentes
-                CGU. En creant un compte ou en utilisant les services de Tumulte, vous reconnaissez
-                avoir lu, compris et accepte ces conditions.
+                L'utilisation de la Plateforme implique l'acceptation pleine et entiere des
+                presentes CGU. En creant un compte ou en utilisant les services de Tumulte, vous
+                reconnaissez avoir lu, compris et accepte ces conditions.
               </p>
               <p>
                 Tumulte se reserve le droit de modifier les presentes CGU a tout moment. Les
@@ -212,8 +210,8 @@
                   campagnes, sondages, overlay standard)
                 </li>
                 <li>
-                  <strong>Version Premium :</strong> Fonctionnalites avancees (gamification complete,
-                  personnalisation poussee, integrations VTT, support prioritaire)
+                  <strong>Version Premium :</strong> Fonctionnalites avancees (gamification
+                  complete, personnalisation poussee, integrations VTT, support prioritaire)
                 </li>
               </ul>
               <p>
@@ -490,11 +488,7 @@
                 </li>
                 <li>
                   Via le serveur Discord :
-                  <a
-                    href="https://discord.gg/tumulte"
-                    target="_blank"
-                    class="link-styled"
-                  >
+                  <a href="https://discord.gg/tumulte" target="_blank" class="link-styled">
                     discord.gg/tumulte
                   </a>
                 </li>
