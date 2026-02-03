@@ -5,23 +5,21 @@ import logger from '@adonisjs/core/services/logger'
 interface TwitchUserInfo {
   id: string
   login: string
-
   display_name: string
-
   broadcaster_type: string
 }
 
 /**
- * Migration to update broadcaster_type for existing streamers
+ * Migration to fix broadcaster_type for existing streamers
  *
- * This migration fetches the current broadcaster_type from Twitch API
- * for all streamers that have an empty or null broadcaster_type.
+ * This is a retry of migration 1770600000000 with better error handling.
+ * The previous migration failed with HTTP 400 due to potential null/empty IDs.
  *
- * This ensures backward compatibility for accounts created before
- * the broadcaster_type field was properly populated.
- *
- * The broadcaster_type determines if a streamer can use Channel Points
- * for gamification features (only 'affiliate' or 'partner' can use them).
+ * This migration:
+ * - Filters out null/empty twitch_user_ids before making API calls
+ * - Logs detailed error information for debugging
+ * - Ensures backward compatibility for accounts created before
+ *   the broadcaster_type field was properly populated.
  */
 export default class extends BaseSchema {
   async up() {
@@ -31,8 +29,9 @@ export default class extends BaseSchema {
     }>(`
       SELECT id, twitch_user_id, twitch_display_name
       FROM streamers
-      WHERE broadcaster_type IS NULL
-         OR broadcaster_type = ''
+      WHERE (broadcaster_type IS NULL OR broadcaster_type = '')
+        AND twitch_user_id IS NOT NULL
+        AND twitch_user_id != ''
     `)
 
     const streamers = streamersToUpdate.rows
@@ -70,8 +69,9 @@ export default class extends BaseSchema {
       })
 
       if (!tokenResponse.ok) {
+        const tokenError = await tokenResponse.text().catch(() => 'Unknown error')
         logger.error(
-          `[Migration] Failed to get Twitch app token: ${tokenResponse.status} - skipping update`
+          `[Migration] Failed to get Twitch app token: ${tokenResponse.status} - ${tokenError}`
         )
         return
       }
@@ -79,29 +79,37 @@ export default class extends BaseSchema {
       const tokenData = (await tokenResponse.json()) as { access_token: string }
       const accessToken = tokenData.access_token
 
+      logger.info('[Migration] Successfully obtained Twitch app access token')
+
       // Process streamers in batches of 100 (Twitch API limit)
       const batchSize = 100
       let updatedCount = 0
       let affiliateCount = 0
       let partnerCount = 0
+      let skippedCount = 0
 
       for (let i = 0; i < streamers.length; i += batchSize) {
         const batch = streamers.slice(i, i + batchSize)
-        // Filter out any null/empty twitch_user_ids
-        const twitchUserIds = batch
-          .map((s) => s.twitch_user_id)
-          .filter((id) => id && id.trim() !== '')
+
+        // Filter out any null/empty twitch_user_ids (extra safety)
+        const validStreamers = batch.filter(
+          (s) => s.twitch_user_id && s.twitch_user_id.trim() !== ''
+        )
+        const twitchUserIds = validStreamers.map((s) => s.twitch_user_id)
 
         if (twitchUserIds.length === 0) {
           logger.warn(`[Migration] Batch ${Math.floor(i / batchSize) + 1} has no valid Twitch IDs`)
+          skippedCount += batch.length
           continue
         }
+
+        logger.info(
+          `[Migration] Processing batch ${Math.floor(i / batchSize) + 1}: ${twitchUserIds.length} users`
+        )
 
         // Fetch user info from Twitch API
         const params = twitchUserIds.map((id) => `id=${encodeURIComponent(id)}`).join('&')
         const url = `https://api.twitch.tv/helix/users?${params}`
-
-        logger.debug(`[Migration] Fetching Twitch users: ${twitchUserIds.join(', ')}`)
 
         const usersResponse = await fetch(url, {
           headers: {
@@ -116,10 +124,13 @@ export default class extends BaseSchema {
             `[Migration] Failed to fetch Twitch users batch ${Math.floor(i / batchSize) + 1}: ` +
               `HTTP ${usersResponse.status} - ${errorBody}`
           )
+          skippedCount += validStreamers.length
           continue
         }
 
         const usersData = (await usersResponse.json()) as { data: TwitchUserInfo[] }
+
+        logger.info(`[Migration] Twitch API returned ${usersData.data.length} users`)
 
         // Create a map of twitch_user_id -> broadcaster_type
         const broadcasterTypes = new Map(
@@ -127,7 +138,7 @@ export default class extends BaseSchema {
         )
 
         // Update each streamer in this batch
-        for (const streamer of batch) {
+        for (const streamer of validStreamers) {
           const broadcasterType = broadcasterTypes.get(streamer.twitch_user_id)
 
           if (broadcasterType !== undefined) {
@@ -140,14 +151,16 @@ export default class extends BaseSchema {
             if (broadcasterType === 'affiliate') affiliateCount++
             if (broadcasterType === 'partner') partnerCount++
 
-            logger.debug(
-              `[Migration] Updated ${streamer.twitch_display_name}: broadcaster_type = '${broadcasterType}'`
+            logger.info(
+              `[Migration] Updated ${streamer.twitch_display_name}: broadcaster_type = '${broadcasterType || '(empty)'}'`
             )
           } else {
             // User might have been deleted from Twitch or ID changed
             logger.warn(
-              `[Migration] Could not find Twitch user for streamer ${streamer.twitch_display_name} (${streamer.twitch_user_id})`
+              `[Migration] Could not find Twitch user for streamer ${streamer.twitch_display_name} ` +
+                `(ID: ${streamer.twitch_user_id})`
             )
+            skippedCount++
           }
         }
 
@@ -158,9 +171,10 @@ export default class extends BaseSchema {
       }
 
       logger.info(
-        `[Migration] Successfully updated ${updatedCount}/${streamers.length} streamers. ` +
+        `[Migration] Completed! Updated: ${updatedCount}/${streamers.length}, ` +
           `Affiliates: ${affiliateCount}, Partners: ${partnerCount}, ` +
-          `Non-affiliated: ${updatedCount - affiliateCount - partnerCount}`
+          `Non-affiliated: ${updatedCount - affiliateCount - partnerCount}, ` +
+          `Skipped: ${skippedCount}`
       )
     } catch (error) {
       logger.error(
@@ -172,8 +186,6 @@ export default class extends BaseSchema {
 
   async down() {
     // No rollback needed - we're just populating missing data
-    // If needed, we could set broadcaster_type back to empty string
-    // but that would cause more issues than leaving it
     logger.info('[Migration] Rollback not needed for broadcaster_type update')
   }
 }
