@@ -111,7 +111,8 @@ const handleChangeCharacter = async () => {
   }
 }
 
-const handleConfirmChange = async (characterId: string) => {
+const handleConfirmChange = async (characterId: string | null) => {
+  if (!characterId) return
   updateLoading.value = true
   try {
     await updateCharacter(campaignId.value, characterId)

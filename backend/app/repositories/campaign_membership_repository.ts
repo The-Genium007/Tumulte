@@ -106,6 +106,27 @@ export class CampaignMembershipRepository {
     await membership.save()
     return membership
   }
+
+  /**
+   * Find all memberships with expired poll authorization
+   * Used by the authorization expiry scheduler
+   */
+  async findExpiredAuthorizations(): Promise<CampaignMembership[]> {
+    return CampaignMembership.query()
+      .whereNotNull('pollAuthorizationExpiresAt')
+      .where('pollAuthorizationExpiresAt', '<', DateTime.now().toSQL())
+      .preload('streamer')
+      .preload('campaign')
+  }
+
+  /**
+   * Clear poll authorization timestamps (used after processing expiry)
+   */
+  async clearPollAuthorization(membership: CampaignMembership): Promise<void> {
+    membership.pollAuthorizationGrantedAt = null
+    membership.pollAuthorizationExpiresAt = null
+    await membership.save()
+  }
 }
 
 export default CampaignMembershipRepository
