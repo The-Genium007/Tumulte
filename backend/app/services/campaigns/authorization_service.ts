@@ -5,10 +5,14 @@ import { CampaignMembershipRepository } from '#repositories/campaign_membership_
 import { streamer as Streamer } from '#models/streamer'
 import { TokenRefreshService } from '#services/auth/token_refresh_service'
 import { webSocketService as WebSocketService } from '#services/websocket/websocket_service'
+import { GamificationAuthBridge } from '#services/gamification/gamification_auth_bridge'
 
 @inject()
 export class AuthorizationService {
-  constructor(private membershipRepository: CampaignMembershipRepository) {}
+  constructor(
+    private membershipRepository: CampaignMembershipRepository,
+    private gamificationBridge: GamificationAuthBridge
+  ) {}
 
   /**
    * Grant 12-hour authorization for a streamer in a campaign
@@ -52,6 +56,34 @@ export class AuthorizationService {
 
     await this.membershipRepository.grantPollAuthorization(membership)
 
+    // Sync gamification rewards (create Twitch Channel Points rewards)
+    try {
+      const gamificationResult = await this.gamificationBridge.onAuthorizationGranted(
+        campaignId,
+        streamer
+      )
+      logger.info(
+        {
+          streamerId,
+          campaignId,
+          rewardsCreated: gamificationResult.created,
+          rewardsEnabled: gamificationResult.enabled,
+          rewardsFailed: gamificationResult.failed,
+        },
+        '[Authorization] Gamification rewards synced on grant'
+      )
+    } catch (error) {
+      // Log but don't fail the authorization - gamification is non-blocking
+      logger.error(
+        {
+          streamerId,
+          campaignId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        '[Authorization] Failed to sync gamification rewards on grant'
+      )
+    }
+
     // Broadcast readiness change via WebSocket
     const wsService = new WebSocketService()
     wsService.emitStreamerReadinessChange(campaignId, streamerId, true, streamer.twitchDisplayName)
@@ -73,6 +105,36 @@ export class AuthorizationService {
     }
 
     await this.membershipRepository.revokePollAuthorization(membership)
+
+    // Delete gamification rewards (remove Twitch Channel Points rewards)
+    try {
+      const streamer = await Streamer.find(streamerId)
+      if (streamer) {
+        const gamificationResult = await this.gamificationBridge.onAuthorizationRevoked(
+          campaignId,
+          streamer
+        )
+        logger.info(
+          {
+            streamerId,
+            campaignId,
+            rewardsDeleted: gamificationResult.deleted,
+            rewardsFailed: gamificationResult.failed,
+          },
+          '[Authorization] Gamification rewards deleted on revoke'
+        )
+      }
+    } catch (error) {
+      // Log but don't fail the revocation - gamification is non-blocking
+      logger.error(
+        {
+          streamerId,
+          campaignId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+        '[Authorization] Failed to delete gamification rewards on revoke'
+      )
+    }
   }
 
   /**

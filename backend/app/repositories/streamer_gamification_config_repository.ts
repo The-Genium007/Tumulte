@@ -157,6 +157,23 @@ export class StreamerGamificationConfigRepository {
     await config.delete()
     return true
   }
+
+  /**
+   * Find all active rewards for a streamer in a specific campaign
+   * Used when disabling rewards on authorization revoke/expiry
+   */
+  async findActiveByStreamerAndCampaign(
+    streamerId: string,
+    campaignId: string
+  ): Promise<StreamerGamificationConfig[]> {
+    return StreamerGamificationConfig.query()
+      .where('streamerId', streamerId)
+      .where('campaignId', campaignId)
+      .where('twitchRewardStatus', 'active')
+      .whereNotNull('twitchRewardId')
+      .preload('event')
+      .preload('streamer')
+  }
 }
 
 export default StreamerGamificationConfigRepository

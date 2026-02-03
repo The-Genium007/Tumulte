@@ -57,9 +57,7 @@ export class CampaignService {
     })
 
     membership.acceptedAt = DateTime.now()
-    const now = DateTime.now()
-    membership.pollAuthorizationGrantedAt = now
-    membership.pollAuthorizationExpiresAt = now.plus({ years: 100 })
+    // No permanent authorization - owner must activate 12h auth like other streamers
 
     await this.membershipRepository.update(membership)
 

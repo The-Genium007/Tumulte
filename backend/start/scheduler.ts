@@ -1,25 +1,32 @@
 /*
 |--------------------------------------------------------------------------
-| Token Refresh Scheduler
+| Schedulers
 |--------------------------------------------------------------------------
 |
 | This file is loaded automatically at application boot to start the
-| token refresh scheduler that keeps Twitch tokens fresh.
+| various schedulers:
+| - Token refresh: keeps Twitch tokens fresh
+| - Authorization expiry: cleans up expired 12h authorizations
 |
 */
 
 import { TokenRefreshScheduler } from '#services/scheduler/token_refresh_scheduler'
+import { AuthorizationExpiryScheduler } from '#services/scheduler/authorization_expiry_scheduler'
 import logger from '@adonisjs/core/services/logger'
 import app from '@adonisjs/core/services/app'
 
-// Only start scheduler in web environment (not during tests or CLI commands)
+// Only start schedulers in web environment (not during tests or CLI commands)
 if (app.getEnvironment() === 'web') {
-  const scheduler = new TokenRefreshScheduler()
-  scheduler.start()
+  const tokenRefreshScheduler = new TokenRefreshScheduler()
+  tokenRefreshScheduler.start()
+
+  const authExpiryScheduler = new AuthorizationExpiryScheduler()
+  authExpiryScheduler.start()
 
   // Graceful shutdown
   app.terminating(() => {
-    logger.info('[Scheduler] Application terminating, stopping scheduler...')
-    scheduler.stop()
+    logger.info('[Scheduler] Application terminating, stopping schedulers...')
+    tokenRefreshScheduler.stop()
+    authExpiryScheduler.stop()
   })
 }

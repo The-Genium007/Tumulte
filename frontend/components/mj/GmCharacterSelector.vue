@@ -127,13 +127,12 @@ const isAssignedToStreamer = (character: GmCharacter) => character.assignedToStr
                   </div>
 
                   <div class="flex items-center gap-2">
-                    <div
-                      class="size-5 rounded-full bg-info-500 flex items-center justify-center"
-                    >
+                    <div class="size-5 rounded-full bg-info-500 flex items-center justify-center">
                       <UIcon name="i-lucide-user" class="size-3 text-white" />
                     </div>
                     <span class="text-sm text-secondary"
-                      ><strong>Assigné</strong> — PJ contrôlé par un streamer (non sélectionnable)</span
+                      ><strong>Assigné</strong> — PJ contrôlé par un streamer (non
+                      sélectionnable)</span
                     >
                   </div>
                 </div>
@@ -263,10 +262,14 @@ const isAssignedToStreamer = (character: GmCharacter) => character.assignedToStr
                 ? 'bg-muted/30 border-transparent opacity-60 cursor-not-allowed'
                 : isActive(character)
                   ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-400 dark:border-primary-500'
-                  : 'bg-elevated border-transparent hover:border-muted'
+                  : 'bg-elevated border-transparent hover:border-muted',
             ]"
             :disabled="updating || isAssignedToStreamer(character)"
-            :title="isAssignedToStreamer(character) ? `Joué par ${character.assignedToStreamer?.streamerName}` : ''"
+            :title="
+              isAssignedToStreamer(character)
+                ? `Joué par ${character.assignedToStreamer?.streamerName}`
+                : ''
+            "
             @click="!isAssignedToStreamer(character) && handleSelectCharacter(character)"
           >
             <div class="relative shrink-0">
@@ -402,7 +405,7 @@ const isAssignedToStreamer = (character: GmCharacter) => character.assignedToStr
                     ? 'bg-muted/20 border-default opacity-60 cursor-not-allowed'
                     : isActive(character)
                       ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-600'
-                      : 'bg-elevated border-default hover:border-muted'
+                      : 'bg-elevated border-default hover:border-muted',
                 ]"
                 :disabled="updating || isAssignedToStreamer(character)"
                 @click="!isAssignedToStreamer(character) && handleSelectCharacter(character)"
@@ -414,7 +417,7 @@ const isAssignedToStreamer = (character: GmCharacter) => character.assignedToStr
                     size="lg"
                     :class="[
                       isActive(character) ? 'ring-2 ring-primary-500' : '',
-                      isAssignedToStreamer(character) ? 'grayscale' : ''
+                      isAssignedToStreamer(character) ? 'grayscale' : '',
                     ]"
                   />
                   <!-- Badge "joué par" si assigné -->
