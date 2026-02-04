@@ -3,7 +3,7 @@ import { DateTime } from 'luxon'
 import { StreamerGamificationConfigRepository } from '#repositories/streamer_gamification_config_repository'
 import StreamerGamificationConfig from '#models/streamer_gamification_config'
 import testUtils from '#tests/helpers/database'
-import { createTestUser, createTestStreamer, createTestCampaign } from '#tests/helpers/test_utils'
+import { createTestStreamer, createTestCampaign } from '#tests/helpers/test_utils'
 import GamificationEvent from '#models/gamification_event'
 
 /**

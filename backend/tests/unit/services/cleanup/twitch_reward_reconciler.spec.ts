@@ -30,9 +30,9 @@ test.group('TwitchRewardReconciler', () => {
     const mockConfigRepo = {
       markAsDeleted: async () => {},
       updateOrphanRetry: async () => {},
-      findByStreamerWithAnyReward: async () => [],
-      findStreamersWithActiveConfigs: async () => [],
-      findByTwitchRewardId: async () => null,
+      findByStreamerWithAnyReward: async (): Promise<StreamerGamificationConfig[]> => [],
+      findStreamersWithActiveConfigs: async (): Promise<string[]> => [],
+      findByTwitchRewardId: async (): Promise<StreamerGamificationConfig | null> => null,
     }
 
     const mockAuditService = {
@@ -437,16 +437,8 @@ test.group('TwitchRewardReconciler', () => {
       listRewards: [{ id: 'orphan-reward' }],
     })
 
-    mockConfigRepo.findStreamersWithActiveConfigs = async () => ['streamer-1']
+    mockConfigRepo.findStreamersWithActiveConfigs = async (): Promise<string[]> => ['streamer-1']
     mockConfigRepo.findByStreamerWithAnyReward = async () => []
-
-    // Mock Streamer.find
-    const originalFind = (await import('#models/streamer')).streamer.find
-    const mockStreamer = {
-      id: 'streamer-1',
-      twitchDisplayName: 'TestStreamer',
-      twitchUserId: '12345',
-    }
 
     // We can't easily mock static methods, so we test the behavior indirectly
     // by checking that errors are reported for missing streamers
@@ -489,12 +481,9 @@ test.group('TwitchRewardReconciler', () => {
       listRewards: [],
     })
 
-    let phantomFixed = false
-    mockConfigRepo.findStreamersWithActiveConfigs = async () => []
-    mockConfigRepo.findByTwitchRewardId = async () => ({ id: 'phantom-config' })
-    mockConfigRepo.markAsDeleted = async () => {
-      phantomFixed = true
-    }
+    mockConfigRepo.findStreamersWithActiveConfigs = async (): Promise<string[]> => []
+    mockConfigRepo.findByTwitchRewardId = async (): Promise<StreamerGamificationConfig | null> =>
+      ({ id: 'phantom-config' }) as unknown as StreamerGamificationConfig
 
     const reconciler = new TwitchRewardReconciler(
       mockTwitchRewardService as any,
