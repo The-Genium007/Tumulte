@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeEach, vi, afterEach } from 'vitest'
 import axios from 'axios'
 import type { AxiosError, AxiosInstance } from 'axios'
+import * as Sentry from '@sentry/nuxt'
 
 // Mock Sentry before any imports - this prevents the debug module error
 vi.mock('@sentry/nuxt', () => ({
@@ -277,6 +278,119 @@ describe('HTTP Client', () => {
         'Erreur de configuration de la requête:',
         'Invalid config'
       )
+    }
+
+    consoleErrorSpy.mockRestore()
+  })
+
+  test('should capture 5xx errors to Sentry', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const errorCallback = mockAxiosInstance.interceptors.response._errorCallback
+
+    if (errorCallback) {
+      const error = {
+        response: { status: 502, data: { message: 'Bad Gateway' } },
+        config: { method: 'post', url: '/api/test' },
+      } as AxiosError
+
+      await expect(errorCallback(error)).rejects.toEqual(error)
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(error, {
+        tags: {
+          'http.status': 502,
+          'http.method': 'POST',
+        },
+        extra: {
+          url: '/api/test',
+          responseData: { message: 'Bad Gateway' },
+        },
+      })
+    }
+
+    consoleErrorSpy.mockRestore()
+  })
+
+  test('should capture 503 errors to Sentry', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const errorCallback = mockAxiosInstance.interceptors.response._errorCallback
+
+    if (errorCallback) {
+      const error = {
+        response: { status: 503, data: { error: 'Service Unavailable' } },
+        config: { method: 'get', url: '/health' },
+      } as AxiosError
+
+      await expect(errorCallback(error)).rejects.toEqual(error)
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(error, {
+        tags: {
+          'http.status': 503,
+          'http.method': 'GET',
+        },
+        extra: {
+          url: '/health',
+          responseData: { error: 'Service Unavailable' },
+        },
+      })
+    }
+
+    consoleErrorSpy.mockRestore()
+  })
+
+  test('should capture timeout errors to Sentry', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const errorCallback = mockAxiosInstance.interceptors.response._errorCallback
+
+    if (errorCallback) {
+      const error = {
+        code: 'ECONNABORTED',
+        message: 'timeout of 30000ms exceeded',
+        config: { method: 'get', url: '/slow-endpoint', timeout: 30000 },
+      } as AxiosError
+
+      await expect(errorCallback(error)).rejects.toEqual(error)
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(error, {
+        tags: {
+          'http.error_type': 'timeout',
+          'http.method': 'GET',
+        },
+        extra: {
+          url: '/slow-endpoint',
+          timeout: 30000,
+        },
+      })
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Request timeout:', error)
+    }
+
+    consoleErrorSpy.mockRestore()
+  })
+
+  test('should capture network errors (no response) to Sentry', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const errorCallback = mockAxiosInstance.interceptors.response._errorCallback
+
+    if (errorCallback) {
+      const error = {
+        request: {},
+        config: { method: 'post', url: '/api/submit' },
+      } as AxiosError
+
+      await expect(errorCallback(error)).rejects.toEqual(error)
+
+      expect(Sentry.captureException).toHaveBeenCalledWith(error, {
+        tags: {
+          'http.error_type': 'no_response',
+          'http.method': 'POST',
+        },
+        extra: {
+          url: '/api/submit',
+        },
+      })
     }
 
     consoleErrorSpy.mockRestore()
