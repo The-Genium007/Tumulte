@@ -672,3 +672,19 @@ export interface CookieConsentPreferences {
   /** Timestamp ISO du consentement */
   consentTimestamp: string
 }
+
+// Cookie Consent types (RGPD)
+export type ConsentCategory = 'required' | 'analytics' | 'marketing'
+
+export interface CookieConsentPreferences {
+  /** Cookies essentiels - toujours actifs */
+  required: true
+  /** Cookies analytiques (PostHog) */
+  analytics: boolean
+  /** Cookies marketing (GTM, pixels publicitaires) */
+  marketing: boolean
+  /** Version du consentement pour re-prompter si politique change */
+  consentVersion: string
+  /** Timestamp ISO du consentement */
+  consentTimestamp: string
+}
