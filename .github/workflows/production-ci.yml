@@ -476,6 +476,18 @@ jobs:
         with:
           name: production-build
           path: frontend/.output/
+      # Upload source maps to Sentry for better stack traces
+      - name: Upload source maps to Sentry
+        if: github.event_name == 'push' && env.SENTRY_AUTH_TOKEN != ''
+        working-directory: ./frontend
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        run: |
+          npx @sentry/cli releases new "tumulte-frontend@${{ github.sha }}"
+          npx @sentry/cli releases files "tumulte-frontend@${{ github.sha }}" upload-sourcemaps .output/public --ext map --ext js || true
+          npx @sentry/cli releases finalize "tumulte-frontend@${{ github.sha }}"
 
   # Phase 6 : Tests E2E Frontend (BLOQUANT en production)
   frontend-e2e-tests:

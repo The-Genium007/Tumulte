@@ -5,6 +5,7 @@ import type { User, LoginCredentials, RegisterData, AuthError } from '@/types'
 import { usePushNotificationsStore } from '@/stores/pushNotifications'
 import { storeUser, getStoredUser, clearUserData } from '@/utils/offline-storage'
 import { useAnalytics } from '@/composables/useAnalytics'
+import { loggers } from '@/utils/logger'
 
 export const useAuthStore = defineStore('auth', () => {
   const _router = useRouter()
@@ -61,7 +62,7 @@ export const useAuthStore = defineStore('auth', () => {
         isOfflineData.value = true
       }
     } catch (error) {
-      console.warn('[AuthStore] Failed to load from offline storage:', error)
+      loggers.auth.warn('Failed to load from offline storage:', error)
     }
   }
 
@@ -140,7 +141,7 @@ export const useAuthStore = defineStore('auth', () => {
       authError.value = null
       _router.push({ name: 'login' })
     } catch (error) {
-      console.error('Logout failed:', error)
+      loggers.auth.error('Logout failed:', error)
       throw error
     }
   }
@@ -254,7 +255,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       return { success: true }
     } catch (error) {
-      console.error('Forgot password failed:', error)
+      loggers.auth.error('Forgot password failed:', error)
       return { success: false, error: { error: 'Une erreur est survenue.' } }
     } finally {
       loading.value = false
@@ -286,7 +287,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       return { success: true }
     } catch (error) {
-      console.error('Reset password failed:', error)
+      loggers.auth.error('Reset password failed:', error)
       return { success: false, error: { error: 'Une erreur est survenue.' } }
     } finally {
       loading.value = false
@@ -325,7 +326,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       return { success: true }
     } catch (error) {
-      console.error('Resend verification failed:', error)
+      loggers.auth.error('Resend verification failed:', error)
       return { success: false, error: { error: 'Une erreur est survenue.' } }
     }
   }
