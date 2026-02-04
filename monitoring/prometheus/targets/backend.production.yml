@@ -1,0 +1,14 @@
+# =============================================================================
+# Prometheus Target - Backend PRODUCTION
+# =============================================================================
+# Ce fichier est utilisé par file_sd_configs pour découvrir dynamiquement
+# les targets backend en production.
+#
+# Déployé automatiquement par le script deploy.sh
+# =============================================================================
+- targets:
+    - 'tumulte-backend-prod:3333'
+  labels:
+    service: 'backend'
+    app: 'tumulte'
+    environment: 'production'

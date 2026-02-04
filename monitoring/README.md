@@ -1,123 +1,188 @@
 # Tumulte Monitoring Stack
 
-Configuration Prometheus + Grafana pour monitorer l'application Tumulte.
+Stack de monitoring Prometheus + Grafana pour l'application Tumulte, avec support multi-environnement et intégration Cloudflare Tunnel.
 
 ## Structure des fichiers
 
 ```
 monitoring/
-├── docker-compose.yml          # Référence pour les containers
+├── docker-compose.yml              # Configuration de base
+├── docker-compose.staging.yml      # Override staging
+├── docker-compose.production.yml   # Override production
+├── .env.example                    # Template des variables d'environnement
+├── scripts/
+│   └── deploy.sh                   # Script de déploiement simplifié
 ├── prometheus/
-│   ├── prometheus.yml          # Config principale Prometheus
-│   └── alerts.yml              # Règles d'alertes
+│   ├── prometheus.yml              # Config principale Prometheus
+│   ├── alerts.yml                  # Règles d'alertes
+│   └── targets/                    # Targets par environnement
+│       ├── backend.staging.yml
+│       ├── backend.production.yml
+│       ├── frontend.staging.yml
+│       └── frontend.production.yml
 ├── grafana/
 │   ├── provisioning/
-│   │   ├── datasources/        # Config auto des datasources
-│   │   └── dashboards/         # Config auto des dashboards
+│   │   ├── datasources/            # Config auto des datasources
+│   │   └── dashboards/             # Config auto des dashboards
 │   └── dashboards/
 │       └── tumulte-overview.json
-└── alertmanager/
-    └── alertmanager.yml        # Config des notifications
+├── alertmanager/
+│   ├── alertmanager.yml            # Config des notifications Discord
+│   └── templates/
+│       └── discord.tmpl            # Template messages Discord
+└── cloudflare/
+    └── docker-compose.tunnel.yml   # Tunnel Cloudflare sécurisé
 ```
 
 ---
 
-## Guide de démarrage
+## Quick Start
 
-### Étape 1 : Créer le fichier .env
+### Développement local
 
-Crée un fichier `.env` dans ce dossier avec :
-
-```bash
-# GRAFANA
-GF_SECURITY_ADMIN_USER=admin
-GF_SECURITY_ADMIN_PASSWORD=ton_mot_de_passe_secure
-GRAFANA_ROOT_URL=http://localhost:3001
-
-# POSTGRESQL EXPORTER
-DATA_SOURCE_NAME=postgresql://USER:PASS@HOST:5432/twitch_polls?sslmode=disable
-
-# REDIS EXPORTER
-REDIS_ADDR=host.docker.internal:6379
-REDIS_PASSWORD=ton_redis_password
-```
-
-### Étape 2 : Lancer les containers
-
-**Option A : Docker Compose (tout automatique)**
 ```bash
 cd monitoring
-docker compose up -d
+cp .env.example .env
+# Éditer .env avec tes valeurs
+./scripts/deploy.sh dev
 ```
 
-**Option B : Manuellement (si tu préfères)**
+### Staging (avec Cloudflare Tunnel)
 
-1. **Prometheus** :
 ```bash
-docker run -d \
-  --name tumulte-prometheus \
-  -p 9090:9090 \
-  -v $(pwd)/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro \
-  -v $(pwd)/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro \
-  --add-host=host.docker.internal:host-gateway \
-  prom/prometheus:v2.51.0 \
-  --config.file=/etc/prometheus/prometheus.yml \
-  --storage.tsdb.retention.time=30d
+cp .env.example .env.staging
+# Configurer CLOUDFLARE_TUNNEL_TOKEN, DISCORD_*_WEBHOOK_URL, etc.
+./scripts/deploy.sh staging --tunnel
 ```
 
-2. **Grafana** :
+### Production (avec Cloudflare Tunnel)
+
 ```bash
-docker run -d \
-  --name tumulte-grafana \
-  -p 3001:3000 \
-  -v $(pwd)/grafana/provisioning:/etc/grafana/provisioning:ro \
-  -v $(pwd)/grafana/dashboards:/var/lib/grafana/dashboards:ro \
-  -e GF_SECURITY_ADMIN_USER=admin \
-  -e GF_SECURITY_ADMIN_PASSWORD=admin \
-  grafana/grafana:10.4.1
+cp .env.example .env.production
+# Configurer toutes les variables de production
+./scripts/deploy.sh prod --tunnel
 ```
 
-3. **Node Exporter** (métriques système) :
+---
+
+## Configuration des environnements
+
+### Variables d'environnement
+
+Crée un fichier `.env` (dev), `.env.staging` ou `.env.production` :
+
 ```bash
-docker run -d \
-  --name tumulte-node-exporter \
-  -p 9100:9100 \
-  -v /proc:/host/proc:ro \
-  -v /sys:/host/sys:ro \
-  prom/node-exporter:v1.7.0 \
-  --path.procfs=/host/proc \
-  --path.sysfs=/host/sys
+# === ENVIRONNEMENT ===
+ENVIRONMENT=staging                    # development | staging | production
+ENV_SUFFIX=staging                     # dev | staging | prod
+
+# === GRAFANA ===
+GF_SECURITY_ADMIN_USER=admin
+GF_SECURITY_ADMIN_PASSWORD=secure_password_here
+GRAFANA_ROOT_URL=https://monitoring-staging.tumulte.app
+
+# === DISCORD WEBHOOKS ===
+# Crée des webhooks dans Discord: Server Settings > Integrations > Webhooks
+DISCORD_MONITORING_WEBHOOK_URL=https://discord.com/api/webhooks/xxx/yyy
+DISCORD_CRITICAL_WEBHOOK_URL=https://discord.com/api/webhooks/xxx/zzz
+
+# === CLOUDFLARE TUNNEL ===
+# Dashboard: https://one.dash.cloudflare.com/ > Access > Tunnels
+CLOUDFLARE_TUNNEL_TOKEN=eyJhxxxxx
+GRAFANA_PUBLIC_DOMAIN=monitoring-staging.tumulte.app
+
+# === EXPORTERS ===
+DATA_SOURCE_NAME=postgresql://user:pass@host:5432/twitch_polls?sslmode=disable
+REDIS_ADDR=host.docker.internal:6379
+REDIS_PASSWORD=
 ```
 
-4. **Postgres Exporter** :
+### Commandes du script deploy.sh
+
 ```bash
-docker run -d \
-  --name tumulte-postgres-exporter \
-  -p 9187:9187 \
-  -e DATA_SOURCE_NAME="postgresql://user:pass@host:5432/db?sslmode=disable" \
-  --add-host=host.docker.internal:host-gateway \
-  prometheuscommunity/postgres-exporter:v0.15.0
+# Démarrer
+./scripts/deploy.sh dev                    # Développement local
+./scripts/deploy.sh staging                # Staging sans tunnel
+./scripts/deploy.sh staging --tunnel       # Staging avec Cloudflare
+./scripts/deploy.sh prod --tunnel          # Production avec Cloudflare
+
+# Gestion
+./scripts/deploy.sh staging --down         # Arrêter
+./scripts/deploy.sh staging --restart      # Redémarrer
+./scripts/deploy.sh staging --logs         # Voir les logs
+./scripts/deploy.sh staging --status       # Statut des containers
 ```
 
-5. **Redis Exporter** :
-```bash
-docker run -d \
-  --name tumulte-redis-exporter \
-  -p 9121:9121 \
-  -e REDIS_ADDR="host.docker.internal:6379" \
-  --add-host=host.docker.internal:host-gateway \
-  oliver006/redis_exporter:v1.58.0
+---
+
+## Cloudflare Tunnel
+
+Le tunnel Cloudflare permet d'exposer Grafana de manière sécurisée sans ouvrir de ports sur le serveur.
+
+### Configuration
+
+1. **Créer le tunnel** dans [Cloudflare Zero Trust](https://one.dash.cloudflare.com/):
+   - Access > Tunnels > Create Tunnel
+   - Nom: `tumulte-monitoring-staging` ou `tumulte-monitoring-prod`
+   - Copier le token
+
+2. **Configurer les routes publiques**:
+   | Public hostname | Service |
+   |-----------------|---------|
+   | `monitoring-staging.tumulte.app` | `http://grafana:3000` |
+   | `monitoring.tumulte.app` | `http://grafana:3000` |
+
+3. **(Optionnel) Ajouter une Access Policy**:
+   - Access > Applications > Add Application
+   - Type: Self-hosted
+   - Domain: `monitoring.tumulte.app`
+   - Policy: Email OTP ou SSO
+
+### Architecture avec tunnel
+
+```
+Internet
+    │
+    ▼
+Cloudflare Edge (CDN + DDoS protection)
+    │
+    ▼ (tunnel chiffré TLS)
+cloudflared container
+    │
+    └──► tumulte-grafana:3000 → monitoring.tumulte.app
 ```
 
-### Étape 3 : Vérifier que tout fonctionne
+> **Note**: Prometheus et Alertmanager ne sont PAS exposés publiquement pour des raisons de sécurité.
 
-1. **Prometheus** : http://localhost:9090
-   - Va dans Status → Targets
-   - Tous les targets doivent être "UP" (vert)
+---
 
-2. **Grafana** : http://localhost:3001
-   - Login : admin / ton_mot_de_passe
-   - Le dashboard "Tumulte - Overview" est auto-chargé
+## Alertes Discord
+
+Les alertes sont envoyées vers Discord via webhooks. Deux channels recommandés :
+- **#monitoring** : Alertes normales (warnings)
+- **#alertes-critiques** : Alertes critiques uniquement
+
+### Créer un webhook Discord
+
+1. Server Settings > Integrations > Webhooks
+2. New Webhook
+3. Copier l'URL
+4. Coller dans `.env.staging` ou `.env.production`
+
+### Alertes configurées
+
+| Alerte | Condition | Sévérité |
+|--------|-----------|----------|
+| TumulteBackendDown | Service down > 1min | Critical |
+| TumulteFrontendDown | Service down > 1min | Critical |
+| HighRequestLatency | p95 > 1s pendant 5min | Warning |
+| HighErrorRate | > 5% erreurs 5xx | Critical |
+| HighCpuUsage | CPU > 80% pendant 10min | Warning |
+| LowMemoryAvailable | RAM < 10% | Critical |
+| DiskSpaceLow | Disque < 15% | Warning |
+| PostgresDown | DB down | Critical |
+| RedisDown | Cache down | Critical |
+| ContainerRestarting | > 3 restarts/heure | Warning |
 
 ---
 
@@ -137,7 +202,7 @@ docker run -d \
 │                        PROMETHEUS                                │
 │  - Scrape toutes les 15s les endpoints /metrics                 │
 │  - Stocke les données en time-series                            │
-│  - Évalue les alertes                                           │
+│  - Évalue les alertes → Alertmanager → Discord                  │
 └─────────────────────────────────────────────────────────────────┘
                     │
                     ▼
@@ -145,7 +210,7 @@ docker run -d \
 │                         GRAFANA                                  │
 │  - Requête Prometheus via PromQL                                │
 │  - Affiche les dashboards                                       │
-│  - Configure des alertes visuelles                              │
+│  - Accessible via Cloudflare Tunnel (staging/prod)              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -153,8 +218,9 @@ docker run -d \
 
 1. **Ton app expose /metrics** → Format texte Prometheus
 2. **Prometheus scrape** → Toutes les 15 secondes
-3. **Prometheus stocke** → Base de données time-series
-4. **Grafana query** → PromQL pour visualiser
+3. **Prometheus évalue** → Les alertes selon `alerts.yml`
+4. **Alertmanager notifie** → Discord via webhooks
+5. **Grafana visualise** → Dashboards en temps réel
 
 ---
 
@@ -183,22 +249,6 @@ docker run -d \
 | Postgres Exporter | Connexions, transactions, locks |
 | Redis Exporter | Mémoire, commandes, clients |
 | cAdvisor | CPU/RAM par container Docker |
-
----
-
-## Alertes configurées
-
-| Alerte | Condition | Sévérité |
-|--------|-----------|----------|
-| TumulteBackendDown | Service indisponible > 1min | Critical |
-| TumulteFrontendDown | Service indisponible > 1min | Critical |
-| HighRequestLatency | p95 > 1s pendant 5min | Warning |
-| HighErrorRate | > 5% erreurs 5xx | Critical |
-| HighCpuUsage | CPU > 80% pendant 10min | Warning |
-| LowMemoryAvailable | RAM < 10% disponible | Critical |
-| DiskSpaceLow | Disque < 15% | Warning |
-| PostgresDown | DB indisponible | Critical |
-| RedisDown | Cache indisponible | Critical |
 
 ---
 
@@ -274,10 +324,48 @@ Surveille ces métriques pour savoir quand scaler :
    - http://localhost:9090/graph
    - Tape une métrique et vérifie qu'il y a des résultats
 
-### Les alertes ne partent pas
+### Les alertes Discord ne partent pas
 
-1. Vérifie Alertmanager :
+1. Vérifie que les webhooks sont configurés dans `.env.staging` ou `.env.production`
+
+2. Vérifie Alertmanager :
    - http://localhost:9093
-   - Vérifie que les alertes sont visibles
+   - Status → Alertmanager Config
+   - Vérifie que les URLs ne contiennent pas "PLACEHOLDER"
 
-2. Configure les webhooks Discord dans `alertmanager.yml`
+3. Teste le webhook manuellement :
+   ```bash
+   curl -X POST -H "Content-Type: application/json" \
+     -d '{"content": "Test depuis Tumulte Monitoring"}' \
+     "$DISCORD_MONITORING_WEBHOOK_URL"
+   ```
+
+### Le tunnel Cloudflare ne fonctionne pas
+
+1. Vérifie le token :
+   ```bash
+   docker logs tumulte-cloudflared-staging
+   ```
+
+2. Vérifie la configuration dans le dashboard Cloudflare Zero Trust
+
+3. Vérifie que les routes sont bien configurées vers `http://grafana:3000`
+
+---
+
+## Connexion au réseau des applications
+
+Pour que Prometheus puisse scraper les métriques des containers backend/frontend en staging/production, les containers doivent être sur le même réseau Docker.
+
+Ajoute dans `docker-compose.staging.yml` ou `docker-compose.production.yml` :
+
+```yaml
+networks:
+  monitoring:
+    # Réseau par défaut du monitoring
+  dokploy-network:
+    external: true
+    # Réseau partagé avec backend/frontend
+```
+
+Et ajoute `dokploy-network` aux services prometheus et les exporters si nécessaire.

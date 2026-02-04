@@ -4,8 +4,15 @@
 # Ce fichier configure les cibles (targets) que Prometheus va scraper
 # pour collecter les métriques.
 #
-# En production, remplace les adresses localhost par les vraies adresses
-# de tes services (IPs, hostnames Docker, etc.)
+# Les targets backend/frontend sont configurés via les variables d'environnement:
+#   - BACKEND_TARGET (ex: host.docker.internal:3333, tumulte-backend-staging:3333)
+#   - FRONTEND_TARGET (ex: host.docker.internal:3000, tumulte-frontend-staging:3000)
+#
+# Usage par environnement:
+#   - Dev: host.docker.internal:PORT (accès au host depuis Docker)
+#   - Staging: tumulte-backend-staging:3333, tumulte-frontend-staging:3000
+#   - Prod: tumulte-backend-prod:3333, tumulte-frontend-prod:3000
+#
 # =============================================================================
 
 global:
@@ -14,8 +21,8 @@ global:
   # Intervalle d'évaluation des règles d'alerte
   evaluation_interval: 15s
   # Labels ajoutés à toutes les métriques
+  # Note: ENVIRONMENT est défini via docker-compose (development/staging/production)
   external_labels:
-    environment: 'production'
     project: 'tumulte'
 
 # Règles d'alertes
@@ -46,14 +53,26 @@ scrape_configs:
   # TUMULTE BACKEND - Métriques applicatives AdonisJS
   # ---------------------------------------------------------------------------
   # Ton backend expose /metrics avec prom-client
-  # Adapte l'adresse selon ton setup (localhost en dev, nom du container en prod)
+  #
+  # Configuration des targets par environnement (dans .env):
+  #   Dev:     BACKEND_TARGET=host.docker.internal:3333
+  #   Staging: BACKEND_TARGET=tumulte-backend-staging:3333
+  #   Prod:    BACKEND_TARGET=tumulte-backend-prod:3333
+  #
+  # Note: En staging/prod avec Docker, les containers sont sur le même réseau
+  # Docker (dokploy-network + monitoring), donc on utilise le hostname du container.
+  #
   - job_name: 'tumulte-backend'
     metrics_path: '/metrics'
     static_configs:
+      # Dev: utilise host.docker.internal pour accéder au host
+      # Staging/Prod: configurer via file_sd_configs ou modifier ce fichier
       - targets: ['host.docker.internal:3333']
         labels:
           service: 'backend'
           app: 'tumulte'
+    # Timeout plus long pour le backend (peut être lent au démarrage)
+    scrape_timeout: 10s
     # Si ton endpoint /metrics nécessite une auth, décommente :
     # basic_auth:
     #   username: 'prometheus'
@@ -62,6 +81,11 @@ scrape_configs:
   # ---------------------------------------------------------------------------
   # TUMULTE FRONTEND - Métriques Nuxt SSR
   # ---------------------------------------------------------------------------
+  # Configuration des targets par environnement (dans .env):
+  #   Dev:     FRONTEND_TARGET=host.docker.internal:3000
+  #   Staging: FRONTEND_TARGET=tumulte-frontend-staging:3000
+  #   Prod:    FRONTEND_TARGET=tumulte-frontend-prod:3000
+  #
   - job_name: 'tumulte-frontend'
     metrics_path: '/metrics'
     static_configs:
@@ -69,6 +93,7 @@ scrape_configs:
         labels:
           service: 'frontend'
           app: 'tumulte'
+    scrape_timeout: 10s
 
   # ---------------------------------------------------------------------------
   # NODE EXPORTER - Métriques système (CPU, RAM, disque, réseau)

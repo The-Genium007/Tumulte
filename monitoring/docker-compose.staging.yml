@@ -1,0 +1,59 @@
+# =============================================================================
+# Tumulte Monitoring Stack - STAGING Override
+# =============================================================================
+# Usage: docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+# =============================================================================
+
+services:
+  prometheus:
+    environment:
+      - ENVIRONMENT=staging
+    labels:
+      - "tumulte.environment=staging"
+      - "tumulte.component=prometheus"
+    # Connexion au réseau des applications pour scraper les métriques
+    networks:
+      - monitoring
+      - dokploy-network
+
+  grafana:
+    environment:
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-https://monitoring-staging.tumulte.app}
+    labels:
+      - "tumulte.environment=staging"
+      - "tumulte.component=grafana"
+      - "cloudflare.tunnel.hostname=${GRAFANA_PUBLIC_DOMAIN:-monitoring-staging.tumulte.app}"
+      - "cloudflare.tunnel.service=http://grafana:3000"
+
+  alertmanager:
+    labels:
+      - "tumulte.environment=staging"
+      - "tumulte.component=alertmanager"
+
+  node-exporter:
+    labels:
+      - "tumulte.environment=staging"
+      - "tumulte.component=node-exporter"
+
+  cadvisor:
+    labels:
+      - "tumulte.environment=staging"
+      - "tumulte.component=cadvisor"
+
+  postgres-exporter:
+    labels:
+      - "tumulte.environment=staging"
+      - "tumulte.component=postgres-exporter"
+
+  redis-exporter:
+    labels:
+      - "tumulte.environment=staging"
+      - "tumulte.component=redis-exporter"
+
+# Réseaux
+networks:
+  monitoring:
+    # Réseau interne du monitoring (défini dans docker-compose.yml)
+  dokploy-network:
+    external: true
+    # Réseau partagé avec backend/frontend pour scraper leurs métriques

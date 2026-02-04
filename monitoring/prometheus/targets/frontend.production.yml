@@ -1,0 +1,14 @@
+# =============================================================================
+# Prometheus Target - Frontend PRODUCTION
+# =============================================================================
+# Ce fichier est utilisé par file_sd_configs pour découvrir dynamiquement
+# les targets frontend en production.
+#
+# Déployé automatiquement par le script deploy.sh
+# =============================================================================
+- targets:
+    - 'tumulte-frontend-prod:3000'
+  labels:
+    service: 'frontend'
+    app: 'tumulte'
+    environment: 'production'

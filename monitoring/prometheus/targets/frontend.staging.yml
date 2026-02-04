@@ -1,0 +1,14 @@
+# =============================================================================
+# Prometheus Target - Frontend STAGING
+# =============================================================================
+# Ce fichier est utilisé par file_sd_configs pour découvrir dynamiquement
+# les targets frontend en staging.
+#
+# Déployé automatiquement par le script deploy.sh
+# =============================================================================
+- targets:
+    - 'tumulte-frontend-staging:3000'
+  labels:
+    service: 'frontend'
+    app: 'tumulte'
+    environment: 'staging'
