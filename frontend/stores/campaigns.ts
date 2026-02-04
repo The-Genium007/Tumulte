@@ -121,15 +121,14 @@ export const useCampaignsStore = defineStore('campaigns', () => {
       // Track la création de campagne
       track('campaign_created', {
         campaign_id: newCampaign.id,
-        campaign_name: newCampaign.name,
-        is_first_campaign: isFirstCampaign,
+        campaign_name: newCampaign.name, // eslint-disable-line camelcase
+        is_first_campaign: isFirstCampaign, // eslint-disable-line camelcase
       })
 
       // Marquer "first_campaign_at" une seule fois (ne change jamais après)
       if (isFirstCampaign) {
-        setUserPropertiesOnce({
-          first_campaign_at: new Date().toISOString(),
-        })
+        // eslint-disable-next-line camelcase
+        setUserPropertiesOnce({ first_campaign_at: new Date().toISOString() })
       }
 
       return newCampaign
@@ -213,8 +212,8 @@ export const useCampaignsStore = defineStore('campaigns', () => {
       // Track l'invitation du streamer
       track('streamer_invited', {
         campaign_id: campaignId,
-        campaign_name: selectedCampaign.value?.name,
-        member_count: selectedCampaign.value?.members?.length ?? 1,
+        campaign_name: selectedCampaign.value?.name, // eslint-disable-line camelcase
+        member_count: selectedCampaign.value?.members?.length ?? 1, // eslint-disable-line camelcase
       })
 
       return member

@@ -279,9 +279,8 @@ export const useCampaigns = () => {
       if (!response.ok) throw new Error('Failed to accept invitation')
 
       // Track l'acceptation de l'invitation
-      track('invitation_accepted', {
-        invitation_id: id,
-      })
+      // eslint-disable-next-line camelcase
+      track('invitation_accepted', { invitation_id: id })
     } catch (error) {
       console.error('Failed to accept invitation:', error)
       throw error

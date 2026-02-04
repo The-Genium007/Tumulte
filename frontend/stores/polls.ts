@@ -87,7 +87,7 @@ export const usePollsStore = defineStore('polls', () => {
         track('first_poll_created', {
           poll_id: data.data.id,
           campaign_id: campaignId,
-          options_count: pollData.options.length,
+          options_count: pollData.options.length, // eslint-disable-line camelcase
         })
         setUserPropertiesOnce({
           first_poll_created_at: new Date().toISOString(),
@@ -214,9 +214,9 @@ export const usePollsStore = defineStore('polls', () => {
       track('poll_launched', {
         poll_id: pollId,
         poll_instance_id: data.data.id,
-        poll_question: poll?.question,
-        options_count: poll?.options?.length,
-        duration_seconds: poll?.durationSeconds,
+        poll_question: poll?.question, // eslint-disable-line camelcase
+        options_count: poll?.options?.length, // eslint-disable-line camelcase
+        duration_seconds: poll?.durationSeconds, // eslint-disable-line camelcase
       })
 
       return { pollInstance: data.data, pollId: data.pollId || pollId }
