@@ -4,15 +4,15 @@
 
 {{ define "discord.text" }}
 {{ range .Alerts }}
-**{{ .Labels.alertname }}** ({{ .Labels.severity | toUpper }})
+**{{ .Labels.alertname }}** ({{ .Labels.severity }})
 {{ .Annotations.summary }}
 
 {{ if .Annotations.description }}
 > {{ .Annotations.description }}
 {{ end }}
 
-**Environnement:** {{ .Labels.environment | default "unknown" }}
-**Service:** {{ .Labels.service | default "N/A" }}
+**Environnement:** {{ if .Labels.environment }}{{ .Labels.environment }}{{ else }}unknown{{ end }}
+**Service:** {{ if .Labels.service }}{{ .Labels.service }}{{ else }}N/A{{ end }}
 {{ if eq .Status "firing" }}
 **Depuis:** {{ .StartsAt.Format "15:04:05 02/01/2006" }}
 {{ else }}
