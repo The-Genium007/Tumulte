@@ -13,16 +13,16 @@
 
 # Backend - sera remplacé par tumulte-backend-{ENV_SUFFIX}:3333
 - targets:
-    - 'tumulte-backend-prod:3333'
+    - 'tumulte-backend-staging:3333'
   labels:
     service: 'backend'
     app: 'tumulte'
-    environment: 'prod'
+    environment: 'staging'
 
 # Frontend - sera remplacé par tumulte-frontend-{ENV_SUFFIX}:3000
 - targets:
-    - 'tumulte-frontend-prod:3000'
+    - 'tumulte-frontend-staging:3000'
   labels:
     service: 'frontend'
     app: 'tumulte'
-    environment: 'prod'
+    environment: 'staging'
