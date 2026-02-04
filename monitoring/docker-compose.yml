@@ -2,28 +2,21 @@
 # Tumulte Monitoring Stack - Prometheus + Grafana + Exporters
 # =============================================================================
 #
-# Ce fichier est la configuration de BASE. Utilisez les overrides pour chaque
-# environnement:
+# ENV_SUFFIX differentiates environments: "prod" or "staging"
+# Cloudflare tunnel uses: tumulte-grafana-prod:3000 or tumulte-grafana-staging:3000
 #
-# Développement (local):
-#   docker compose up -d
+# Usage:
+#   docker compose --env-file .env up -d
+#   docker compose --env-file .env.staging up -d
+#   docker compose --env-file .env.production up -d
 #
-# Staging:
-#   docker compose -f docker-compose.yml -f docker-compose.staging.yml \
-#     --env-file .env.staging up -d
-#
-# Production:
-#   docker compose -f docker-compose.yml -f docker-compose.production.yml \
-#     --env-file .env.production up -d
-#
-# Avec Cloudflare Tunnel (staging/prod):
-#   docker compose -f docker-compose.yml -f docker-compose.staging.yml \
-#     -f cloudflare/docker-compose.tunnel.yml --env-file .env.staging up -d
-#
-# Accès (mode local):
+# Accès local (dev):
 #   - Grafana:     http://localhost:3001
 #   - Prometheus:  http://localhost:9090
 #   - Alertmanager: http://localhost:9093
+#
+# Accès via tunnel (staging/prod):
+#   - Grafana: https://monitoring.tumulte.app ou https://monitoring-staging.tumulte.app
 #
 # =============================================================================
 
@@ -33,7 +26,8 @@ services:
   # ---------------------------------------------------------------------------
   prometheus:
     image: prom/prometheus:v2.51.0
-    container_name: tumulte-prometheus-${ENV_SUFFIX:-dev}
+    container_name: tumulte-prometheus-${ENV_SUFFIX:-prod}
+    hostname: tumulte-prometheus-${ENV_SUFFIX:-prod}
     restart: unless-stopped
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -47,29 +41,38 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./prometheus/targets:/etc/prometheus/targets:ro
       - prometheus_data:/prometheus
     networks:
       - monitoring
+      - dokploy-network
     extra_hosts:
       - 'host.docker.internal:host-gateway'
+    environment:
+      - ENV_SUFFIX=${ENV_SUFFIX:-prod}
     labels:
-      - "tumulte.environment=${ENVIRONMENT:-development}"
+      - "tumulte.environment=${ENV_SUFFIX:-prod}"
       - "tumulte.component=prometheus"
 
   # ---------------------------------------------------------------------------
   # GRAFANA - Visualisation et dashboards
-  # Configure credentials via env_file or docker secrets in production
+  # Cloudflare tunnel routes to: tumulte-grafana-{ENV_SUFFIX}:3000
   # ---------------------------------------------------------------------------
   grafana:
     image: grafana/grafana:10.4.1
-    container_name: tumulte-grafana-${ENV_SUFFIX:-dev}
+    container_name: tumulte-grafana-${ENV_SUFFIX:-prod}
+    hostname: tumulte-grafana-${ENV_SUFFIX:-prod}
     restart: unless-stopped
     env_file:
       - .env
     environment:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-http://localhost:3001}
+      - GF_SERVER_DOMAIN=${GRAFANA_DOMAIN:-localhost}
       - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel
+      # Security (enabled for staging/prod via .env)
+      - GF_SECURITY_COOKIE_SECURE=${GF_SECURITY_COOKIE_SECURE:-false}
+      - GF_SECURITY_STRICT_TRANSPORT_SECURITY=${GF_SECURITY_STRICT_TRANSPORT_SECURITY:-false}
     ports:
       - '3001:3000'
     volumes:
@@ -78,10 +81,11 @@ services:
       - grafana_data:/var/lib/grafana
     networks:
       - monitoring
+      - dokploy-network
     depends_on:
       - prometheus
     labels:
-      - "tumulte.environment=${ENVIRONMENT:-development}"
+      - "tumulte.environment=${ENV_SUFFIX:-prod}"
       - "tumulte.component=grafana"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/api/health || exit 1"]
@@ -95,7 +99,8 @@ services:
   # ---------------------------------------------------------------------------
   alertmanager:
     image: prom/alertmanager:v0.27.0
-    container_name: tumulte-alertmanager-${ENV_SUFFIX:-dev}
+    container_name: tumulte-alertmanager-${ENV_SUFFIX:-prod}
+    hostname: tumulte-alertmanager-${ENV_SUFFIX:-prod}
     restart: unless-stopped
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
@@ -104,16 +109,16 @@ services:
       - '9093:9093'
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./alertmanager/templates:/etc/alertmanager/templates:ro
       - alertmanager_data:/alertmanager
     networks:
       - monitoring
     environment:
-      # Ces variables sont utilisées dans alertmanager.yml via envsubst ou template
       - DISCORD_MONITORING_WEBHOOK_URL=${DISCORD_MONITORING_WEBHOOK_URL:-}
       - DISCORD_CRITICAL_WEBHOOK_URL=${DISCORD_CRITICAL_WEBHOOK_URL:-}
-      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - ENV_SUFFIX=${ENV_SUFFIX:-prod}
     labels:
-      - "tumulte.environment=${ENVIRONMENT:-development}"
+      - "tumulte.environment=${ENV_SUFFIX:-prod}"
       - "tumulte.component=alertmanager"
 
   # ---------------------------------------------------------------------------
@@ -121,7 +126,8 @@ services:
   # ---------------------------------------------------------------------------
   node-exporter:
     image: prom/node-exporter:v1.7.0
-    container_name: tumulte-node-exporter-${ENV_SUFFIX:-dev}
+    container_name: tumulte-node-exporter-${ENV_SUFFIX:-prod}
+    hostname: tumulte-node-exporter-${ENV_SUFFIX:-prod}
     restart: unless-stopped
     command:
       - '--path.procfs=/host/proc'
@@ -137,7 +143,7 @@ services:
     networks:
       - monitoring
     labels:
-      - "tumulte.environment=${ENVIRONMENT:-development}"
+      - "tumulte.environment=${ENV_SUFFIX:-prod}"
       - "tumulte.component=node-exporter"
 
   # ---------------------------------------------------------------------------
@@ -145,7 +151,8 @@ services:
   # ---------------------------------------------------------------------------
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.49.1
-    container_name: tumulte-cadvisor-${ENV_SUFFIX:-dev}
+    container_name: tumulte-cadvisor-${ENV_SUFFIX:-prod}
+    hostname: tumulte-cadvisor-${ENV_SUFFIX:-prod}
     restart: unless-stopped
     privileged: true
     ports:
@@ -159,7 +166,7 @@ services:
     networks:
       - monitoring
     labels:
-      - "tumulte.environment=${ENVIRONMENT:-development}"
+      - "tumulte.environment=${ENV_SUFFIX:-prod}"
       - "tumulte.component=cadvisor"
 
   # ---------------------------------------------------------------------------
@@ -167,10 +174,11 @@ services:
   # ---------------------------------------------------------------------------
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:v0.15.0
-    container_name: tumulte-postgres-exporter-${ENV_SUFFIX:-dev}
+    container_name: tumulte-postgres-exporter-${ENV_SUFFIX:-prod}
+    hostname: tumulte-postgres-exporter-${ENV_SUFFIX:-prod}
     restart: unless-stopped
-    env_file:
-      - .env
+    environment:
+      - DATA_SOURCE_NAME=${DATA_SOURCE_NAME}
     ports:
       - '9187:9187'
     networks:
@@ -178,7 +186,7 @@ services:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     labels:
-      - "tumulte.environment=${ENVIRONMENT:-development}"
+      - "tumulte.environment=${ENV_SUFFIX:-prod}"
       - "tumulte.component=postgres-exporter"
 
   # ---------------------------------------------------------------------------
@@ -186,10 +194,12 @@ services:
   # ---------------------------------------------------------------------------
   redis-exporter:
     image: oliver006/redis_exporter:v1.58.0
-    container_name: tumulte-redis-exporter-${ENV_SUFFIX:-dev}
+    container_name: tumulte-redis-exporter-${ENV_SUFFIX:-prod}
+    hostname: tumulte-redis-exporter-${ENV_SUFFIX:-prod}
     restart: unless-stopped
-    env_file:
-      - .env
+    environment:
+      - REDIS_ADDR=${REDIS_ADDR:-redis:6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
     ports:
       - '9121:9121'
     networks:
@@ -197,7 +207,7 @@ services:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     labels:
-      - "tumulte.environment=${ENVIRONMENT:-development}"
+      - "tumulte.environment=${ENV_SUFFIX:-prod}"
       - "tumulte.component=redis-exporter"
 
 # Volumes persistants
@@ -209,7 +219,11 @@ volumes:
   alertmanager_data:
     driver: local
 
-# Réseau isolé pour le monitoring
+# Networks
 networks:
+  # Réseau interne monitoring
   monitoring:
     driver: bridge
+  # Dokploy network - pour accéder aux containers backend/frontend
+  dokploy-network:
+    external: true
