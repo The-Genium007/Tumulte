@@ -111,8 +111,8 @@ export default defineAppConfig({
     },
     switch: {
       slots: {
-        root: 'ring-0 border-0 bg-[var(--theme-input-bg)] data-[state=checked]:bg-[var(--color-dark-accent)] rounded-full overflow-hidden',
-        thumb: 'bg-[var(--ui-bg-inverted)] ring-0 shadow-sm rounded-full',
+        root: 'ring-0 border-0 bg-[var(--theme-input-bg)] data-[state=checked]:bg-[var(--color-secondary-500)] rounded-full overflow-hidden',
+        thumb: 'bg-white dark:bg-[var(--color-dark-text-primary)] ring-0 shadow-sm rounded-full',
       },
     },
     selectMenu: {

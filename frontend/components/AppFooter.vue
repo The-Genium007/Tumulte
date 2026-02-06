@@ -1,52 +1,72 @@
 <template>
-  <footer
-    class="mt-auto container mx-auto px-4 sm:px-6 lg:px-8 pb-24 lg:pb-6 max-w-7xl safe-area-bottom"
-  >
-    <div class="bg-(--theme-bg-elevated) rounded-4xl px-8 py-6 text-center space-y-3">
-      <!-- Version -->
-      <p class="text-sm text-(--theme-text-muted)">v{{ version }}</p>
+  <footer class="mt-auto pb-24 lg:pb-6 safe-area-bottom">
+    <div class="container-page py-4">
+      <nav class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <!-- Logo -->
+        <NuxtLink to="/" class="flex items-center gap-3 group">
+          <img
+            src="~/assets/images/logo.png"
+            alt="Tumulte"
+            class="size-8 sm:size-10 transition-transform group-hover:scale-105"
+          />
+          <span class="text-base sm:text-lg font-bold text-primary">Tumulte</span>
+        </NuxtLink>
 
-      <!-- Legal links -->
-      <div class="flex flex-wrap justify-center gap-4 text-xs">
-        <NuxtLink
-          to="/legal/conditions-utilisation"
-          class="text-(--theme-text-muted) hover:text-(--theme-text-secondary) hover:underline transition-colors"
-        >
-          Conditions d'utilisation
-        </NuxtLink>
-        <span class="text-(--theme-text-muted)">•</span>
-        <NuxtLink
-          to="/legal/politique-confidentialite"
-          class="text-(--theme-text-muted) hover:text-(--theme-text-secondary) hover:underline transition-colors"
-        >
-          Politique de confidentialité
-        </NuxtLink>
-        <span class="text-(--theme-text-muted)">•</span>
-        <NuxtLink
-          to="/about"
-          class="text-(--theme-text-muted) hover:text-(--theme-text-secondary) hover:underline transition-colors"
-        >
-          À propos
-        </NuxtLink>
-      </div>
+        <!-- Navigation centrale -->
+        <div class="flex items-center gap-4 sm:gap-6 flex-wrap justify-center">
+          <NuxtLink
+            to="/about"
+            class="text-sm text-(--theme-text-secondary) hover:text-(--theme-text-primary) transition-colors"
+          >
+            À propos
+          </NuxtLink>
+          <NuxtLink
+            to="/legal/conditions-utilisation"
+            class="text-sm text-(--theme-text-secondary) hover:text-(--theme-text-primary) transition-colors"
+          >
+            CGU
+          </NuxtLink>
+          <NuxtLink
+            to="/legal/politique-confidentialite"
+            class="text-sm text-(--theme-text-secondary) hover:text-(--theme-text-primary) transition-colors"
+          >
+            Confidentialité
+          </NuxtLink>
+          <button
+            type="button"
+            class="text-sm text-(--theme-text-secondary) hover:text-(--theme-text-primary) transition-colors"
+            @click="handleOpenSupport"
+          >
+            Support
+          </button>
+        </div>
 
-      <!-- Copyright -->
-      <p class="text-xs text-(--theme-text-muted)">
-        &copy; 2026 Tumulte. Propulsé par
-        <a
-          href="https://lucasgiza.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="text-(--theme-text-secondary) hover:underline"
-          >Lucas GIZA</a
-        >
-      </p>
+        <!-- Infos -->
+        <div class="flex items-center gap-4 text-xs text-(--theme-text-muted)">
+          <span>v{{ version }}</span>
+          <span class="hidden sm:inline">•</span>
+          <a
+            href="https://lucasgiza.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hidden sm:inline hover:text-(--theme-text-secondary) transition-colors"
+          >
+            Lucas GIZA
+          </a>
+        </div>
+      </nav>
     </div>
   </footer>
 </template>
 
 <script setup lang="ts">
 import { useAppVersion } from '~/composables/useAppVersion'
+import { useSupportWidget } from '~/composables/useSupportWidget'
 
 const { version } = useAppVersion()
+const { openSupport } = useSupportWidget()
+
+function handleOpenSupport() {
+  openSupport()
+}
 </script>
