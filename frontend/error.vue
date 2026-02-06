@@ -51,6 +51,8 @@
 </template>
 
 <script setup lang="ts">
+import * as Sentry from '@sentry/nuxt'
+
 interface NuxtError {
   statusCode?: number
   statusMessage?: string
@@ -63,6 +65,23 @@ interface NuxtError {
 const props = defineProps<{
   error?: NuxtError
 }>()
+
+// Capture error to Sentry for 5xx errors (not 404s which are expected)
+onMounted(() => {
+  if (props.error && props.error.statusCode && props.error.statusCode >= 500) {
+    Sentry.captureException(new Error(props.error.message || 'Unknown error'), {
+      tags: {
+        'error.statusCode': props.error.statusCode,
+        'error.fatal': props.error.fatal,
+        'error.unhandled': props.error.unhandled,
+      },
+      extra: {
+        statusMessage: props.error.statusMessage,
+        data: props.error.data,
+      },
+    })
+  }
+})
 
 const errorMessage = computed(() => {
   if (props.error?.statusCode === 404) {

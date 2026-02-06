@@ -4,10 +4,11 @@ export default defineNuxtConfig({
   devtools: { enabled: process.env.NODE_ENV === 'development' },
   ssr: false, // SPA mode - variables must be set at build time
 
-  // Disable source maps in production for security
+  // Source maps: enabled for Sentry error tracking
+  // In production, maps are uploaded to Sentry then deleted from build output
   sourcemap: {
     server: false,
-    client: process.env.NODE_ENV === 'development',
+    client: true,
   },
 
   modules: [
