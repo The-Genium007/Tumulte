@@ -5,8 +5,8 @@
  * Change these values to use different color palettes from your design tokens.
  *
  * Available palettes (defined in assets/css/main.css):
- * - brand: Primary brand color (#0f0b04)
- * - secondary: Secondary color (#0f0b04)
+ * - brand: Primary brand color (#8b6f47 - marron doré chaleureux)
+ * - secondary: Secondary color (#d8b790 - beige doré)
  * - neutral: Gray scale for text/backgrounds
  * - success: Green for success states
  * - error: Red for error states
