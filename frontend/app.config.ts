@@ -5,8 +5,8 @@
  * Change these values to use different color palettes from your design tokens.
  *
  * Available palettes (defined in assets/css/main.css):
- * - brand: Primary brand color (#0f0b04)
- * - secondary: Secondary color (#0f0b04)
+ * - brand: Primary brand color (#8b6f47 - marron doré chaleureux)
+ * - secondary: Secondary color (#d8b790 - beige doré)
  * - neutral: Gray scale for text/backgrounds
  * - success: Green for success states
  * - error: Red for error states
@@ -111,8 +111,8 @@ export default defineAppConfig({
     },
     switch: {
       slots: {
-        root: 'ring-0 border-0 bg-[var(--theme-input-bg)] data-[state=checked]:bg-[var(--color-dark-accent)] rounded-full overflow-hidden',
-        thumb: 'bg-[var(--ui-bg-inverted)] ring-0 shadow-sm rounded-full',
+        root: 'ring-0 border-0 bg-[var(--theme-input-bg)] data-[state=checked]:bg-[var(--color-secondary-500)] rounded-full overflow-hidden',
+        thumb: 'bg-white dark:bg-[var(--color-dark-text-primary)] ring-0 shadow-sm rounded-full',
       },
     },
     selectMenu: {

@@ -39,7 +39,7 @@
         <UButton
           to="/"
           size="xl"
-          class="cta-glow shimmer"
+          class="error-cta"
           trailing-icon="i-lucide-home"
           @click="handleGoHome"
         >
@@ -51,6 +51,8 @@
 </template>
 
 <script setup lang="ts">
+import * as Sentry from '@sentry/nuxt'
+
 interface NuxtError {
   statusCode?: number
   statusMessage?: string
@@ -63,6 +65,23 @@ interface NuxtError {
 const props = defineProps<{
   error?: NuxtError
 }>()
+
+// Capture error to Sentry for 5xx errors (not 404s which are expected)
+onMounted(() => {
+  if (props.error && props.error.statusCode && props.error.statusCode >= 500) {
+    Sentry.captureException(new Error(props.error.message || 'Unknown error'), {
+      tags: {
+        'error.statusCode': props.error.statusCode,
+        'error.fatal': props.error.fatal,
+        'error.unhandled': props.error.unhandled,
+      },
+      extra: {
+        statusMessage: props.error.statusMessage,
+        data: props.error.data,
+      },
+    })
+  }
+})
 
 const errorMessage = computed(() => {
   if (props.error?.statusCode === 404) {
@@ -155,39 +174,22 @@ const handleGoHome = () => {
   }
 }
 
-/* Animation shimmer pour le bouton CTA (si pas déjà dans main.css) */
-@keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
-:deep(.shimmer) {
-  background: linear-gradient(
-    90deg,
-    var(--color-primary-600) 0%,
-    var(--color-primary-500) 25%,
-    var(--color-primary-400) 50%,
-    var(--color-primary-500) 75%,
-    var(--color-primary-600) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 3s linear infinite;
-}
-
-:deep(.cta-glow) {
+/* Bouton CTA avec glow subtil */
+:deep(.error-cta) {
   box-shadow:
     0 0 20px rgba(216, 183, 144, 0.3),
     0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-:deep(.cta-glow:hover) {
+:deep(.error-cta:hover) {
+  transform: translateY(-2px);
   box-shadow:
     0 0 30px rgba(216, 183, 144, 0.5),
-    0 6px 12px rgba(0, 0, 0, 0.15);
+    0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+:deep(.error-cta:active) {
+  transform: translateY(0);
 }
 </style>

@@ -2,6 +2,7 @@ import app from '@adonisjs/core/services/app'
 import { HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import logger from '@adonisjs/core/services/logger'
 import { ValidationException } from '#middleware/validate_middleware'
+import { Sentry } from '#config/sentry'
 
 export default class Handler extends ExceptionHandler {
   /**
@@ -60,6 +61,34 @@ export default class Handler extends ExceptionHandler {
         },
         'Unhandled exception'
       )
+
+      // Send to Sentry for 5xx errors only (4xx are filtered in sentry config)
+      if (error instanceof Error) {
+        const requestId = ctx.request.header('x-request-id')
+        const sessionId = ctx.request.header('x-session-id')
+
+        // Set user context for correlation
+        const user = ctx.auth?.user
+        if (user) {
+          Sentry.setUser({
+            id: String(user.id),
+            username: user.displayName,
+          })
+        }
+
+        Sentry.captureException(error, {
+          tags: {
+            'request.id': requestId,
+            'session.id': sessionId,
+            'http.method': ctx.request.method(),
+            'http.url': ctx.request.url(),
+          },
+          extra: {
+            ip: ctx.request.ip(),
+            userAgent: ctx.request.header('user-agent'),
+          },
+        })
+      }
     }
 
     return super.report(error, ctx)
