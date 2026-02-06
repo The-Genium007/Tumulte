@@ -3,6 +3,7 @@ import { apiClient } from '@japa/api-client'
 import { pluginAdonisJS } from '@japa/plugin-adonisjs'
 import testUtils from '@adonisjs/core/services/test_utils'
 import app from '@adonisjs/core/services/app'
+import db from '@adonisjs/lucid/services/db'
 import type { Config } from '@japa/runner/types'
 
 /**
@@ -27,12 +28,42 @@ export const configureSuite: Config['configureSuite'] = (suite) => {
 }
 
 /**
+ * Tables to truncate after tests (in order to respect FK constraints)
+ * Order matters: truncate child tables before parent tables
+ */
+const TABLES_TO_TRUNCATE = [
+  'auth_access_tokens',
+  'notification_preferences',
+  'campaign_memberships',
+  'poll_results',
+  'poll_instances',
+  'polls',
+  'campaign_sessions',
+  'overlay_configs',
+  'vtt_connections',
+  'streamers',
+  'streamer_gamification_configs',
+  'campaigns',
+  'auth_providers',
+  'users',
+]
+
+/**
  * Global test runner hooks
  */
 export const runnerHooks = {
   setup: [
     async () => {
-      // Run migrations to ensure auth_access_tokens table exists
+      // Verify we're using the test database to prevent accidental data loss
+      const dbName = process.env.DB_DATABASE ?? ''
+      if (!dbName.includes('test')) {
+        throw new Error(
+          `SAFETY CHECK FAILED: Tests must run on a test database (got: ${dbName}). ` +
+            'Update .env.test to use DB_DATABASE=twitch_polls_test'
+        )
+      }
+
+      // Run migrations using Ace command
       const ace = await import('@adonisjs/core/services/ace')
       await ace.default.exec('migration:run', [])
 
@@ -41,7 +72,19 @@ export const runnerHooks = {
   ],
   teardown: [
     async () => {
-      console.log('✅ Test environment cleaned up')
+      // Clean up all test data to prevent pollution between test runs
+      try {
+        for (const table of TABLES_TO_TRUNCATE) {
+          try {
+            await db.rawQuery(`TRUNCATE TABLE "${table}" CASCADE`)
+          } catch {
+            // Table might not exist, skip silently
+          }
+        }
+        console.log('✅ Test database cleaned up')
+      } catch (error) {
+        console.error('⚠️ Failed to clean up test database:', error)
+      }
     },
   ],
 }
