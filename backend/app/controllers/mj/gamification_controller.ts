@@ -1,11 +1,14 @@
 import { inject } from '@adonisjs/core'
 import app from '@adonisjs/core/services/app'
+import env from '#start/env'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { GamificationService } from '#services/gamification/gamification_service'
 import { GamificationEventRepository } from '#repositories/gamification_event_repository'
 import { GamificationConfigRepository } from '#repositories/gamification_config_repository'
 import { GamificationInstanceRepository } from '#repositories/gamification_instance_repository'
 import { CampaignRepository } from '#repositories/campaign_repository'
+import { StreamerGamificationConfigRepository } from '#repositories/streamer_gamification_config_repository'
+import { CampaignMembershipRepository } from '#repositories/campaign_membership_repository'
 import {
   GamificationEventDto,
   GamificationEventListDto,
@@ -19,6 +22,8 @@ import {
   updateCampaignGamificationConfigSchema,
   triggerManualEventSchema,
 } from '#validators/gamification/gamification_validators'
+import { randomUUID, createHmac } from 'node:crypto'
+import logger from '@adonisjs/core/services/logger'
 
 /**
  * GamificationController - Gestion de la gamification côté MJ
@@ -31,7 +36,9 @@ export default class GamificationController {
     private eventRepository: GamificationEventRepository,
     private configRepository: GamificationConfigRepository,
     private instanceRepository: GamificationInstanceRepository,
-    private campaignRepository: CampaignRepository
+    private campaignRepository: CampaignRepository,
+    private streamerConfigRepository: StreamerGamificationConfigRepository,
+    private membershipRepository: CampaignMembershipRepository
   ) {}
 
   /**
@@ -441,5 +448,253 @@ export default class GamificationController {
             : 0,
       },
     })
+  }
+
+  /**
+   * Simule une redemption Channel Points via self HTTP call au webhook EventSub
+   * POST /mj/campaigns/:id/gamification/events/:eventId/simulate-redemption
+   *
+   * DEV/STAGING uniquement. Envoie un vrai POST HTTP signé HMAC au endpoint
+   * /webhooks/twitch/eventsub pour tester le pipeline complet.
+   */
+  async simulateRedemption({ auth, params, response }: HttpContext) {
+    const nodeEnv = process.env.NODE_ENV || 'development'
+    if (nodeEnv === 'production') {
+      return response.forbidden({ error: 'Cette route est désactivée en production' })
+    }
+
+    const userId = auth.user!.id
+    const campaignId = params.id
+    const eventId = params.eventId
+
+    const isOwner = await this.campaignRepository.isOwner(campaignId, userId)
+    if (!isOwner) {
+      return response.forbidden({ error: "Vous n'êtes pas propriétaire de cette campagne" })
+    }
+
+    // Trouver un streamer membre actif de la campagne avec une config gamification
+    const memberships = await this.membershipRepository.findActiveByCampaign(campaignId)
+    if (memberships.length === 0) {
+      return response.badRequest({
+        error: 'Aucun streamer actif dans cette campagne',
+      })
+    }
+
+    // Chercher un streamer qui a activé cet événement (StreamerGamificationConfig avec twitchRewardId)
+    let streamerConfig = null
+    let targetMembership = null
+
+    for (const membership of memberships) {
+      const config = await this.streamerConfigRepository.findByStreamerCampaignAndEvent(
+        membership.streamerId,
+        campaignId,
+        eventId
+      )
+      if (config?.twitchRewardId && config.isEnabled) {
+        streamerConfig = config
+        targetMembership = membership
+        break
+      }
+    }
+
+    // Si aucun streamer n'a de twitchRewardId (non-affilié), auto-provisionner un reward simulé
+    if (!streamerConfig || !targetMembership) {
+      // Prendre le premier membre actif avec un compte Twitch lié
+      const eligibleMembership = memberships.find((m) => m.streamer?.twitchUserId)
+      if (!eligibleMembership) {
+        return response.badRequest({
+          error: 'Aucun streamer avec un compte Twitch lié dans cette campagne',
+        })
+      }
+
+      // Chercher ou créer la StreamerGamificationConfig
+      let config = await this.streamerConfigRepository.findByStreamerCampaignAndEvent(
+        eligibleMembership.streamerId,
+        campaignId,
+        eventId
+      )
+
+      if (!config) {
+        config = await this.streamerConfigRepository.create({
+          campaignId,
+          streamerId: eligibleMembership.streamerId,
+          eventId,
+          isEnabled: true,
+        })
+      } else if (!config.isEnabled) {
+        await this.streamerConfigRepository.setEnabled(config.id, true)
+        config.isEnabled = true
+      }
+
+      // Auto-provisionner un twitchRewardId simulé
+      const simRewardId = `sim_reward_${randomUUID()}`
+      await this.streamerConfigRepository.updateTwitchReward(config.id, simRewardId, 'active')
+      config.twitchRewardId = simRewardId
+      config.twitchRewardStatus = 'active' as any
+
+      // Recharger la relation event
+      config = await this.streamerConfigRepository.findByStreamerCampaignAndEvent(
+        eligibleMembership.streamerId,
+        campaignId,
+        eventId
+      )
+
+      streamerConfig = config!
+      targetMembership = eligibleMembership
+
+      logger.info(
+        {
+          event: 'simulate_redemption_auto_provision',
+          streamerId: eligibleMembership.streamerId,
+          simRewardId,
+          campaignId,
+          eventId,
+        },
+        'Auto-provisioned simulated twitchRewardId for non-affiliate streamer'
+      )
+    }
+
+    const streamer = targetMembership.streamer
+    if (!streamer?.twitchUserId) {
+      return response.badRequest({
+        error: "Le streamer n'a pas de compte Twitch lié",
+      })
+    }
+
+    // Vérifier que le secret EventSub est configuré
+    const webhookSecret = env.get('TWITCH_EVENTSUB_SECRET') || ''
+    if (!webhookSecret) {
+      return response.badRequest({
+        error:
+          'TWITCH_EVENTSUB_SECRET non configuré dans .env. ' +
+          'Ajoutez un secret (ex: "dev-test-secret") pour la vérification de signature.',
+      })
+    }
+
+    // Construire le payload EventSub identique à Twitch
+    const redemptionId = randomUUID()
+    const testViewerId = String(Math.floor(Math.random() * 900000000) + 100000000)
+    const testViewerName = `test_viewer_${Math.floor(Math.random() * 9999)}`
+
+    const effectiveCost = streamerConfig.getEffectiveCost(
+      await this.configRepository.findByCampaignAndEvent(campaignId, eventId),
+      streamerConfig.event
+    )
+
+    const eventsubPayload = {
+      subscription: {
+        id: randomUUID(),
+        type: 'channel.channel_points_custom_reward_redemption.add',
+        version: '1',
+        status: 'enabled',
+        condition: {
+          broadcaster_user_id: streamer.twitchUserId,
+        },
+        transport: {
+          method: 'webhook',
+          callback: `http://localhost/webhooks/twitch/eventsub`,
+        },
+        created_at: new Date().toISOString(),
+      },
+
+      event: {
+        id: redemptionId,
+        broadcaster_user_id: streamer.twitchUserId,
+        broadcaster_user_login: streamer.twitchLogin || 'test_broadcaster', // eslint-disable-line camelcase
+        broadcaster_user_name: streamer.twitchDisplayName || 'Test_Broadcaster', // eslint-disable-line camelcase
+        user_id: testViewerId,
+        user_login: testViewerName, // eslint-disable-line camelcase
+        user_name: testViewerName, // eslint-disable-line camelcase
+        user_input: '', // eslint-disable-line camelcase
+        status: 'unfulfilled',
+        reward: {
+          id: streamerConfig.twitchRewardId,
+          title: streamerConfig.event?.name || 'Gamification Test',
+          cost: effectiveCost,
+          prompt: '',
+        },
+        redeemed_at: new Date().toISOString(), // eslint-disable-line camelcase
+      },
+    }
+
+    // Calculer la signature HMAC-SHA256 (même algo que twitch_eventsub_controller.ts:295-330)
+    const messageId = randomUUID()
+    const timestamp = new Date().toISOString()
+    const bodyString = JSON.stringify(eventsubPayload)
+    const hmacMessage = messageId + timestamp + bodyString
+    const signature =
+      'sha256=' + createHmac('sha256', webhookSecret).update(hmacMessage).digest('hex')
+
+    // Self HTTP call vers le vrai endpoint webhook
+    const port = env.get('PORT', 3333)
+    const host = env.get('HOST', 'localhost')
+    const webhookUrl = `http://${host}:${port}/webhooks/twitch/eventsub`
+
+    try {
+      const webhookResponse = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Twitch-Eventsub-Message-Id': messageId,
+          'Twitch-Eventsub-Message-Timestamp': timestamp,
+          'Twitch-Eventsub-Message-Signature': signature,
+          'Twitch-Eventsub-Message-Type': 'notification',
+        },
+        body: bodyString,
+      })
+
+      const webhookStatus = webhookResponse.status
+      const webhookBody = await webhookResponse.text()
+
+      if (webhookStatus === 200) {
+        logger.info(
+          {
+            event: 'simulate_redemption_success',
+            campaignId,
+            eventId,
+            streamerId: streamer.id,
+            redemptionId,
+            viewerName: testViewerName,
+          },
+          'Simulation redemption réussie'
+        )
+
+        return response.ok({
+          message: 'Redemption simulée avec succès',
+          data: {
+            redemptionId,
+            viewerName: testViewerName,
+            cost: effectiveCost,
+            streamerId: streamer.id,
+            streamerName: streamer.twitchDisplayName || streamer.twitchLogin,
+            webhookStatus,
+          },
+        })
+      }
+
+      logger.warn(
+        {
+          event: 'simulate_redemption_webhook_failed',
+          webhookStatus,
+          webhookBody,
+        },
+        'Le webhook EventSub a rejeté la simulation'
+      )
+
+      return response.badRequest({
+        error: `Le webhook a répondu avec le status ${webhookStatus}`,
+        details: webhookBody,
+      })
+    } catch (err) {
+      logger.error(
+        { event: 'simulate_redemption_error', error: (err as Error).message },
+        'Erreur lors du self HTTP call'
+      )
+
+      return response.internalServerError({
+        error: 'Erreur lors de la simulation',
+        details: (err as Error).message,
+      })
+    }
   }
 }

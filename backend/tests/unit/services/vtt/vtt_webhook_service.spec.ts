@@ -10,6 +10,7 @@ import {
 import Character from '#models/character'
 import CharacterAssignment from '#models/character_assignment'
 import DiceRoll from '#models/dice_roll'
+import { campaign as Campaign } from '#models/campaign'
 import { DateTime } from 'luxon'
 
 test.group('VttWebhookService - processDiceRoll', (group) => {
@@ -507,5 +508,450 @@ test.group('VttWebhookService - syncCharacter', (group) => {
     const character = await service.syncCharacter(connection, 'npc-campaign-123', characterData)
 
     assert.equal(character.characterType, 'npc')
+  })
+})
+
+// ========================================
+// GAMIFICATION INTEGRATION TESTS
+// ========================================
+
+test.group('VttWebhookService - gamification onDiceRoll integration', (group) => {
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
+
+  test('should call gamificationService.onDiceRoll for player character rolls', async ({
+    assert,
+  }) => {
+    let onDiceRollCalled = false
+    let capturedCampaignId = ''
+    let capturedStreamerId = ''
+    let capturedStreamerName = ''
+
+    const mockGamificationService = {
+      onDiceRoll: async (
+        campaignId: string,
+        streamerId: string,
+        streamerName: string,
+        _viewerCount: number,
+        _diceRollData: any
+      ) => {
+        onDiceRollCalled = true
+        capturedCampaignId = campaignId
+        capturedStreamerId = streamerId
+        capturedStreamerName = streamerName
+        return null
+      },
+    }
+
+    const { default: VttWebhookService } = await import('#services/vtt/vtt_webhook_service')
+    const service = new VttWebhookService(mockGamificationService as any)
+
+    const user = await createTestUser()
+    const provider = await createTestVttProvider()
+    const connection = await createTestVttConnection({
+      userId: user.id,
+      vttProviderId: provider.id,
+    })
+    const campaign = await createTestCampaign({
+      ownerId: user.id,
+      vttConnectionId: connection.id,
+      vttCampaignId: 'gami-campaign-1',
+    })
+
+    // Create character and assign to a streamer (player roll)
+    const streamer = await createTestStreamer({ twitchDisplayName: 'PlayerOne' })
+    const character = await Character.create({
+      campaignId: campaign.id,
+      vttCharacterId: 'player-char-1',
+      name: 'Ragnar',
+      characterType: 'pc',
+      lastSyncAt: DateTime.now(),
+    })
+    await CharacterAssignment.create({
+      campaignId: campaign.id,
+      streamerId: streamer.id,
+      characterId: character.id,
+    })
+
+    const payload = {
+      campaignId: 'gami-campaign-1',
+      characterId: 'player-char-1',
+      characterName: 'Ragnar',
+      rollFormula: '1d20',
+      result: 20,
+      diceResults: [20],
+      isCritical: true,
+      criticalType: 'success' as const,
+    }
+
+    await service.processDiceRoll(connection, payload)
+
+    assert.isTrue(onDiceRollCalled)
+    assert.equal(capturedCampaignId, campaign.id)
+    assert.equal(capturedStreamerId, streamer.id)
+    assert.equal(capturedStreamerName, 'PlayerOne')
+  })
+
+  test('should call gamificationService.onDiceRoll for GM rolls with active character', async ({
+    assert,
+  }) => {
+    let onDiceRollCalled = false
+    let capturedStreamerId = ''
+
+    const mockGamificationService = {
+      onDiceRoll: async (
+        _campaignId: string,
+        streamerId: string,
+        _streamerName: string,
+        _viewerCount: number,
+        _diceRollData: any
+      ) => {
+        onDiceRollCalled = true
+        capturedStreamerId = streamerId
+        return null
+      },
+    }
+
+    const { default: VttWebhookService } = await import('#services/vtt/vtt_webhook_service')
+    const service = new VttWebhookService(mockGamificationService as any)
+
+    const user = await createTestUser()
+    const gmStreamer = await createTestStreamer({ userId: user.id })
+    const provider = await createTestVttProvider()
+    const connection = await createTestVttConnection({
+      userId: user.id,
+      vttProviderId: provider.id,
+    })
+
+    // Create campaign first (without gmActiveCharacterId)
+    const campaign = await createTestCampaign({
+      ownerId: user.id,
+      vttConnectionId: connection.id,
+      vttCampaignId: 'gami-campaign-2',
+    })
+
+    // Create GM active character with correct campaignId
+    const gmCharacter = await Character.create({
+      campaignId: campaign.id,
+      vttCharacterId: 'gm-active-char',
+      name: 'GM Character',
+      characterType: 'npc',
+      lastSyncAt: DateTime.now(),
+    })
+
+    // Update campaign to set GM active character
+    campaign.gmActiveCharacterId = gmCharacter.id
+    await campaign.save()
+
+    const payload = {
+      campaignId: 'gami-campaign-2',
+      characterId: 'some-npc-id', // NPC not assigned to any player
+      characterName: 'Goblin',
+      rollFormula: '1d20',
+      result: 1,
+      diceResults: [1],
+      isCritical: true,
+      criticalType: 'failure' as const,
+    }
+
+    await service.processDiceRoll(connection, payload)
+
+    assert.isTrue(onDiceRollCalled)
+    assert.equal(capturedStreamerId, gmStreamer.id)
+  })
+
+  test('should NOT call gamificationService.onDiceRoll when pending attribution', async ({
+    assert,
+  }) => {
+    let onDiceRollCalled = false
+
+    const mockGamificationService = {
+      onDiceRoll: async () => {
+        onDiceRollCalled = true
+        return null
+      },
+    }
+
+    const { default: VttWebhookService } = await import('#services/vtt/vtt_webhook_service')
+    const service = new VttWebhookService(mockGamificationService as any)
+
+    const user = await createTestUser()
+    const provider = await createTestVttProvider()
+    const connection = await createTestVttConnection({
+      userId: user.id,
+      vttProviderId: provider.id,
+    })
+    // Campaign with NO gmActiveCharacterId
+    await createTestCampaign({
+      ownerId: user.id,
+      vttConnectionId: connection.id,
+      vttCampaignId: 'gami-campaign-3',
+    })
+
+    const payload = {
+      campaignId: 'gami-campaign-3',
+      characterId: 'unassigned-char',
+      characterName: 'Unknown NPC',
+      rollFormula: '1d20',
+      result: 15,
+      diceResults: [15],
+      isCritical: false,
+    }
+
+    const { pendingAttribution } = await service.processDiceRoll(connection, payload)
+
+    assert.isTrue(pendingAttribution)
+    assert.isFalse(onDiceRollCalled)
+  })
+
+  test('should NOT call gamificationService.onDiceRoll when service is null', async ({
+    assert,
+  }) => {
+    const { default: VttWebhookService } = await import('#services/vtt/vtt_webhook_service')
+    const service = new VttWebhookService(null)
+
+    const user = await createTestUser()
+    const provider = await createTestVttProvider()
+    const connection = await createTestVttConnection({
+      userId: user.id,
+      vttProviderId: provider.id,
+    })
+    const campaign = await createTestCampaign({
+      ownerId: user.id,
+      vttConnectionId: connection.id,
+      vttCampaignId: 'gami-campaign-4',
+    })
+
+    // Create a player character with assignment so it's not pending
+    const streamer = await createTestStreamer()
+    const character = await Character.create({
+      campaignId: campaign.id,
+      vttCharacterId: 'assigned-char',
+      name: 'Hero',
+      characterType: 'pc',
+      lastSyncAt: DateTime.now(),
+    })
+    await CharacterAssignment.create({
+      campaignId: campaign.id,
+      streamerId: streamer.id,
+      characterId: character.id,
+    })
+
+    const payload = {
+      campaignId: 'gami-campaign-4',
+      characterId: 'assigned-char',
+      characterName: 'Hero',
+      rollFormula: '1d20',
+      result: 20,
+      diceResults: [20],
+      isCritical: true,
+      criticalType: 'success' as const,
+    }
+
+    // Should not throw — gamification is simply skipped
+    const { diceRoll } = await service.processDiceRoll(connection, payload)
+    assert.exists(diceRoll.id)
+  })
+
+  test('should handle gamificationService.onDiceRoll errors gracefully', async ({ assert }) => {
+    const mockGamificationService = {
+      onDiceRoll: async () => {
+        throw new Error('Gamification failed')
+      },
+    }
+
+    const { default: VttWebhookService } = await import('#services/vtt/vtt_webhook_service')
+    const service = new VttWebhookService(mockGamificationService as any)
+
+    const user = await createTestUser()
+    const provider = await createTestVttProvider()
+    const connection = await createTestVttConnection({
+      userId: user.id,
+      vttProviderId: provider.id,
+    })
+    const campaign = await createTestCampaign({
+      ownerId: user.id,
+      vttConnectionId: connection.id,
+      vttCampaignId: 'gami-campaign-5',
+    })
+
+    const streamer = await createTestStreamer()
+    const character = await Character.create({
+      campaignId: campaign.id,
+      vttCharacterId: 'error-char',
+      name: 'Error Hero',
+      characterType: 'pc',
+      lastSyncAt: DateTime.now(),
+    })
+    await CharacterAssignment.create({
+      campaignId: campaign.id,
+      streamerId: streamer.id,
+      characterId: character.id,
+    })
+
+    const payload = {
+      campaignId: 'gami-campaign-5',
+      characterId: 'error-char',
+      characterName: 'Error Hero',
+      rollFormula: '1d20',
+      result: 20,
+      diceResults: [20],
+      isCritical: true,
+      criticalType: 'success' as const,
+    }
+
+    // Should NOT throw — error is caught and logged
+    const { diceRoll } = await service.processDiceRoll(connection, payload)
+    assert.exists(diceRoll.id)
+    assert.equal(diceRoll.result, 20)
+  })
+})
+
+// ========================================
+// CHARACTER RESOLUTION TESTS
+// ========================================
+
+test.group('VttWebhookService - resolveCharacterForRoll character name', (group) => {
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
+
+  test('should use GM active character name when roll is re-attributed', async ({ assert }) => {
+    let capturedCharacterName = ''
+
+    const mockGamificationService = {
+      onDiceRoll: async (
+        _campaignId: string,
+        _streamerId: string,
+        _streamerName: string,
+        _viewerCount: number,
+        diceRollData: any
+      ) => {
+        capturedCharacterName = diceRollData.characterName
+        return null
+      },
+    }
+
+    const { default: VttWebhookService } = await import('#services/vtt/vtt_webhook_service')
+    const service = new VttWebhookService(mockGamificationService as any)
+
+    const user = await createTestUser()
+    await createTestStreamer({ userId: user.id })
+    const provider = await createTestVttProvider()
+    const connection = await createTestVttConnection({
+      userId: user.id,
+      vttProviderId: provider.id,
+    })
+
+    // Create campaign first, then character, then link them
+    const campaign = await createTestCampaign({
+      ownerId: user.id,
+      vttConnectionId: connection.id,
+      vttCampaignId: 'name-test-campaign',
+    })
+
+    const gmChar = await Character.create({
+      campaignId: campaign.id,
+      vttCharacterId: 'gm-char-name-test',
+      name: 'Maître du Donjon',
+      characterType: 'npc',
+      lastSyncAt: DateTime.now(),
+    })
+
+    campaign.gmActiveCharacterId = gmChar.id
+    await campaign.save()
+
+    // The VTT sends roll from "Goblin" but it should be re-attributed to "Maître du Donjon"
+    const payload = {
+      campaignId: 'name-test-campaign',
+      characterId: 'goblin-npc-id',
+      characterName: 'Goblin',
+      rollFormula: '1d20',
+      result: 20,
+      diceResults: [20],
+      isCritical: true,
+      criticalType: 'success' as const,
+    }
+
+    await service.processDiceRoll(connection, payload)
+
+    // The gamification should receive the GM active character name, not 'Goblin'
+    assert.equal(capturedCharacterName, 'Maître du Donjon')
+  })
+
+  test('should set pendingAttribution when no player assignment and no GM active character', async ({
+    assert,
+  }) => {
+    const { default: VttWebhookService } = await import('#services/vtt/vtt_webhook_service')
+    const service = new VttWebhookService()
+
+    const user = await createTestUser()
+    const provider = await createTestVttProvider()
+    const connection = await createTestVttConnection({
+      userId: user.id,
+      vttProviderId: provider.id,
+    })
+    await createTestCampaign({
+      ownerId: user.id,
+      vttConnectionId: connection.id,
+      vttCampaignId: 'pending-test-campaign',
+      // No gmActiveCharacterId
+    })
+
+    const payload = {
+      campaignId: 'pending-test-campaign',
+      characterId: 'npc-no-owner',
+      characterName: 'Random NPC',
+      rollFormula: '1d20',
+      result: 10,
+      diceResults: [10],
+      isCritical: false,
+    }
+
+    const { pendingAttribution, diceRoll } = await service.processDiceRoll(connection, payload)
+
+    assert.isTrue(pendingAttribution)
+    assert.isNull(diceRoll.characterId)
+  })
+
+  test('should attribute roll to GM active character ID', async ({ assert }) => {
+    const { default: VttWebhookService } = await import('#services/vtt/vtt_webhook_service')
+    const service = new VttWebhookService()
+
+    const user = await createTestUser()
+    const provider = await createTestVttProvider()
+    const connection = await createTestVttConnection({
+      userId: user.id,
+      vttProviderId: provider.id,
+    })
+
+    const campaign = await createTestCampaign({
+      ownerId: user.id,
+      vttConnectionId: connection.id,
+      vttCampaignId: 'attrib-test-campaign',
+    })
+
+    const gmChar = await Character.create({
+      campaignId: campaign.id,
+      vttCharacterId: 'gm-active-for-attrib',
+      name: 'GM Char',
+      characterType: 'npc',
+      lastSyncAt: DateTime.now(),
+    })
+
+    campaign.gmActiveCharacterId = gmChar.id
+    await campaign.save()
+
+    const payload = {
+      campaignId: 'attrib-test-campaign',
+      characterId: 'some-npc',
+      characterName: 'Some NPC',
+      rollFormula: '1d20',
+      result: 12,
+      diceResults: [12],
+      isCritical: false,
+    }
+
+    const { diceRoll, pendingAttribution } = await service.processDiceRoll(connection, payload)
+
+    assert.isFalse(pendingAttribution)
+    assert.equal(diceRoll.characterId, gmChar.id)
   })
 })

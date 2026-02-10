@@ -309,6 +309,29 @@ export const useGamification = () => {
   // ========== Test Functions (DEV/STAGING only) ==========
 
   /**
+   * Simule une redemption Channel Points via le vrai pipeline EventSub
+   * Envoie un self HTTP call signé HMAC au webhook /webhooks/twitch/eventsub
+   */
+  const simulateRedemption = async (campaignId: string, eventId: string): Promise<void> => {
+    try {
+      const response = await fetch(
+        `${API_URL}/mj/campaigns/${campaignId}/gamification/events/${eventId}/simulate-redemption`,
+        {
+          method: 'POST',
+          credentials: 'include',
+        }
+      )
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to simulate redemption')
+      }
+    } catch (err) {
+      console.error('Failed to simulate redemption:', err)
+      throw err
+    }
+  }
+
+  /**
    * Force la complétion d'une instance (DEV/STAGING seulement)
    * Simule l'atteinte de l'objectif et exécute l'action immédiatement
    */
@@ -384,6 +407,7 @@ export const useGamification = () => {
     resetCooldowns,
 
     // Test (DEV/STAGING only)
+    simulateRedemption,
     forceCompleteInstance,
 
     // Helpers

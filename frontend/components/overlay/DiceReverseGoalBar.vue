@@ -144,6 +144,22 @@ const updateShake = () => {
   shakeIntensity.value = (Math.random() - 0.5) * 2 * intensity
 }
 
+// Stop all audio
+const stopAllAudio = () => {
+  try {
+    if (progressAudio.value) {
+      progressAudio.value.pause()
+      progressAudio.value.currentTime = 0
+    }
+    if (successAudio.value) {
+      successAudio.value.pause()
+      successAudio.value.currentTime = 0
+    }
+  } catch {
+    // Ignore audio errors
+  }
+}
+
 // Play sound
 const playSound = (type: 'progress' | 'success') => {
   try {
@@ -151,6 +167,11 @@ const playSound = (type: 'progress' | 'success') => {
       progressAudio.value.currentTime = 0
       progressAudio.value.play().catch(() => {})
     } else if (type === 'success' && successAudio.value) {
+      // Stop progress sound before playing success
+      if (progressAudio.value) {
+        progressAudio.value.pause()
+        progressAudio.value.currentTime = 0
+      }
       successAudio.value.currentTime = 0
       successAudio.value.play().catch(() => {})
     }
@@ -196,6 +217,7 @@ watch(
       // Hide after celebration
       setTimeout(() => {
         showSuccessAnimation.value = false
+        stopAllAudio()
         emit('hidden')
       }, 3000)
     }
@@ -207,6 +229,7 @@ watch(
   () => props.visible,
   (visible) => {
     if (!visible) {
+      stopAllAudio()
       emit('hidden')
     }
   }
@@ -227,6 +250,7 @@ onMounted(() => {
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval)
   if (shakeInterval) clearInterval(shakeInterval)
+  stopAllAudio()
 })
 </script>
 

@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
+import app from '@adonisjs/core/services/app'
 import { z } from 'zod'
 import { DateTime } from 'luxon'
 import VttConnection from '#models/vtt_connection'
@@ -63,8 +64,9 @@ export default class VttController {
       // 4. Valider le payload
       const payload = diceRollPayloadSchema.parse(request.body())
 
-      // 5. Déléguer le traitement au service
-      const webhookService = new VttWebhookService()
+      // 5. Déléguer le traitement au service (avec gamification)
+      const gamificationService = await app.container.make('gamificationService')
+      const webhookService = new VttWebhookService(gamificationService)
       const { diceRoll, pendingAttribution } = await webhookService.processDiceRoll(
         vttConnection,
         payload

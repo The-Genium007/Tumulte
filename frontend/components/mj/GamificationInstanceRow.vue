@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { GamificationInstance } from '@/types/api'
 
 const props = defineProps<{
@@ -15,18 +15,44 @@ const emit = defineEmits<{
 
 // Timer for countdown
 const timeRemaining = ref(0)
+const cancelling = ref(false)
 let timerInterval: ReturnType<typeof setInterval> | null = null
 
-onMounted(() => {
+const startTimer = () => {
+  stopTimer()
   updateTimeRemaining()
   timerInterval = setInterval(updateTimeRemaining, 1000)
+}
+
+const stopTimer = () => {
+  if (timerInterval) {
+    clearInterval(timerInterval)
+    timerInterval = null
+  }
+}
+
+onMounted(() => {
+  if (isActive.value) {
+    startTimer()
+  } else {
+    updateTimeRemaining()
+  }
 })
 
 onUnmounted(() => {
-  if (timerInterval) {
-    clearInterval(timerInterval)
-  }
+  stopTimer()
 })
+
+// Stop the timer when the instance is no longer active
+watch(
+  () => props.instance.status,
+  (newStatus) => {
+    if (newStatus !== 'active') {
+      stopTimer()
+      cancelling.value = false
+    }
+  }
+)
 
 const updateTimeRemaining = () => {
   const now = new Date().getTime()
@@ -42,6 +68,8 @@ const progressPercentage = computed(() => {
 const isComplete = computed(() => props.instance.isObjectiveReached)
 
 const isActive = computed(() => props.instance.status === 'active')
+
+const isArmed = computed(() => props.instance.status === 'armed')
 
 const eventName = computed(() => props.instance.event?.name ?? 'Événement')
 
@@ -62,6 +90,7 @@ const formatTime = (seconds: number): string => {
 
 // Handle cancel
 const handleCancel = () => {
+  cancelling.value = true
   emit('cancel', props.instance.id)
 }
 </script>
@@ -69,7 +98,13 @@ const handleCancel = () => {
 <template>
   <div
     class="relative overflow-hidden rounded-lg border transition-all"
-    :class="isComplete ? 'border-success-500 bg-success-light' : 'border-muted bg-elevated'"
+    :class="
+      isComplete
+        ? 'border-success-500 bg-success-light'
+        : isArmed
+          ? 'border-amber-500 bg-amber-500/5'
+          : 'border-muted bg-elevated'
+    "
   >
     <!-- Progress bar background -->
     <div
@@ -90,6 +125,11 @@ const handleCancel = () => {
           :style="{ backgroundColor: eventColor + '30' }"
         >
           <UIcon v-if="isComplete" name="i-lucide-check" class="size-5 text-success-500" />
+          <UIcon
+            v-else-if="isArmed"
+            name="i-lucide-shield-alert"
+            class="size-5 animate-pulse text-amber-500"
+          />
           <UIcon
             v-else
             name="i-lucide-zap"
@@ -113,10 +153,16 @@ const handleCancel = () => {
               <span class="font-semibold text-primary">{{ instance.currentProgress }}</span>
               / {{ instance.objectiveTarget }} clics
             </span>
-            <span class="text-muted">•</span>
-            <span :class="timeRemaining <= 10 ? 'text-error-500 font-semibold' : 'text-muted'">
-              {{ formatTime(timeRemaining) }}
-            </span>
+            <template v-if="isArmed">
+              <span class="text-muted">•</span>
+              <span class="text-amber-500 font-medium"> En attente d'un jet critique </span>
+            </template>
+            <template v-else-if="isActive">
+              <span class="text-muted">•</span>
+              <span :class="timeRemaining <= 10 ? 'text-error-500 font-semibold' : 'text-muted'">
+                {{ formatTime(timeRemaining) }}
+              </span>
+            </template>
           </div>
         </div>
       </div>
@@ -141,20 +187,27 @@ const handleCancel = () => {
           @click="emit('forceComplete', instance.id)"
         />
 
-        <!-- Cancel button (only if active) -->
+        <!-- Cancel button (active or armed) -->
         <UButton
-          v-if="isActive"
+          v-if="isActive || isArmed"
           icon="i-lucide-x"
           color="error"
           variant="soft"
           size="sm"
+          :loading="cancelling"
           aria-label="Annuler l'événement"
           @click="handleCancel"
         />
 
-        <!-- Status indicator (when not active) -->
+        <!-- Armed status indicator -->
+        <UBadge v-if="isArmed" color="warning" variant="solid" size="lg">
+          <UIcon name="i-lucide-shield-alert" class="size-4 mr-1" />
+          En attente
+        </UBadge>
+
+        <!-- Status indicator (when not active and not armed) -->
         <UBadge
-          v-if="!isActive"
+          v-else-if="!isActive"
           :color="isComplete ? 'success' : instance.status === 'cancelled' ? 'error' : 'neutral'"
           variant="solid"
           size="lg"

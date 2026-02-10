@@ -1,4 +1,5 @@
 import { inject } from '@adonisjs/core'
+import app from '@adonisjs/core/services/app'
 import type { Server, Socket } from 'socket.io'
 import jwt from 'jsonwebtoken'
 import { DateTime } from 'luxon'
@@ -283,8 +284,14 @@ export default class VttWebSocketService {
       // Get the VTT connection
       const connection = await VttConnection.findOrFail(connectionId)
 
-      // Process dice roll via webhook service (same logic as HTTP webhook)
-      const webhookService = new VttWebhookService()
+      // Process dice roll via webhook service (same logic as HTTP webhook, with gamification)
+      let gamificationService = null
+      try {
+        gamificationService = await app.container.make('gamificationService')
+      } catch {
+        logger.warn('Could not resolve gamificationService for dice roll')
+      }
+      const webhookService = new VttWebhookService(gamificationService)
       const { diceRoll, pendingAttribution } = await webhookService.processDiceRoll(connection, {
         campaignId: data.campaignId,
         characterId: data.characterId,
