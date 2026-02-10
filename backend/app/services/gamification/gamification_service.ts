@@ -787,59 +787,31 @@ export class GamificationService {
   }
 
   /**
-   * Force la complétion d'une instance (pour les tests DEV/STAGING)
-   * Simule l'atteinte de l'objectif et exécute l'action
+   * Force le passage en état "armed" d'une instance (pour les tests DEV/STAGING)
+   * Simule l'atteinte de l'objectif et arme l'instance (en attente d'un jet critique)
    */
   async forceCompleteInstance(instanceId: string): Promise<GamificationInstance> {
     const instance = await GamificationInstance.findOrFail(instanceId)
     await instance.load('event')
 
-    // Récupérer la config
-    const config = await this.getCampaignConfig(instance.campaignId, instance.eventId)
-    if (!config) {
-      throw new Error('Configuration non trouvée')
-    }
-
     // Mettre la progression à 100%
     instance.currentProgress = instance.objectiveTarget
+    await instance.save()
 
-    // Récupérer le connectionId de la VTT connection
-    const connectionId = await this.getVttConnectionId(instance.campaignId)
+    // Passer en état armed (en attente d'un jet critique)
+    await this.instanceManager.armInstance(instance)
 
-    logger.info(
-      {
-        event: 'force_complete_debug',
-        instanceId: instance.id,
-        campaignId: instance.campaignId,
-        connectionId: connectionId ?? 'NULL',
-        hasFoundryService: !!this.actionExecutor,
-      },
-      'Debug: état avant exécution'
-    )
-
-    if (!connectionId) {
-      logger.warn(
-        {
-          event: 'force_complete_no_connection',
-          instanceId: instance.id,
-          campaignId: instance.campaignId,
-        },
-        'Pas de connexion VTT trouvée pour cette campagne'
-      )
-    }
-
-    // Compléter l'instance et exécuter l'action immédiatement (pour les tests)
-    await this.instanceManager.complete(instance, instance.event, config, connectionId!, true)
-
-    this.broadcastInstanceCompleted(instance)
+    // Broadcast la progression à 100% puis l'état armed
+    this.broadcastProgress(instance, 'test_force')
+    this.broadcastInstanceArmed(instance)
 
     logger.info(
       {
-        event: 'force_complete_instance',
+        event: 'force_armed_instance',
         instanceId: instance.id,
         campaignId: instance.campaignId,
       },
-      'Instance forcée en complétion (test)'
+      'Instance forcée en état armed (test)'
     )
 
     return instance

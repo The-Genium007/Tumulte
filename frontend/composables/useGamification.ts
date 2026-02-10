@@ -297,13 +297,26 @@ export const useGamification = () => {
   }
 
   /**
-   * Réinitialise les cooldowns d'une campagne
-   * Note: Cette fonctionnalité n'est pas encore implémentée côté backend
+   * Réinitialise les cooldowns d'une campagne (DEV/STAGING uniquement)
    */
-  const resetCooldowns = async (_campaignId: string): Promise<{ count: number }> => {
-    // TODO: Implémenter la route backend pour reset cooldowns
-    console.warn('resetCooldowns: Route not implemented yet')
-    return { count: 0 }
+  const resetCooldowns = async (campaignId: string): Promise<{ count: number }> => {
+    try {
+      const response = await fetch(
+        `${API_URL}/mj/campaigns/${campaignId}/gamification/reset-cooldowns`,
+        {
+          method: 'POST',
+          credentials: 'include',
+        }
+      )
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to reset cooldowns')
+      }
+      return { count: 1 }
+    } catch (err) {
+      console.error('Failed to reset cooldowns:', err)
+      throw err
+    }
   }
 
   // ========== Test Functions (DEV/STAGING only) ==========

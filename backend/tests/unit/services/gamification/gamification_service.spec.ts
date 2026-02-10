@@ -430,8 +430,8 @@ test.group('GamificationService - cancelInstance', () => {
 })
 
 test.group('GamificationService - forceCompleteInstance', () => {
-  test('should set progress to target and complete', async ({ assert }) => {
-    let completeCalled = false
+  test('should set progress to target and arm instance', async ({ assert }) => {
+    let armCalled = false
     const mockInstance = createMockGamificationInstance({
       objectiveTarget: 100,
       currentProgress: 0,
@@ -439,12 +439,13 @@ test.group('GamificationService - forceCompleteInstance', () => {
       eventId: 'event-123',
       event: createMockGamificationEvent() as any,
     })
+    mockInstance.save = async () => mockInstance
 
     const service = createService({
       instanceManager: {
-        complete: async () => {
-          completeCalled = true
-          return createMockGamificationInstance({ status: 'completed' })
+        armInstance: async () => {
+          armCalled = true
+          return createMockGamificationInstance({ status: 'armed' })
         },
       },
     })
@@ -453,40 +454,14 @@ test.group('GamificationService - forceCompleteInstance', () => {
     const GamificationInstanceModule = await import('#models/gamification_instance')
     const origFindOrFail = GamificationInstanceModule.default.findOrFail
     ;(GamificationInstanceModule.default as any).findOrFail = async () => mockInstance
-    ;(service as any).getCampaignConfig = async () => ({
-      isEnabled: true,
-      event: createMockGamificationEvent(),
-    })
-    ;(service as any).getVttConnectionId = async () => 'vtt-conn-123'
-    ;(service as any).broadcastInstanceCompleted = () => {}
+    ;(service as any).broadcastProgress = () => {}
+    ;(service as any).broadcastInstanceArmed = () => {}
 
     try {
       await service.forceCompleteInstance('instance-123')
-      assert.isTrue(completeCalled)
+      assert.isTrue(armCalled)
       // The instance's currentProgress should be set to objectiveTarget
       assert.equal(mockInstance.currentProgress, 100)
-    } finally {
-      ;(GamificationInstanceModule.default as any).findOrFail = origFindOrFail
-    }
-  })
-
-  test('should throw when config not found', async ({ assert }) => {
-    const mockInstance = createMockGamificationInstance({
-      event: createMockGamificationEvent() as any,
-    })
-
-    const service = createService({})
-
-    const GamificationInstanceModule = await import('#models/gamification_instance')
-    const origFindOrFail = GamificationInstanceModule.default.findOrFail
-    ;(GamificationInstanceModule.default as any).findOrFail = async () => mockInstance
-    ;(service as any).getCampaignConfig = async () => null
-
-    try {
-      await assert.rejects(
-        () => service.forceCompleteInstance('instance-123'),
-        /Configuration non trouvée/
-      )
     } finally {
       ;(GamificationInstanceModule.default as any).findOrFail = origFindOrFail
     }
