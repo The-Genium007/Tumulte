@@ -353,6 +353,18 @@ describe('useGamification', () => {
       )
     })
 
+    it('should handle cancel error', async () => {
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: false,
+      })
+
+      const { cancelInstance } = useGamification()
+
+      await expect(cancelInstance('campaign-123', 'instance-1')).rejects.toThrow(
+        'Failed to cancel instance'
+      )
+    })
+
     it('should clear activeInstance if cancelled instance matches', async () => {
       // First, trigger to set activeInstance
       global.fetch = vi
@@ -480,6 +492,18 @@ describe('useGamification', () => {
         { credentials: 'include' }
       )
     })
+
+    it('should handle cooldown check error', async () => {
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: false,
+      })
+
+      const { checkCooldown } = useGamification()
+
+      await expect(checkCooldown('campaign-123', 'event-1')).rejects.toThrow(
+        'Failed to check cooldown'
+      )
+    })
   })
 
   describe('resetCooldowns', () => {
@@ -526,6 +550,49 @@ describe('useGamification', () => {
 
       await expect(forceCompleteInstance('campaign-123', 'instance-1')).rejects.toThrow(
         'Instance not found'
+      )
+    })
+  })
+
+  describe('simulateRedemption', () => {
+    it('should simulate a redemption successfully', async () => {
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+      })
+
+      const { simulateRedemption } = useGamification()
+
+      await simulateRedemption('campaign-123', 'event-1')
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'http://localhost:3333/mj/campaigns/campaign-123/gamification/events/event-1/simulate-redemption',
+        { method: 'POST', credentials: 'include' }
+      )
+    })
+
+    it('should handle simulate redemption error with API message', async () => {
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.resolve({ error: 'Event not configured' }),
+      })
+
+      const { simulateRedemption } = useGamification()
+
+      await expect(simulateRedemption('campaign-123', 'event-1')).rejects.toThrow(
+        'Event not configured'
+      )
+    })
+
+    it('should handle simulate redemption error with fallback message', async () => {
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: false,
+        json: () => Promise.reject(new Error('invalid json')),
+      })
+
+      const { simulateRedemption } = useGamification()
+
+      await expect(simulateRedemption('campaign-123', 'event-1')).rejects.toThrow(
+        'Failed to simulate redemption'
       )
     })
   })
