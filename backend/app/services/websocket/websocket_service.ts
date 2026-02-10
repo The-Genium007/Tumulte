@@ -101,6 +101,7 @@ interface PollEndEvent {
   totalVotes: number
   percentages: Record<string, number>
   winnerIndex: number | null
+  cancelled: boolean
   [key: string]: any
 }
 
@@ -239,7 +240,11 @@ class WebSocketService {
   /**
    * Émet l'événement de fin d'un sondage
    */
-  async emitPollEnd(pollInstanceId: string, aggregated: PollAggregatedVotes): Promise<void> {
+  async emitPollEnd(
+    pollInstanceId: string,
+    aggregated: PollAggregatedVotes,
+    cancelled: boolean = false
+  ): Promise<void> {
     const channel = `poll:${pollInstanceId}`
 
     logger.info({
@@ -280,6 +285,7 @@ class WebSocketService {
       totalVotes: aggregated.totalVotes,
       percentages: percentages,
       winnerIndex: winnerIndex,
+      cancelled: cancelled,
     }
 
     logger.info({
@@ -318,6 +324,7 @@ class WebSocketService {
           totalVotes: data.totalVotes,
           percentages: percentages,
           winnerIndex: data.winnerIndex,
+          cancelled: data.cancelled,
           campaign_id: String(pollInstance.campaignId),
         }
 

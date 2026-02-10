@@ -14,7 +14,10 @@
         :element="element"
         :poll-data="activePoll"
         :percentages="percentages"
+        :votes-by-option="votesByOption"
+        :total-votes="totalVotes"
         :is-ending="isEnding"
+        :is-cancelled="isCancelled"
         @state-change="handlePollStateChange"
       />
       <!-- DiceBox pour les éléments de type dice -->
@@ -203,7 +206,10 @@ const activePoll = ref<
   | null
 >(null)
 const percentages = ref<Record<number, number>>({})
+const votesByOption = ref<Record<number, number>>({})
+const totalVotes = ref(0)
 const isEnding = ref(false)
+const isCancelled = ref(false)
 
 // =============================================
 // Système de queue unifiée pour les dice rolls
@@ -283,7 +289,10 @@ const handlePollStateChange = (newState: string) => {
   if (newState === 'hidden') {
     activePoll.value = null
     percentages.value = {}
+    votesByOption.value = {}
+    totalVotes.value = 0
     isEnding.value = false
+    isCancelled.value = false
     console.log('[Overlay] Poll state cleared, ready for next poll')
   }
 }
@@ -491,7 +500,11 @@ const setupWebSocketSubscription = () => {
 
       const totalDuration = data.durationSeconds || 60
       activePoll.value = { ...data, totalDuration }
+      percentages.value = {}
+      votesByOption.value = {}
+      totalVotes.value = 0
       isEnding.value = false
+      isCancelled.value = false
     },
 
     onPollUpdate: (data) => {
@@ -499,12 +512,17 @@ const setupWebSocketSubscription = () => {
       if (isEnding.value) return
       if (activePoll.value?.pollInstanceId === data.pollInstanceId) {
         percentages.value = data.percentages
+        votesByOption.value = data.votesByOption || {}
+        totalVotes.value = data.totalVotes || 0
       }
     },
 
     onPollEnd: (data) => {
       if (activePoll.value?.pollInstanceId === data.pollInstanceId) {
         percentages.value = data.percentages
+        votesByOption.value = data.votesByOption || {}
+        totalVotes.value = data.totalVotes || 0
+        isCancelled.value = data.cancelled === true
         isEnding.value = true
       }
     },
@@ -561,6 +579,9 @@ const setupWebSocketSubscription = () => {
           component.reset()
           activePoll.value = null
           percentages.value = {}
+          votesByOption.value = {}
+          totalVotes.value = 0
+          isCancelled.value = false
           break
       }
     },
