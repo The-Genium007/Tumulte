@@ -236,7 +236,7 @@ export type GamificationEventType = 'individual' | 'group'
 export type GamificationTriggerType = 'dice_critical' | 'manual' | 'custom'
 export type GamificationActionType = 'dice_invert' | 'chat_message' | 'stat_modify' | 'custom'
 export type GamificationCooldownType = 'time' | 'gm_validation' | 'event_complete'
-export type GamificationInstanceStatus = 'active' | 'completed' | 'expired' | 'cancelled'
+export type GamificationInstanceStatus = 'active' | 'armed' | 'completed' | 'expired' | 'cancelled'
 
 export interface GamificationTriggerConfig {
   criticalSuccess?: {
@@ -364,6 +364,8 @@ export interface GamificationInstance {
   startsAt: string
   expiresAt: string
   completedAt: string | null
+  armedAt: string | null
+  isArmed: boolean
   resultData: GamificationResultData | null
   cooldownEndsAt: string | null
   // For individual instances

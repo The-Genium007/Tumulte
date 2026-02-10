@@ -3,8 +3,11 @@ import VttConnection from '#models/vtt_connection'
 import { campaign as Campaign } from '#models/campaign'
 import Character from '#models/character'
 import CharacterAssignment from '#models/character_assignment'
+import { streamer as Streamer } from '#models/streamer'
 import DiceRoll from '#models/dice_roll'
 import DiceRollService from '#services/vtt/dice_roll_service'
+import type { GamificationService } from '#services/gamification/gamification_service'
+import type { DiceRollData } from '#services/gamification/trigger_evaluator'
 import logger from '@adonisjs/core/services/logger'
 
 interface DiceRollPayload {
@@ -29,6 +32,12 @@ interface DiceRollPayload {
 }
 
 export default class VttWebhookService {
+  private gamificationService: GamificationService | null
+
+  constructor(gamificationService?: GamificationService | null) {
+    this.gamificationService = gamificationService ?? null
+  }
+
   /**
    * Traite un événement de dice roll provenant d'un VTT
    *
@@ -65,10 +74,8 @@ export default class VttWebhookService {
     }
 
     // 4. Determine which character to attribute this roll to
-    const { characterId, pendingAttribution } = await this.resolveCharacterForRoll(
-      campaign,
-      vttCharacter
-    )
+    const { characterId, pendingAttribution, streamerId, streamerName, resolvedCharacterName } =
+      await this.resolveCharacterForRoll(campaign, vttCharacter)
 
     // 5. Créer le dice roll via le service
     const diceRollService = new DiceRollService()
@@ -93,22 +100,63 @@ export default class VttWebhookService {
       pendingAttribution,
     })
 
+    // 6. Notify gamification system (non-blocking — dice roll is already saved)
+    if (this.gamificationService && !pendingAttribution && streamerId) {
+      const diceRollData: DiceRollData = {
+        rollId: diceRoll.id,
+        characterId,
+        characterName: resolvedCharacterName ?? vttCharacter.name,
+        formula: payload.rollFormula,
+        result: payload.result,
+        diceResults: payload.diceResults,
+        isCritical: payload.isCritical,
+        criticalType: payload.criticalType ?? null,
+      }
+
+      try {
+        await this.gamificationService.onDiceRoll(
+          campaign.id,
+          streamerId,
+          streamerName ?? 'Unknown',
+          0,
+          diceRollData
+        )
+      } catch (error) {
+        logger.error(
+          {
+            event: 'gamification_on_dice_roll_error',
+            campaignId: campaign.id,
+            rollId: diceRoll.id,
+            error: (error as Error).message,
+          },
+          'Failed to process gamification on dice roll (non-fatal)'
+        )
+      }
+    }
+
     return { diceRoll, pendingAttribution }
   }
 
   /**
    * Resolve which character a dice roll should be attributed to
    *
-   * @returns characterId (null if pending) and pendingAttribution flag
+   * @returns characterId, pendingAttribution flag, streamerId/streamerName, and resolvedCharacterName
    */
   private async resolveCharacterForRoll(
     campaign: Campaign,
     vttCharacter: Character
-  ): Promise<{ characterId: string | null; pendingAttribution: boolean }> {
+  ): Promise<{
+    characterId: string | null
+    pendingAttribution: boolean
+    streamerId: string | null
+    streamerName: string | null
+    resolvedCharacterName: string | null
+  }> {
     // Check if this character is assigned to a player (streamer)
     const playerAssignment = await CharacterAssignment.query()
       .where('character_id', vttCharacter.id)
       .where('campaign_id', campaign.id)
+      .preload('streamer')
       .first()
 
     if (playerAssignment) {
@@ -117,17 +165,39 @@ export default class VttWebhookService {
         characterId: vttCharacter.id,
         characterName: vttCharacter.name,
       })
-      return { characterId: vttCharacter.id, pendingAttribution: false }
+      return {
+        characterId: vttCharacter.id,
+        pendingAttribution: false,
+        streamerId: playerAssignment.streamerId,
+        streamerName:
+          playerAssignment.streamer?.twitchDisplayName ||
+          playerAssignment.streamer?.twitchLogin ||
+          null,
+        resolvedCharacterName: vttCharacter.name,
+      }
     }
 
     // This is a GM roll (no player owns this character)
+    // Resolve the GM's streamer for gamification
+    const gmStreamer = await Streamer.query().where('userId', campaign.ownerId).first()
+
     // Check if GM has an active character set
     if (campaign.gmActiveCharacterId) {
+      // Load the GM's active character name
+      const gmActiveCharacter = await Character.find(campaign.gmActiveCharacterId)
+
       logger.debug('Roll attributed to GM active character', {
         gmActiveCharacterId: campaign.gmActiveCharacterId,
+        gmActiveCharacterName: gmActiveCharacter?.name,
         originalCharacterId: vttCharacter.id,
       })
-      return { characterId: campaign.gmActiveCharacterId, pendingAttribution: false }
+      return {
+        characterId: campaign.gmActiveCharacterId,
+        pendingAttribution: false,
+        streamerId: gmStreamer?.id ?? null,
+        streamerName: gmStreamer?.twitchDisplayName || gmStreamer?.twitchLogin || null,
+        resolvedCharacterName: gmActiveCharacter?.name ?? vttCharacter.name,
+      }
     }
 
     // No active character - roll needs manual attribution
@@ -135,7 +205,13 @@ export default class VttWebhookService {
       campaignId: campaign.id,
       vttCharacterId: vttCharacter.id,
     })
-    return { characterId: null, pendingAttribution: true }
+    return {
+      characterId: null,
+      pendingAttribution: true,
+      streamerId: null,
+      streamerName: null,
+      resolvedCharacterName: null,
+    }
   }
 
   /**

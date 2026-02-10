@@ -583,6 +583,7 @@
                   @toggle="handleToggleGamificationEvent"
                   @update="handleUpdateGamificationConfig"
                   @trigger-test="handleTriggerTest"
+                  @simulate-redemption="handleSimulateRedemption"
                 />
               </div>
 
@@ -847,6 +848,7 @@ const {
   cancelInstance,
   triggerEvent,
   forceCompleteInstance,
+  simulateRedemption,
   resetCooldowns,
   getConfigForEvent,
 } = useGamification()
@@ -1184,6 +1186,20 @@ const handleTriggerTest = async (eventId: string, diceValue: number) => {
     await loadActiveGamificationInstances()
   } catch (err) {
     console.error('Failed to trigger test event:', err)
+  } finally {
+    savingGamificationEventId.value = null
+  }
+}
+
+const handleSimulateRedemption = async (eventId: string) => {
+  if (!isDev.value) return
+
+  savingGamificationEventId.value = eventId
+  try {
+    await simulateRedemption(campaignId, eventId)
+    await loadActiveGamificationInstances()
+  } catch (err) {
+    console.error('Failed to simulate redemption:', err)
   } finally {
     savingGamificationEventId.value = null
   }

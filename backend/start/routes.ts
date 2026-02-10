@@ -274,6 +274,12 @@ router
       '#controllers/mj/gamification_controller.forceComplete'
     )
 
+    // Simulate redemption (DEV/STAGING only - self HTTP call to EventSub webhook)
+    router.post(
+      '/campaigns/:id/gamification/events/:eventId/simulate-redemption',
+      '#controllers/mj/gamification_controller.simulateRedemption'
+    )
+
     // Statistiques gamification
     router.get(
       '/campaigns/:id/gamification/stats',

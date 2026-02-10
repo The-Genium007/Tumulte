@@ -21,6 +21,7 @@ const emit = defineEmits<{
   toggle: [eventId: string, enabled: boolean]
   update: [eventId: string, updates: UpdateGamificationConfigRequest]
   triggerTest: [eventId: string, diceValue: number]
+  simulateRedemption: [eventId: string]
 }>()
 
 // Difficulty levels with their coefficients
@@ -418,6 +419,17 @@ const handleResetToDefaults = () => {
             @click="emit('triggerTest', event.id, 1)"
           />
         </template>
+        <!-- Simulate Channel Points Redemption (DEV/STAGING only, any event type) -->
+        <UButton
+          v-if="isDev && config"
+          icon="i-lucide-zap"
+          label="Simuler redemption"
+          color="info"
+          variant="soft"
+          size="sm"
+          :loading="loading"
+          @click="emit('simulateRedemption', event.id)"
+        />
         <UButton
           icon="i-lucide-settings"
           label="Paramètres"

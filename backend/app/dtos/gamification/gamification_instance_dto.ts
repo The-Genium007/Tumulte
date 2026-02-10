@@ -30,7 +30,9 @@ export class GamificationInstanceDto {
   streamerSnapshots!: StreamerSnapshot[] | null
   remainingSeconds!: number
   isActive!: boolean
+  isArmed!: boolean
   isObjectiveReached!: boolean
+  armedAt!: string | null
   event!: GamificationEventListDto | null
   createdAt!: string
   updatedAt!: string
@@ -57,7 +59,9 @@ export class GamificationInstanceDto {
       streamerSnapshots: instance.streamerSnapshots,
       remainingSeconds: instance.remainingSeconds,
       isActive: instance.isActive,
+      isArmed: instance.isArmed,
       isObjectiveReached: instance.isObjectiveReached,
+      armedAt: instance.armedAt?.toISO() || null,
       event: instance.event ? GamificationEventListDto.fromModel(instance.event) : null,
       createdAt: instance.createdAt.toISO() || '',
       updatedAt: instance.updatedAt.toISO() || '',
