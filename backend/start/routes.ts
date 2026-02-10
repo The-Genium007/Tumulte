@@ -280,6 +280,12 @@ router
       '#controllers/mj/gamification_controller.simulateRedemption'
     )
 
+    // Reset cooldowns (DEV/STAGING only - for testing)
+    router.post(
+      '/campaigns/:id/gamification/reset-cooldowns',
+      '#controllers/mj/gamification_controller.resetCooldowns'
+    )
+
     // Statistiques gamification
     router.get(
       '/campaigns/:id/gamification/stats',

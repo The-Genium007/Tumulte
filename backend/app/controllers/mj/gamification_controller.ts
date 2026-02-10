@@ -420,6 +420,34 @@ export default class GamificationController {
   }
 
   /**
+   * Réinitialise les cooldowns de gamification d'une campagne
+   * POST /mj/campaigns/:id/gamification/reset-cooldowns
+   *
+   * DEV/STAGING uniquement.
+   */
+  async resetCooldowns({ auth, params, response }: HttpContext) {
+    const envSuffix = process.env.ENV_SUFFIX || 'dev'
+    if (envSuffix === 'prod') {
+      return response.forbidden({ error: 'Cette route est désactivée en production' })
+    }
+
+    const userId = auth.user!.id
+    const campaignId = params.id
+
+    const isOwner = await this.campaignRepository.isOwner(campaignId, userId)
+    if (!isOwner) {
+      return response.forbidden({ error: "Vous n'êtes pas propriétaire de cette campagne" })
+    }
+
+    const gamificationService = await this.getGamificationService()
+    await gamificationService.onSessionStart(campaignId)
+
+    return response.ok({
+      data: { message: 'Cooldowns réinitialisés' },
+    })
+  }
+
+  /**
    * Récupère les statistiques de gamification d'une campagne
    * GET /mj/campaigns/:id/gamification/stats
    */
@@ -570,6 +598,11 @@ export default class GamificationController {
           'Ajoutez un secret (ex: "dev-test-secret") pour la vérification de signature.',
       })
     }
+
+    // Réinitialiser les cooldowns pour cette campagne avant la simulation
+    // afin de permettre des tests en boucle sans être bloqué
+    const gamificationService = await this.getGamificationService()
+    await gamificationService.onSessionStart(campaignId)
 
     // Construire le payload EventSub identique à Twitch
     const redemptionId = randomUUID()
