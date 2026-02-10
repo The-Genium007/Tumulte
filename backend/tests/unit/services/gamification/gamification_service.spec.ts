@@ -912,3 +912,541 @@ test.group('GamificationService - onStreamerRedemption', () => {
     assert.isFalse(result.processed)
   })
 })
+
+test.group('GamificationService - enableEventForCampaign', () => {
+  test('should create new config when none exists', async ({ assert }) => {
+    const service = createService({})
+
+    let createCalled = false
+    const mockCreatedConfig = {
+      campaignId: 'campaign-123',
+      eventId: 'event-123',
+      isEnabled: true,
+      cost: null,
+      objectiveCoefficient: null,
+      minimumObjective: null,
+      duration: null,
+      cooldown: null,
+      maxClicksPerUserPerSession: 0,
+    }
+
+    // Stub getCampaignConfig to return null (no existing config)
+    ;(service as any).getCampaignConfig = async () => null
+
+    // Stub CampaignGamificationConfig.create
+    const CampaignConfigModule = await import('#models/campaign_gamification_config')
+    const origCreate = CampaignConfigModule.default.create
+    ;(CampaignConfigModule.default as any).create = async (data: any) => {
+      createCalled = true
+      assert.equal(data.campaignId, 'campaign-123')
+      assert.equal(data.eventId, 'event-123')
+      assert.isTrue(data.isEnabled)
+      return mockCreatedConfig
+    }
+
+    try {
+      const result = await service.enableEventForCampaign('campaign-123', 'event-123')
+
+      assert.isTrue(createCalled)
+      assert.isNotNull(result)
+      assert.isTrue(result.isEnabled)
+    } finally {
+      ;(CampaignConfigModule.default as any).create = origCreate
+    }
+  })
+
+  test('should update existing config when one exists', async ({ assert }) => {
+    const service = createService({})
+
+    let saveCalled = false
+    const mockExistingConfig = {
+      campaignId: 'campaign-123',
+      eventId: 'event-123',
+      isEnabled: false,
+      cost: null,
+      objectiveCoefficient: null,
+      minimumObjective: null,
+      duration: null,
+      cooldown: null,
+      maxClicksPerUserPerSession: 0,
+      save: async function () {
+        saveCalled = true
+        this.isEnabled = true
+      },
+    }
+
+    // Stub getCampaignConfig to return existing config
+    ;(service as any).getCampaignConfig = async () => mockExistingConfig
+
+    const result = await service.enableEventForCampaign('campaign-123', 'event-123')
+
+    assert.isTrue(saveCalled)
+    assert.isTrue(result.isEnabled)
+  })
+
+  test('should apply overrides when provided', async ({ assert }) => {
+    const service = createService({})
+
+    const mockExistingConfig = {
+      campaignId: 'campaign-123',
+      eventId: 'event-123',
+      isEnabled: false,
+      cost: null,
+      objectiveCoefficient: null,
+      minimumObjective: null,
+      duration: null,
+      cooldown: null,
+      maxClicksPerUserPerSession: 0,
+      save: async function () {
+        this.isEnabled = true
+      },
+    }
+
+    ;(service as any).getCampaignConfig = async () => mockExistingConfig
+
+    const result = await service.enableEventForCampaign('campaign-123', 'event-123', {
+      cost: 100,
+      objectiveCoefficient: 1.5,
+      minimumObjective: 50,
+      duration: 300,
+      cooldown: 600,
+      maxClicksPerUserPerSession: 5,
+    })
+
+    assert.equal(result.cost, 100)
+    assert.equal(result.objectiveCoefficient, 1.5)
+    assert.equal(result.minimumObjective, 50)
+    assert.equal(result.duration, 300)
+    assert.equal(result.cooldown, 600)
+    assert.equal(result.maxClicksPerUserPerSession, 5)
+  })
+
+  test('should apply partial overrides', async ({ assert }) => {
+    const service = createService({})
+
+    const mockExistingConfig = {
+      campaignId: 'campaign-123',
+      eventId: 'event-123',
+      isEnabled: false,
+      cost: 50,
+      objectiveCoefficient: 1.0,
+      minimumObjective: 10,
+      duration: 200,
+      cooldown: 400,
+      maxClicksPerUserPerSession: 3,
+      save: async function () {
+        this.isEnabled = true
+      },
+    }
+
+    ;(service as any).getCampaignConfig = async () => mockExistingConfig
+
+    const result = await service.enableEventForCampaign('campaign-123', 'event-123', {
+      cost: 100,
+      duration: 300,
+    })
+
+    // Overridden values
+    assert.equal(result.cost, 100)
+    assert.equal(result.duration, 300)
+
+    // Non-overridden values should remain unchanged
+    assert.equal(result.objectiveCoefficient, 1.0)
+    assert.equal(result.minimumObjective, 10)
+    assert.equal(result.cooldown, 400)
+    assert.equal(result.maxClicksPerUserPerSession, 3)
+  })
+})
+
+test.group('GamificationService - disableEventForCampaign', () => {
+  test('should disable existing config', async ({ assert }) => {
+    const service = createService({})
+
+    let saveCalled = false
+    const mockConfig = {
+      campaignId: 'campaign-123',
+      eventId: 'event-123',
+      isEnabled: true,
+      save: async function () {
+        saveCalled = true
+      },
+    }
+
+    ;(service as any).getCampaignConfig = async () => mockConfig
+
+    await service.disableEventForCampaign('campaign-123', 'event-123')
+
+    assert.isTrue(saveCalled)
+    assert.isFalse(mockConfig.isEnabled)
+  })
+
+  test('should do nothing when no config exists', async ({ assert }) => {
+    const service = createService({})
+
+    ;(service as any).getCampaignConfig = async () => null
+
+    // Should not throw, just return silently
+    await service.disableEventForCampaign('campaign-123', 'event-123')
+
+    assert.isTrue(true) // If we get here without error, the test passes
+  })
+})
+
+test.group('GamificationService - onDiceRoll', () => {
+  test('should return null when no configs match', async ({ assert }) => {
+    const service = createService({})
+
+    // Stub CampaignGamificationConfig.query to return empty array
+    const CampaignConfigModule = await import('#models/campaign_gamification_config')
+    const origQuery = CampaignConfigModule.default.query
+    ;(CampaignConfigModule.default as any).query = () => ({
+      where: () => ({
+        where: () => ({
+          preload: () => [],
+        }),
+      }),
+    })
+
+    try {
+      const result = await service.onDiceRoll('campaign-123', 'streamer-123', 'TestStreamer', 100, {
+        rollId: 'roll-123',
+        characterId: 'char-123',
+        characterName: 'TestChar',
+        formula: '1d20',
+        result: 15,
+        diceResults: [15],
+        isCritical: false,
+        criticalType: null,
+        messageId: 'msg-123',
+      })
+
+      assert.isNull(result)
+    } finally {
+      ;(CampaignConfigModule.default as any).query = origQuery
+    }
+  })
+
+  test('should skip events on cooldown', async ({ assert }) => {
+    let evaluateCalled = false
+
+    const service = createService({
+      instanceManager: {
+        isOnCooldown: async () => ({
+          onCooldown: true,
+          endsAt: DateTime.now().plus({ minutes: 5 }),
+        }),
+      },
+      triggerEvaluator: {
+        evaluate: () => {
+          evaluateCalled = true
+          return { shouldTrigger: true, triggerData: { critical: 'success' } }
+        },
+      },
+    })
+
+    const mockConfig = {
+      campaignId: 'campaign-123',
+      eventId: 'event-123',
+      isEnabled: true,
+      event: createMockGamificationEvent(),
+    }
+
+    // Stub query to return config
+    const CampaignConfigModule = await import('#models/campaign_gamification_config')
+    const origQuery = CampaignConfigModule.default.query
+    ;(CampaignConfigModule.default as any).query = () => ({
+      where: () => ({
+        where: () => ({
+          preload: () => [mockConfig],
+        }),
+      }),
+    })
+
+    try {
+      const result = await service.onDiceRoll('campaign-123', 'streamer-123', 'TestStreamer', 100, {
+        rollId: 'roll-123',
+        characterId: 'char-123',
+        characterName: 'TestChar',
+        formula: '1d20',
+        result: 20,
+        diceResults: [20],
+        isCritical: true,
+        criticalType: 'success',
+        messageId: 'msg-123',
+      })
+
+      assert.isNull(result)
+      assert.isFalse(evaluateCalled, 'Evaluate should not be called when on cooldown')
+    } finally {
+      ;(CampaignConfigModule.default as any).query = origQuery
+    }
+  })
+
+  test('should create individual instance when trigger evaluates to true', async ({ assert }) => {
+    let createIndividualCalled = false
+    const mockInstance = createMockGamificationInstance()
+
+    const service = createService({
+      instanceManager: {
+        isOnCooldown: async () => ({ onCooldown: false, endsAt: null }),
+        createIndividual: async () => {
+          createIndividualCalled = true
+          return mockInstance
+        },
+      },
+      triggerEvaluator: {
+        evaluate: () => ({
+          shouldTrigger: true,
+          triggerData: { critical: 'success' },
+        }),
+      },
+    })
+
+    const mockConfig = {
+      campaignId: 'campaign-123',
+      eventId: 'event-123',
+      isEnabled: true,
+      event: createMockGamificationEvent({ type: 'individual' }),
+    }
+
+    const CampaignConfigModule = await import('#models/campaign_gamification_config')
+    const origQuery = CampaignConfigModule.default.query
+    ;(CampaignConfigModule.default as any).query = () => ({
+      where: () => ({
+        where: () => ({
+          preload: () => [mockConfig],
+        }),
+      }),
+    })
+
+    const CampaignModule = await import('#models/campaign')
+    const origFindOrFail = CampaignModule.campaign.findOrFail
+    ;(CampaignModule.campaign as any).findOrFail = async () => ({ id: 'campaign-123' })
+    ;(service as any).broadcastInstanceCreated = () => {}
+
+    try {
+      const result = await service.onDiceRoll('campaign-123', 'streamer-123', 'TestStreamer', 100, {
+        rollId: 'roll-123',
+        characterId: 'char-123',
+        characterName: 'TestChar',
+        formula: '1d20',
+        result: 20,
+        diceResults: [20],
+        isCritical: true,
+        criticalType: 'success',
+        messageId: 'msg-123',
+      })
+
+      assert.isTrue(createIndividualCalled)
+      assert.isNotNull(result)
+      assert.equal((result as any).id, 'instance-123')
+    } finally {
+      ;(CampaignConfigModule.default as any).query = origQuery
+      ;(CampaignModule.campaign as any).findOrFail = origFindOrFail
+    }
+  })
+
+  test('should consume armed instance on critical dice roll', async ({ assert }) => {
+    let consumeArmedCalled = false
+    const armedInstance = createMockGamificationInstance({
+      status: 'armed',
+      eventId: 'event-123',
+    })
+    const consumedInstance = createMockGamificationInstance({ status: 'completed' })
+
+    const service = createService({
+      instanceManager: {
+        getArmedInstanceForStreamer: async (
+          _campaignId: string,
+          _streamerId: string,
+          eventId: string
+        ) => {
+          if (eventId === 'event-123') {
+            return armedInstance
+          }
+          return null
+        },
+        consumeArmedInstance: async () => {
+          consumeArmedCalled = true
+          return consumedInstance
+        },
+      },
+    })
+
+    const mockConfig = {
+      campaignId: 'campaign-123',
+      eventId: 'event-123',
+      isEnabled: true,
+      event: createMockGamificationEvent({
+        triggerConfig: {
+          criticalSuccess: { enabled: true },
+          criticalFailure: { enabled: false },
+        },
+      }),
+    }
+
+    const CampaignConfigModule = await import('#models/campaign_gamification_config')
+    const origQuery = CampaignConfigModule.default.query
+    ;(CampaignConfigModule.default as any).query = () => ({
+      where: () => ({
+        where: () => ({
+          preload: () => [mockConfig],
+        }),
+      }),
+    })
+    ;(service as any).getVttConnectionId = async () => 'vtt-conn-123'
+    ;(service as any).broadcastInstanceConsumed = () => {}
+
+    try {
+      const result = await service.onDiceRoll('campaign-123', 'streamer-123', 'TestStreamer', 100, {
+        rollId: 'roll-123',
+        characterId: 'char-123',
+        characterName: 'TestChar',
+        formula: '1d20',
+        result: 20,
+        diceResults: [20],
+        isCritical: true,
+        criticalType: 'success',
+        messageId: 'msg-123',
+      })
+
+      assert.isTrue(consumeArmedCalled)
+      assert.isNotNull(result)
+      assert.equal((result as any).status, 'completed')
+    } finally {
+      ;(CampaignConfigModule.default as any).query = origQuery
+    }
+  })
+
+  test('should not consume armed instance when critical type does not match', async ({
+    assert,
+  }) => {
+    let consumeArmedCalled = false
+    const armedInstance = createMockGamificationInstance({
+      status: 'armed',
+      eventId: 'event-123',
+    })
+
+    const service = createService({
+      instanceManager: {
+        getArmedInstanceForStreamer: async () => armedInstance,
+        consumeArmedInstance: async () => {
+          consumeArmedCalled = true
+          return createMockGamificationInstance({ status: 'completed' })
+        },
+        isOnCooldown: async () => ({ onCooldown: false, endsAt: null }),
+      },
+      triggerEvaluator: {
+        evaluate: () => ({ shouldTrigger: false, triggerData: null }),
+      },
+    })
+
+    const mockConfig = {
+      campaignId: 'campaign-123',
+      eventId: 'event-123',
+      isEnabled: true,
+      event: createMockGamificationEvent({
+        triggerConfig: {
+          criticalSuccess: { enabled: true },
+          criticalFailure: { enabled: false }, // Only success enabled
+        },
+      }),
+    }
+
+    const CampaignConfigModule = await import('#models/campaign_gamification_config')
+    const origQuery = CampaignConfigModule.default.query
+    ;(CampaignConfigModule.default as any).query = () => ({
+      where: () => ({
+        where: () => ({
+          preload: () => [mockConfig],
+        }),
+      }),
+    })
+
+    try {
+      // Send a critical failure when only success is enabled
+      const result = await service.onDiceRoll('campaign-123', 'streamer-123', 'TestStreamer', 100, {
+        rollId: 'roll-123',
+        characterId: 'char-123',
+        characterName: 'TestChar',
+        formula: '1d20',
+        result: 1,
+        diceResults: [1],
+        isCritical: true,
+        criticalType: 'failure', // Does not match config
+        messageId: 'msg-123',
+      })
+
+      assert.isFalse(consumeArmedCalled)
+      assert.isNull(result)
+    } finally {
+      ;(CampaignConfigModule.default as any).query = origQuery
+    }
+  })
+
+  test('should skip armed consumption when no VTT connection available', async ({ assert }) => {
+    let consumeArmedCalled = false
+    const armedInstance = createMockGamificationInstance({
+      status: 'armed',
+      eventId: 'event-123',
+    })
+
+    const service = createService({
+      instanceManager: {
+        getArmedInstanceForStreamer: async () => armedInstance,
+        consumeArmedInstance: async () => {
+          consumeArmedCalled = true
+          return createMockGamificationInstance({ status: 'completed' })
+        },
+        isOnCooldown: async () => ({ onCooldown: false, endsAt: null }),
+      },
+      triggerEvaluator: {
+        evaluate: () => ({ shouldTrigger: false, triggerData: null }),
+      },
+    })
+
+    const mockConfig = {
+      campaignId: 'campaign-123',
+      eventId: 'event-123',
+      isEnabled: true,
+      event: createMockGamificationEvent({
+        triggerConfig: {
+          criticalSuccess: { enabled: true },
+        },
+      }),
+    }
+
+    const CampaignConfigModule = await import('#models/campaign_gamification_config')
+    const origQuery = CampaignConfigModule.default.query
+    ;(CampaignConfigModule.default as any).query = () => ({
+      where: () => ({
+        where: () => ({
+          preload: () => [mockConfig],
+        }),
+      }),
+    })
+
+    // No VTT connection
+    ;(service as any).getVttConnectionId = async () => null
+
+    try {
+      const result = await service.onDiceRoll('campaign-123', 'streamer-123', 'TestStreamer', 100, {
+        rollId: 'roll-123',
+        characterId: 'char-123',
+        characterName: 'TestChar',
+        formula: '1d20',
+        result: 20,
+        diceResults: [20],
+        isCritical: true,
+        criticalType: 'success',
+        messageId: 'msg-123',
+      })
+
+      // Should skip consumption and return null (then fall through to normal flow)
+      assert.isFalse(consumeArmedCalled)
+      assert.isNull(result)
+    } finally {
+      ;(CampaignConfigModule.default as any).query = origQuery
+    }
+  })
+})

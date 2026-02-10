@@ -276,6 +276,409 @@ test.group('PollLifecycleService - launchPoll', () => {
   })
 })
 
+test.group('PollLifecycleService - cancelPoll', () => {
+  test('should cancel a running poll successfully', async ({ assert }) => {
+    // Arrange
+    const mockPollInstance = createMockPollInstance({ status: 'RUNNING' })
+    const aggregatedVotes = {
+      pollInstanceId: 'poll-instance-123',
+      votesByOption: { '0': 15, '1': 25 },
+      totalVotes: 40,
+      percentages: { '0': 37.5, '1': 62.5 },
+    }
+
+    let stopPollingCalled = false
+    let terminatePollsOnTwitchCalled = false
+    let setCancelledCalled = false
+    let terminateAllByPollInstanceCalled = false
+    let saveFinalResultsCalled = false
+    let emitPollEndCalled = false
+    let emitPollEndIsCancelled: boolean | null = null
+
+    const mockRepository = {
+      findById: async () => mockPollInstance,
+      setStarted: async () => {},
+      setCancelled: async () => {
+        setCancelledCalled = true
+      },
+      setEnded: async () => {},
+      saveFinalResults: async () => {
+        saveFinalResultsCalled = true
+      },
+    }
+
+    const mockChannelLinkRepository = {
+      completeAllByPollInstance: async () => 0,
+      terminateAllByPollInstance: async () => {
+        terminateAllByPollInstanceCalled = true
+        return 3 // 3 channel links terminated
+      },
+    }
+
+    const mockCreationService = {
+      createPollsOnTwitch: async () => {},
+      terminatePollsOnTwitch: async () => {
+        terminatePollsOnTwitchCalled = true
+      },
+      removeStreamerFromCampaignPolls: async () => {},
+    }
+
+    const mockPollingService = {
+      startPolling: async () => {},
+      stopPolling: () => {
+        stopPollingCalled = true
+      },
+      sendCancellationMessage: async () => {},
+      setAggregationService: () => {},
+      setOnPollEndCallback: () => {},
+    }
+
+    const mockAggregationService = {
+      getAggregatedVotes: async () => aggregatedVotes,
+    }
+
+    const mockWebSocketService = {
+      emitPollEnd: (_pollId: string, _votes: any, cancelled?: boolean) => {
+        emitPollEndCalled = true
+        emitPollEndIsCancelled = cancelled ?? null
+      },
+    }
+
+    const mockAnnouncementService = {
+      announceResults: async () => {},
+    }
+
+    const service = new PollLifecycleService(
+      mockRepository as any,
+      mockChannelLinkRepository as any,
+      mockCreationService as any,
+      mockPollingService as any,
+      mockAggregationService as any,
+      mockWebSocketService as any,
+      mockAnnouncementService as any
+    )
+
+    // Act
+    await service.cancelPoll('poll-instance-123')
+
+    // Assert
+    assert.isTrue(stopPollingCalled)
+    assert.isTrue(terminatePollsOnTwitchCalled)
+    assert.isTrue(setCancelledCalled)
+    assert.isTrue(terminateAllByPollInstanceCalled)
+    assert.isTrue(saveFinalResultsCalled)
+    assert.isTrue(emitPollEndCalled)
+    assert.isTrue(emitPollEndIsCancelled) // cancelled flag should be true
+  })
+
+  test('should throw error when poll instance not found', async ({ assert }) => {
+    const mockRepository = {
+      findById: async () => null,
+      setStarted: async () => {},
+      setCancelled: async () => {},
+      setEnded: async () => {},
+      saveFinalResults: async () => {},
+    }
+
+    const mockCreationService = {
+      createPollsOnTwitch: async () => {},
+      terminatePollsOnTwitch: async () => {},
+      removeStreamerFromCampaignPolls: async () => {},
+    }
+
+    const mockPollingService = {
+      startPolling: async () => {},
+      stopPolling: () => {},
+      sendCancellationMessage: async () => {},
+      setAggregationService: () => {},
+      setOnPollEndCallback: () => {},
+    }
+
+    const mockAggregationService = {
+      getAggregatedVotes: async () => ({
+        pollInstanceId: '',
+        votesByOption: {},
+        totalVotes: 0,
+        percentages: {},
+      }),
+    }
+
+    const mockWebSocketService = {
+      emitPollEnd: () => {},
+    }
+
+    const mockAnnouncementService = {
+      announceResults: async () => {},
+    }
+
+    const service = new PollLifecycleService(
+      mockRepository as any,
+      createMockChannelLinkRepository() as any,
+      mockCreationService as any,
+      mockPollingService as any,
+      mockAggregationService as any,
+      mockWebSocketService as any,
+      mockAnnouncementService as any
+    )
+
+    // Act & Assert
+    await assert.rejects(() => service.cancelPoll('non-existent-id'), /Poll instance not found/)
+  })
+
+  test('should throw error when poll is not in RUNNING status', async ({ assert }) => {
+    const mockPollInstance = createMockPollInstance({ status: 'PENDING' })
+
+    const mockRepository = {
+      findById: async () => mockPollInstance,
+      setStarted: async () => {},
+      setCancelled: async () => {},
+      setEnded: async () => {},
+      saveFinalResults: async () => {},
+    }
+
+    const mockCreationService = {
+      createPollsOnTwitch: async () => {},
+      terminatePollsOnTwitch: async () => {},
+      removeStreamerFromCampaignPolls: async () => {},
+    }
+
+    const mockPollingService = {
+      startPolling: async () => {},
+      stopPolling: () => {},
+      sendCancellationMessage: async () => {},
+      setAggregationService: () => {},
+      setOnPollEndCallback: () => {},
+    }
+
+    const mockAggregationService = {
+      getAggregatedVotes: async () => ({
+        pollInstanceId: '',
+        votesByOption: {},
+        totalVotes: 0,
+        percentages: {},
+      }),
+    }
+
+    const mockWebSocketService = {
+      emitPollEnd: () => {},
+    }
+
+    const mockAnnouncementService = {
+      announceResults: async () => {},
+    }
+
+    const service = new PollLifecycleService(
+      mockRepository as any,
+      createMockChannelLinkRepository() as any,
+      mockCreationService as any,
+      mockPollingService as any,
+      mockAggregationService as any,
+      mockWebSocketService as any,
+      mockAnnouncementService as any
+    )
+
+    // Act & Assert
+    await assert.rejects(
+      () => service.cancelPoll('poll-instance-123'),
+      /Poll cannot be cancelled from status PENDING/
+    )
+  })
+
+  test('should throw error when poll status is ENDED', async ({ assert }) => {
+    const mockPollInstance = createMockPollInstance({ status: 'ENDED' })
+
+    const mockRepository = {
+      findById: async () => mockPollInstance,
+      setStarted: async () => {},
+      setCancelled: async () => {},
+      setEnded: async () => {},
+      saveFinalResults: async () => {},
+    }
+
+    const mockCreationService = {
+      createPollsOnTwitch: async () => {},
+      terminatePollsOnTwitch: async () => {},
+      removeStreamerFromCampaignPolls: async () => {},
+    }
+
+    const mockPollingService = {
+      startPolling: async () => {},
+      stopPolling: () => {},
+      sendCancellationMessage: async () => {},
+      setAggregationService: () => {},
+      setOnPollEndCallback: () => {},
+    }
+
+    const mockAggregationService = {
+      getAggregatedVotes: async () => ({
+        pollInstanceId: '',
+        votesByOption: {},
+        totalVotes: 0,
+        percentages: {},
+      }),
+    }
+
+    const mockWebSocketService = {
+      emitPollEnd: () => {},
+    }
+
+    const mockAnnouncementService = {
+      announceResults: async () => {},
+    }
+
+    const service = new PollLifecycleService(
+      mockRepository as any,
+      createMockChannelLinkRepository() as any,
+      mockCreationService as any,
+      mockPollingService as any,
+      mockAggregationService as any,
+      mockWebSocketService as any,
+      mockAnnouncementService as any
+    )
+
+    // Act & Assert
+    await assert.rejects(
+      () => service.cancelPoll('poll-instance-123'),
+      /Poll cannot be cancelled from status ENDED/
+    )
+  })
+
+  test('should throw error when poll status is CANCELLED', async ({ assert }) => {
+    const mockPollInstance = createMockPollInstance({ status: 'CANCELLED' })
+
+    const mockRepository = {
+      findById: async () => mockPollInstance,
+      setStarted: async () => {},
+      setCancelled: async () => {},
+      setEnded: async () => {},
+      saveFinalResults: async () => {},
+    }
+
+    const mockCreationService = {
+      createPollsOnTwitch: async () => {},
+      terminatePollsOnTwitch: async () => {},
+      removeStreamerFromCampaignPolls: async () => {},
+    }
+
+    const mockPollingService = {
+      startPolling: async () => {},
+      stopPolling: () => {},
+      sendCancellationMessage: async () => {},
+      setAggregationService: () => {},
+      setOnPollEndCallback: () => {},
+    }
+
+    const mockAggregationService = {
+      getAggregatedVotes: async () => ({
+        pollInstanceId: '',
+        votesByOption: {},
+        totalVotes: 0,
+        percentages: {},
+      }),
+    }
+
+    const mockWebSocketService = {
+      emitPollEnd: () => {},
+    }
+
+    const mockAnnouncementService = {
+      announceResults: async () => {},
+    }
+
+    const service = new PollLifecycleService(
+      mockRepository as any,
+      createMockChannelLinkRepository() as any,
+      mockCreationService as any,
+      mockPollingService as any,
+      mockAggregationService as any,
+      mockWebSocketService as any,
+      mockAnnouncementService as any
+    )
+
+    // Act & Assert
+    await assert.rejects(
+      () => service.cancelPoll('poll-instance-123'),
+      /Poll cannot be cancelled from status CANCELLED/
+    )
+  })
+
+  test('should send cancellation message and save final results', async ({ assert }) => {
+    const mockPollInstance = createMockPollInstance({ status: 'RUNNING' })
+    const aggregatedVotes = {
+      pollInstanceId: 'poll-instance-123',
+      votesByOption: { '0': 10, '1': 20, '2': 5 },
+      totalVotes: 35,
+      percentages: { '0': 28.6, '1': 57.1, '2': 14.3 },
+    }
+
+    let sendCancellationMessageCalled = false
+    let saveFinalResultsCalledWith: any = null
+
+    const mockRepository = {
+      findById: async () => mockPollInstance,
+      setStarted: async () => {},
+      setCancelled: async () => {},
+      setEnded: async () => {},
+      saveFinalResults: async (pollId: string, totalVotes: number, votesByOption: any) => {
+        saveFinalResultsCalledWith = { pollId, totalVotes, votesByOption }
+      },
+    }
+
+    const mockChannelLinkRepository = {
+      completeAllByPollInstance: async () => 0,
+      terminateAllByPollInstance: async () => 2,
+    }
+
+    const mockCreationService = {
+      createPollsOnTwitch: async () => {},
+      terminatePollsOnTwitch: async () => {},
+      removeStreamerFromCampaignPolls: async () => {},
+    }
+
+    const mockPollingService = {
+      startPolling: async () => {},
+      stopPolling: () => {},
+      sendCancellationMessage: async () => {
+        sendCancellationMessageCalled = true
+      },
+      setAggregationService: () => {},
+      setOnPollEndCallback: () => {},
+    }
+
+    const mockAggregationService = {
+      getAggregatedVotes: async () => aggregatedVotes,
+    }
+
+    const mockWebSocketService = {
+      emitPollEnd: () => {},
+    }
+
+    const mockAnnouncementService = {
+      announceResults: async () => {},
+    }
+
+    const service = new PollLifecycleService(
+      mockRepository as any,
+      mockChannelLinkRepository as any,
+      mockCreationService as any,
+      mockPollingService as any,
+      mockAggregationService as any,
+      mockWebSocketService as any,
+      mockAnnouncementService as any
+    )
+
+    // Act
+    await service.cancelPoll('poll-instance-123')
+
+    // Assert
+    assert.isTrue(sendCancellationMessageCalled)
+    assert.isNotNull(saveFinalResultsCalledWith)
+    assert.equal(saveFinalResultsCalledWith.pollId, 'poll-instance-123')
+    assert.equal(saveFinalResultsCalledWith.totalVotes, 35)
+    assert.deepEqual(saveFinalResultsCalledWith.votesByOption, { '0': 10, '1': 20, '2': 5 })
+  })
+})
+
 test.group('PollLifecycleService - endPoll', () => {
   test('should end a poll and announce results', async ({ assert }) => {
     const mockPollInstance = createMockPollInstance({ status: 'RUNNING' }) as PollInstance
