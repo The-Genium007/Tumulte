@@ -1,5 +1,6 @@
 import env from '#start/env'
 import logger from '@adonisjs/core/services/logger'
+import { Sentry } from '#config/sentry'
 import { RetryUtility } from '#services/resilience/retry_utility'
 import { RetryPolicies } from '#services/resilience/types'
 import type { HttpCallResult, RetryResult, RetryContext } from '#services/resilience/types'
@@ -57,7 +58,7 @@ class TwitchApiService {
    * @returns Token d'application valide
    */
   async getAppAccessToken(): Promise<string> {
-    // Si on a déjà un token valide, le retourner
+    // Si on a déjà un token valide, le retourner (sans log pour éviter le spam)
     if (this.appAccessToken && Date.now() < this.tokenExpiry) {
       return this.appAccessToken
     }
@@ -99,8 +100,21 @@ class TwitchApiService {
       // Expire 5 minutes avant la vraie expiration pour être sûr
       this.tokenExpiry = Date.now() + (data.expires_in - 300) * 1000
 
+      // Log uniquement lors d'un VRAI renouvellement de token
+      logger.info({
+        event: 'twitch_app_token_renewed',
+        expiresIn: data.expires_in,
+        expiresAt: new Date(this.tokenExpiry).toISOString(),
+      })
+
       return this.appAccessToken
     } catch (error) {
+      Sentry.captureException(error, {
+        tags: {
+          service: 'twitch_api',
+          operation: 'getAppAccessToken',
+        },
+      })
       logger.error('Failed to get Twitch app access token:', error)
       throw error
     }
@@ -168,6 +182,13 @@ class TwitchApiService {
       }))
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      Sentry.captureException(error, {
+        tags: {
+          service: 'twitch_api',
+          operation: 'searchUsers',
+        },
+        extra: { query },
+      })
       logger.error(`Failed to search Twitch users: ${errorMessage}`)
       throw error
     }
@@ -242,7 +263,6 @@ class TwitchApiService {
 
       try {
         const url = `https://api.twitch.tv/helix/streams?${params}`
-        logger.info(`Fetching Twitch streams: ${url}`)
 
         const response = await fetch(url, {
           headers: {
@@ -259,7 +279,12 @@ class TwitchApiService {
 
         const data = (await response.json()) as { data: TwitchStream[] }
 
-        logger.info(`Twitch streams response: ${JSON.stringify(data.data.map((s) => s.user_id))}`)
+        // Log uniquement en debug pour éviter le spam
+        logger.debug({
+          event: 'twitch_streams_fetched',
+          requestedCount: chunk.length,
+          liveCount: data.data.length,
+        })
 
         // Ajouter les streams actifs à la map
         for (const stream of data.data) {
@@ -267,6 +292,13 @@ class TwitchApiService {
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        Sentry.captureException(error, {
+          tags: {
+            service: 'twitch_api',
+            operation: 'getStreamsByUserIds',
+          },
+          extra: { userCount: userIds.length },
+        })
         logger.error(`Failed to get Twitch streams: ${errorMessage}`)
         throw error
       }

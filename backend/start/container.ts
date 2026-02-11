@@ -69,7 +69,8 @@ app.container.bind('twitchAuthService', async () => {
   return new mod.twitchAuthService()
 })
 
-app.container.bind('twitchApiService', async () => {
+// Singleton pour réutiliser le token d'application Twitch entre les requêtes
+app.container.singleton('twitchApiService', async () => {
   const mod = await import('#services/twitch/twitch_api_service')
   return new mod.twitchApiService()
 })
@@ -91,10 +92,94 @@ app.container.singleton('twitchChatCountdownService', async () => {
   return new mod.twitchChatCountdownService(chatService)
 })
 
+// Singleton pour réutiliser les subscriptions EventSub entre les requêtes
+app.container.singleton('twitchEventSubService', async () => {
+  const mod = await import('#services/twitch/twitch_eventsub_service')
+  const twitchApiService = await app.container.make('twitchApiService')
+  return new mod.TwitchEventSubService(twitchApiService)
+})
+
 // WebSocket Service
 app.container.singleton('webSocketService', async () => {
   const mod = await import('#services/websocket/websocket_service')
   return new mod.webSocketService()
+})
+
+// VTT WebSocket Service
+app.container.singleton('vttWebSocketService', async () => {
+  const mod = await import('#services/vtt/vtt_websocket_service')
+  return new mod.default()
+})
+
+// Gamification Services
+app.container.singleton('foundryCommandAdapter', async () => {
+  const mod = await import('#services/gamification/foundry_command_adapter')
+  const vttWebSocketService = await app.container.make('vttWebSocketService')
+  return new mod.FoundryCommandAdapter(vttWebSocketService)
+})
+
+// RewardManagerService avec injection du TwitchEventSubService
+app.container.bind('rewardManagerService', async () => {
+  const mod = await import('#services/gamification/reward_manager_service')
+  const rewardManager = await app.container.make(mod.RewardManagerService)
+
+  // Injecter le TwitchEventSubService
+  const twitchEventSubService = await app.container.make('twitchEventSubService')
+  rewardManager.setEventSubService(twitchEventSubService)
+
+  return rewardManager
+})
+
+// GamificationAuthBridge avec injection du TwitchEventSubService
+app.container.bind('gamificationAuthBridge', async () => {
+  const mod = await import('#services/gamification/gamification_auth_bridge')
+  const streamerConfigMod = await import('#repositories/streamer_gamification_config_repository')
+  const campaignConfigMod = await import('#repositories/gamification_config_repository')
+  const twitchRewardMod = await import('#services/twitch/twitch_reward_service')
+
+  const rewardManager = await app.container.make('rewardManagerService')
+  const streamerConfigRepo = await app.container.make(
+    streamerConfigMod.StreamerGamificationConfigRepository
+  )
+  const campaignConfigRepo = await app.container.make(
+    campaignConfigMod.GamificationConfigRepository
+  )
+  const twitchRewardService = await app.container.make(twitchRewardMod.TwitchRewardService)
+
+  const bridge = new mod.GamificationAuthBridge(
+    rewardManager,
+    streamerConfigRepo,
+    campaignConfigRepo,
+    twitchRewardService
+  )
+
+  // Injecter le TwitchEventSubService
+  const twitchEventSubService = await app.container.make('twitchEventSubService')
+  bridge.setEventSubService(twitchEventSubService)
+
+  return bridge
+})
+
+// AuthorizationService avec bridge correctement injectée
+app.container.bind('authorizationService', async () => {
+  const mod = await import('#services/campaigns/authorization_service')
+  const membershipMod = await import('#repositories/campaign_membership_repository')
+
+  const membershipRepo = await app.container.make(membershipMod.CampaignMembershipRepository)
+  const gamificationBridge = await app.container.make('gamificationAuthBridge')
+
+  return new mod.AuthorizationService(membershipRepo, gamificationBridge)
+})
+
+app.container.singleton('gamificationService', async () => {
+  const mod = await import('#services/gamification/gamification_service')
+  const gamificationService = await app.container.make(mod.GamificationService)
+
+  // Injecter le FoundryCommandAdapter
+  const foundryCommandAdapter = await app.container.make('foundryCommandAdapter')
+  gamificationService.setFoundryCommandService(foundryCommandAdapter)
+
+  return gamificationService
 })
 
 // Poll Services
@@ -124,6 +209,7 @@ app.container.singleton('pollPollingService', async () => {
 app.container.singleton('pollLifecycleService', async () => {
   const mod = await import('#services/polls/poll_lifecycle_service')
   const pollInstanceRepository = await app.container.make('pollInstanceRepository')
+  const pollChannelLinkRepository = await app.container.make('pollChannelLinkRepository')
   const pollCreationService = await app.container.make('pollCreationService')
   const pollPollingService = await app.container.make('pollPollingService')
   const pollAggregationService = await app.container.make('pollAggregationService')
@@ -131,6 +217,7 @@ app.container.singleton('pollLifecycleService', async () => {
   const pollResultsAnnouncementService = await app.container.make('pollResultsAnnouncementService')
   return new mod.pollLifecycleService(
     pollInstanceRepository,
+    pollChannelLinkRepository,
     pollCreationService,
     pollPollingService,
     pollAggregationService,
@@ -241,6 +328,25 @@ declare module '@adonisjs/core/types' {
     >
     pollLifecycleService: InstanceType<
       typeof import('#services/polls/poll_lifecycle_service').PollLifecycleService
+    >
+    vttWebSocketService: InstanceType<typeof import('#services/vtt/vtt_websocket_service').default>
+    foundryCommandAdapter: InstanceType<
+      typeof import('#services/gamification/foundry_command_adapter').FoundryCommandAdapter
+    >
+    twitchEventSubService: InstanceType<
+      typeof import('#services/twitch/twitch_eventsub_service').TwitchEventSubService
+    >
+    rewardManagerService: InstanceType<
+      typeof import('#services/gamification/reward_manager_service').RewardManagerService
+    >
+    gamificationService: InstanceType<
+      typeof import('#services/gamification/gamification_service').GamificationService
+    >
+    gamificationAuthBridge: InstanceType<
+      typeof import('#services/gamification/gamification_auth_bridge').GamificationAuthBridge
+    >
+    authorizationService: InstanceType<
+      typeof import('#services/campaigns/authorization_service').AuthorizationService
     >
 
     // Repositories

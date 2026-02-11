@@ -14,7 +14,10 @@
         :element="element"
         :poll-data="activePoll"
         :percentages="percentages"
+        :votes-by-option="votesByOption"
+        :total-votes="totalVotes"
         :is-ending="isEnding"
+        :is-cancelled="isCancelled"
         @state-change="handlePollStateChange"
       />
       <!-- DiceBox pour les éléments de type dice -->
@@ -47,6 +50,26 @@
       :style="diceHudTransformStyle"
       @hidden="handleDiceRollHidden"
     />
+
+    <!-- Dice Reverse Goal Bar - Positioned at top center (Twitch Goal style) -->
+    <div class="dice-reverse-container">
+      <DiceReverseGoalBar
+        :instance="activeGamificationInstance"
+        :visible="isGamificationVisible"
+        @complete="handleGamificationComplete"
+        @expired="handleGamificationExpired"
+        @hidden="handleGamificationHidden"
+      />
+    </div>
+
+    <!-- Dice Reverse Impact HUD - Appears when action executes (e.g., dice inversion) -->
+    <div class="dice-reverse-impact-container">
+      <DiceReverseImpactHUD
+        :data="gamificationImpactData"
+        :visible="isGamificationImpactVisible"
+        @hidden="handleGamificationImpactHidden"
+      />
+    </div>
   </div>
 </template>
 
@@ -54,12 +77,21 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import LivePollElement from '@/overlay-studio/components/LivePollElement.vue'
 import DiceRollOverlay from '@/components/overlay/DiceRollOverlay.vue'
+import DiceReverseGoalBar from '@/components/overlay/DiceReverseGoalBar.vue'
+import DiceReverseImpactHUD, {
+  type ImpactData,
+} from '@/components/overlay/DiceReverseImpactHUD.vue'
 // Note: LiveDiceElement a été remplacé par DiceBox - voir DiceBox.client.vue
 import { useWebSocket } from '@/composables/useWebSocket'
 import { useOverlayConfig } from '@/composables/useOverlayConfig'
 import { useWorkerTimer } from '@/composables/useWorkerTimer'
 import { useOBSEvents } from '@/composables/useOBSEvents'
-import type { PollStartEvent, DiceRollEvent } from '@/types'
+import type {
+  PollStartEvent,
+  DiceRollEvent,
+  GamificationInstanceEvent,
+  GamificationActionExecutedEvent,
+} from '@/types'
 import type { DiceProperties } from '@/overlay-studio/types'
 
 // State pour l'indicateur de connexion
@@ -174,7 +206,10 @@ const activePoll = ref<
   | null
 >(null)
 const percentages = ref<Record<number, number>>({})
+const votesByOption = ref<Record<number, number>>({})
+const totalVotes = ref(0)
 const isEnding = ref(false)
+const isCancelled = ref(false)
 
 // =============================================
 // Système de queue unifiée pour les dice rolls
@@ -206,6 +241,16 @@ const rollDisplayTimeout = ref<ReturnType<typeof setTimeout> | null>(null)
 const ROLL_DISPLAY_DURATION = 5000 // 5s d'affichage après animation 3D
 const ROLL_FADE_DURATION = 1500 // 1.5s de fade out (doit correspondre au CSS)
 const ROLL_DELAY_BETWEEN = 500 // 0.5s entre deux rolls
+
+// =============================================
+// Gamification State
+// =============================================
+const activeGamificationInstance = ref<GamificationInstanceEvent | null>(null)
+const isGamificationVisible = ref(false)
+
+// Impact HUD state (appears when action executes, e.g., dice inversion)
+const gamificationImpactData = ref<ImpactData | null>(null)
+const isGamificationImpactVisible = ref(false)
 
 const { subscribeToStreamerPolls } = useWebSocket()
 
@@ -239,13 +284,16 @@ const handlePollStateChange = (newState: string) => {
   console.log('[Overlay] Poll state changed to:', newState)
 
   // Quand le poll passe en hidden, nettoyer l'état pour le prochain poll
+  // IMPORTANT: On met activePoll à null EN PREMIER pour que le watcher pollData
+  // ne réagisse pas aux changements intermédiaires de isEnding/percentages
   if (newState === 'hidden') {
-    setTimeout(() => {
-      activePoll.value = null
-      percentages.value = {}
-      isEnding.value = false
-      console.log('[Overlay] Poll state cleared, ready for next poll')
-    }, 100)
+    activePoll.value = null
+    percentages.value = {}
+    votesByOption.value = {}
+    totalVotes.value = 0
+    isEnding.value = false
+    isCancelled.value = false
+    console.log('[Overlay] Poll state cleared, ready for next poll')
   }
 }
 
@@ -341,6 +389,37 @@ const handleDiceRollHidden = () => {
   console.log('[Overlay] Dice roll popup transition complete')
 }
 
+// =============================================
+// Gamification Handlers
+// =============================================
+
+const handleGamificationComplete = () => {
+  console.log('[Overlay] Gamification gauge reported complete')
+  // L'animation de succès est gérée par le composant
+}
+
+const handleGamificationExpired = () => {
+  console.log('[Overlay] Gamification gauge reported expired')
+  // Cache la jauge après expiration
+  setTimeout(() => {
+    isGamificationVisible.value = false
+    activeGamificationInstance.value = null
+  }, 2000)
+}
+
+const handleGamificationHidden = () => {
+  console.log('[Overlay] Gamification goal bar hidden')
+  isGamificationVisible.value = false
+  activeGamificationInstance.value = null
+}
+
+// Impact HUD handler
+const handleGamificationImpactHidden = () => {
+  console.log('[Overlay] Gamification impact HUD hidden')
+  isGamificationImpactVisible.value = false
+  gamificationImpactData.value = null
+}
+
 // Variable pour stocker la fonction de désabonnement
 let unsubscribe: (() => Promise<void>) | null = null
 // Compteur de ticks du worker pour vérification périodique
@@ -358,18 +437,24 @@ const fetchActivePoll = async () => {
     if (response.ok) {
       const data = await response.json()
       if (data.data && !activePoll.value) {
-        console.log('[Overlay] Fetched active poll from API:', data.data.pollInstanceId)
         const pollData = data.data
         const startTime = new Date(pollData.startedAt).getTime()
-        const endsAt = new Date(startTime + pollData.durationSeconds * 1000).toISOString()
+        const endsAt = new Date(startTime + pollData.durationSeconds * 1000)
 
+        // Ignorer les polls déjà expirés temporellement (liens stale en DB)
+        if (endsAt.getTime() <= Date.now()) {
+          console.log('[Overlay] Ignoring expired poll from API:', pollData.pollInstanceId)
+          return
+        }
+
+        console.log('[Overlay] Fetched active poll from API:', pollData.pollInstanceId)
         activePoll.value = {
           pollInstanceId: pollData.pollInstanceId,
           title: pollData.title,
           options: pollData.options,
           durationSeconds: pollData.durationSeconds,
           startedAt: pollData.startedAt,
-          endsAt,
+          endsAt: endsAt.toISOString(),
           totalDuration: pollData.durationSeconds,
         }
         percentages.value = pollData.percentages || {}
@@ -415,18 +500,29 @@ const setupWebSocketSubscription = () => {
 
       const totalDuration = data.durationSeconds || 60
       activePoll.value = { ...data, totalDuration }
+      percentages.value = {}
+      votesByOption.value = {}
+      totalVotes.value = 0
       isEnding.value = false
+      isCancelled.value = false
     },
 
     onPollUpdate: (data) => {
+      // Ignorer les updates si le poll est déjà en phase de fin
+      if (isEnding.value) return
       if (activePoll.value?.pollInstanceId === data.pollInstanceId) {
         percentages.value = data.percentages
+        votesByOption.value = data.votesByOption || {}
+        totalVotes.value = data.totalVotes || 0
       }
     },
 
     onPollEnd: (data) => {
       if (activePoll.value?.pollInstanceId === data.pollInstanceId) {
         percentages.value = data.percentages
+        votesByOption.value = data.votesByOption || {}
+        totalVotes.value = data.totalVotes || 0
+        isCancelled.value = data.cancelled === true
         isEnding.value = true
       }
     },
@@ -483,6 +579,9 @@ const setupWebSocketSubscription = () => {
           component.reset()
           activePoll.value = null
           percentages.value = {}
+          votesByOption.value = {}
+          totalVotes.value = 0
+          isCancelled.value = false
           break
       }
     },
@@ -521,6 +620,79 @@ const setupWebSocketSubscription = () => {
       } else {
         currentDiceRoll.value = data
       }
+    },
+
+    // Gamification events
+    onGamificationStart: (data) => {
+      console.log('[Overlay] Gamification started:', data)
+      activeGamificationInstance.value = data
+      isGamificationVisible.value = true
+    },
+
+    onGamificationProgress: (data) => {
+      console.log('[Overlay] Gamification progress:', data)
+      if (activeGamificationInstance.value?.id === data.instanceId) {
+        activeGamificationInstance.value = {
+          ...activeGamificationInstance.value,
+          currentProgress: data.currentProgress,
+          progressPercentage: data.progressPercentage,
+          isObjectiveReached: data.isObjectiveReached,
+        }
+      }
+    },
+
+    onGamificationArmed: (data) => {
+      console.log('[Overlay] Gamification armed:', data)
+      if (activeGamificationInstance.value?.id === data.instanceId) {
+        activeGamificationInstance.value = {
+          ...activeGamificationInstance.value,
+          status: 'armed',
+          isObjectiveReached: true,
+        }
+      }
+    },
+
+    onGamificationComplete: (data) => {
+      console.log('[Overlay] Gamification complete:', data)
+      if (activeGamificationInstance.value?.id === data.instanceId) {
+        activeGamificationInstance.value = {
+          ...activeGamificationInstance.value,
+          status: 'completed',
+          isObjectiveReached: true,
+        }
+      }
+    },
+
+    onGamificationExpired: (data) => {
+      console.log('[Overlay] Gamification expired:', data)
+      if (activeGamificationInstance.value?.id === data.instanceId) {
+        activeGamificationInstance.value = {
+          ...activeGamificationInstance.value,
+          status: 'expired',
+        }
+        // Hide after a short delay
+        setTimeout(() => {
+          isGamificationVisible.value = false
+          activeGamificationInstance.value = null
+        }, 2000)
+      }
+    },
+
+    // Gamification Action Executed - Shows Impact HUD when action executes (e.g., dice inversion)
+    onGamificationActionExecuted: (data: GamificationActionExecutedEvent) => {
+      console.log('[Overlay] Gamification action executed:', data)
+
+      // Transform to ImpactData format
+      gamificationImpactData.value = {
+        instanceId: data.instanceId,
+        eventName: data.eventName,
+        actionType: data.actionType,
+        success: data.success,
+        message: data.message,
+        originalValue: data.originalValue,
+        invertedValue: data.invertedValue,
+      }
+      isGamificationImpactVisible.value = true
     },
   })
 
@@ -679,5 +851,23 @@ body,
 .dice-hidden {
   opacity: 0;
   pointer-events: none;
+}
+
+/* Container pour la jauge de dice reverse (Goal Bar) */
+.dice-reverse-container {
+  position: fixed;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+}
+
+/* Container pour le HUD d'impact dice reverse (slam animation) */
+.dice-reverse-impact-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 200;
 }
 </style>

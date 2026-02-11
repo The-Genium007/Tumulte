@@ -124,6 +124,26 @@
             />
           </template>
 
+          <!-- Goal Bar Preview -->
+          <div class="goal-bar-preview-container">
+            <DiceReverseGoalBar
+              :instance="previewGoalBarInstance"
+              :visible="isPreviewGoalBarVisible"
+              @complete="handlePreviewGoalBarComplete"
+              @expired="handlePreviewGoalBarExpired"
+              @hidden="isPreviewGoalBarVisible = false"
+            />
+          </div>
+
+          <!-- Impact HUD Preview -->
+          <div class="impact-hud-preview-container">
+            <DiceReverseImpactHUD
+              :data="previewImpactData"
+              :visible="isPreviewImpactVisible"
+              @hidden="isPreviewImpactVisible = false"
+            />
+          </div>
+
           <!-- Message si aucune configuration -->
           <div v-if="!hasConfig && !loading" class="no-config-message">
             <UIcon name="i-heroicons-exclamation-triangle" class="warning-icon" />
@@ -149,6 +169,9 @@
           @play-full-sequence="handlePlayFullSequence"
           @reset="handleReset"
           @roll-dice="handleRollDice"
+          @show-goal-bar="handleShowGoalBar"
+          @hide-goal-bar="handleHideGoalBar"
+          @show-impact-hud="handleShowImpactHud"
         />
       </div>
     </div>
@@ -160,6 +183,10 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick, type CSSPropert
 import PreviewPollElement from '@/overlay-studio/components/PreviewPollElement.vue'
 import PreviewControls from '@/overlay-studio/components/PreviewControls.vue'
 import DiceRollOverlay from '@/components/overlay/DiceRollOverlay.vue'
+import DiceReverseGoalBar from '@/components/overlay/DiceReverseGoalBar.vue'
+import DiceReverseImpactHUD, {
+  type ImpactData,
+} from '@/components/overlay/DiceReverseImpactHUD.vue'
 import { useOverlayStudioStore } from '@/overlay-studio/stores/overlayStudio'
 import { useOverlayStudioApi } from '@/overlay-studio/composables/useOverlayStudioApi'
 import {
@@ -167,6 +194,7 @@ import {
   getDiceHudStyleFromElement,
 } from '@/composables/useOverlayElement'
 import type { PollProperties, DiceRollEvent, OverlayElement } from '@/overlay-studio/types'
+import type { GamificationInstanceEvent } from '@/types'
 import type { AnimationState } from '@/overlay-studio/composables/useAnimationController'
 
 definePageMeta({
@@ -204,9 +232,10 @@ const loadSelectedConfig = async (configId: string | undefined) => {
   try {
     loading.value = true
 
-    // Charger la configuration système par défaut
+    // Charger la configuration système par défaut depuis le backend
     if (configId === 'default') {
-      store.loadConfig(getSystemDefaultConfig())
+      const defaultConfig = await api.fetchDefaultConfig()
+      store.loadConfig(defaultConfig)
     } else {
       const fullConfig = await api.fetchConfig(configId)
       store.loadConfig(fullConfig.config)
@@ -241,6 +270,14 @@ const diceBoxReady = ref(false)
 
 // État pour le HUD de dés dans la preview
 const currentPreviewDiceRoll = ref<DiceRollEvent | null>(null)
+
+// État pour Goal Bar preview
+const previewGoalBarInstance = ref<GamificationInstanceEvent | null>(null)
+const isPreviewGoalBarVisible = ref(false)
+
+// État pour Impact HUD preview
+const previewImpactData = ref<ImpactData | null>(null)
+const isPreviewImpactVisible = ref(false)
 const isPreviewDiceHudVisible = ref(false)
 let diceHudTimeout: ReturnType<typeof setTimeout> | null = null
 
@@ -295,99 +332,6 @@ const calculateCanvasScale = () => {
 // Observer le redimensionnement
 let resizeObserver: ResizeObserver | null = null
 
-// Configuration système par défaut (miroir de OverlayConfig.getDefaultConfigWithPoll() du backend)
-const getSystemDefaultConfig = () => ({
-  version: '1.0',
-  canvas: { width: 1920, height: 1080 },
-  elements: [
-    {
-      id: 'default_poll',
-      type: 'poll' as const,
-      name: 'Sondage par défaut',
-      position: { x: 664, y: 0, z: 0 },
-      rotation: { x: 0, y: 0, z: 0 },
-      scale: { x: 0.5, y: 0.5, z: 1 },
-      visible: true,
-      locked: false,
-      zIndex: 0,
-      properties: {
-        questionStyle: {
-          fontFamily: 'Inter',
-          fontSize: 48,
-          fontWeight: 700,
-          color: '#ffffff',
-          textShadow: {
-            enabled: true,
-            color: 'rgba(0, 0, 0, 0.5)',
-            blur: 4,
-            offsetX: 0,
-            offsetY: 2,
-          },
-        },
-        questionBoxStyle: {
-          backgroundColor: 'transparent',
-          borderColor: 'transparent',
-          borderWidth: 0,
-          borderRadius: 0,
-          opacity: 1,
-          padding: { top: 0, right: 0, bottom: 16, left: 0 },
-        },
-        optionBoxStyle: {
-          backgroundColor: 'rgba(17, 17, 17, 0.9)',
-          borderColor: '#9333ea',
-          borderWidth: 2,
-          borderRadius: 12,
-          opacity: 1,
-          padding: { top: 16, right: 24, bottom: 16, left: 24 },
-        },
-        optionTextStyle: { fontFamily: 'Inter', fontSize: 24, fontWeight: 600, color: '#ffffff' },
-        optionPercentageStyle: {
-          fontFamily: 'Inter',
-          fontSize: 28,
-          fontWeight: 800,
-          color: '#e0d0ff',
-        },
-        optionSpacing: 16,
-        medalColors: { gold: '#FFD700', silver: '#C0C0C0', bronze: '#CD7F32', base: '#9333ea' },
-        progressBar: {
-          height: 8,
-          backgroundColor: 'rgba(147, 51, 234, 0.2)',
-          fillColor: '#9333ea',
-          fillGradient: { enabled: true, startColor: '#9333ea', endColor: '#ec4899' },
-          borderRadius: 4,
-          position: 'bottom' as const,
-          showTimeText: true,
-          timeTextStyle: { fontFamily: 'Inter', fontSize: 20, fontWeight: 700, color: '#ffffff' },
-        },
-        animations: {
-          entry: {
-            animation: { duration: 0.5, easing: 'ease-out' as const, delay: 0 },
-            slideDirection: 'up' as const,
-            sound: { enabled: true, volume: 0.8 },
-            soundLeadTime: 1.5,
-          },
-          loop: { music: { enabled: true, volume: 0.3 } },
-          exit: { animation: { duration: 0.5, easing: 'ease-in' as const, delay: 0 } },
-          result: {
-            winnerEnlarge: { scale: 1.1, duration: 0.3 },
-            loserFadeOut: { opacity: 0.3, duration: 0.5 },
-            sound: { enabled: true, volume: 0.8 },
-            displayDuration: 5,
-          },
-        },
-        layout: { maxWidth: 480, minOptionsToShow: 2, maxOptionsToShow: 5 },
-        mockData: {
-          question: 'Quelle action pour le héros ?',
-          options: ['Attaquer', 'Fuir', 'Négocier', 'Explorer'],
-          percentages: [35, 28, 22, 15],
-          timeRemaining: 45,
-          totalDuration: 60,
-        },
-      },
-    },
-  ],
-})
-
 // Charger la configuration au montage
 onMounted(async () => {
   const route = useRoute()
@@ -397,10 +341,11 @@ onMounted(async () => {
     // Charger la liste des configs
     const configs = await api.fetchConfigs()
 
-    // Si ?config=default, charger la configuration système par défaut
+    // Si ?config=default, charger la configuration système par défaut depuis le backend
     if (configParam === 'default') {
       selectedConfigId.value = 'default'
-      store.loadConfig(getSystemDefaultConfig())
+      const defaultConfig = await api.fetchDefaultConfig()
+      store.loadConfig(defaultConfig)
     }
     // Si ?config=<uuid>, charger cette configuration spécifique
     else if (configParam && configParam !== 'default') {
@@ -704,6 +649,45 @@ const handleRollDice = async (data: DiceRollEvent) => {
     isPreviewDiceHudVisible.value = false
   }, displayDuration)
 }
+
+// =============================================
+// Goal Bar Preview Handlers
+// =============================================
+const handleShowGoalBar = (instance: GamificationInstanceEvent) => {
+  console.log('[Preview] Showing Goal Bar:', instance)
+  previewGoalBarInstance.value = instance
+  isPreviewGoalBarVisible.value = true
+}
+
+const handleHideGoalBar = () => {
+  console.log('[Preview] Hiding Goal Bar')
+  isPreviewGoalBarVisible.value = false
+  // Delay clearing data for exit animation
+  setTimeout(() => {
+    previewGoalBarInstance.value = null
+  }, 500)
+}
+
+const handlePreviewGoalBarComplete = () => {
+  console.log('[Preview] Goal Bar complete')
+}
+
+const handlePreviewGoalBarExpired = () => {
+  console.log('[Preview] Goal Bar expired')
+  setTimeout(() => {
+    isPreviewGoalBarVisible.value = false
+    previewGoalBarInstance.value = null
+  }, 2000)
+}
+
+// =============================================
+// Impact HUD Preview Handlers
+// =============================================
+const handleShowImpactHud = (data: ImpactData) => {
+  console.log('[Preview] Showing Impact HUD:', data)
+  previewImpactData.value = data
+  isPreviewImpactVisible.value = true
+}
 </script>
 
 <style scoped>
@@ -825,6 +809,24 @@ const handleRollDice = async (data: DiceRollEvent) => {
 /* Dice container */
 .dice-container {
   z-index: 10;
+}
+
+/* Goal Bar preview container */
+.goal-bar-preview-container {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+}
+
+/* Impact HUD preview container */
+.impact-hud-preview-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 200;
 }
 
 .no-config-message {

@@ -8,8 +8,16 @@ export type { DiceRollEvent } from '~/types'
 /**
  * Types d'éléments disponibles dans l'éditeur
  * NOTE: Structure extensible - ajouter de nouveaux types ici
+ *
+ * diceReverseGoalBar et diceReverseImpactHud sont des sous-types de diceReverse
+ * Quand on ajoute "Inversion" dans le sidebar, les deux sont créés ensemble
  */
-export type OverlayElementType = 'poll' | 'dice'
+export type OverlayElementType =
+  | 'poll'
+  | 'dice'
+  | 'diceReverse' // Legacy/parent type (kept for backward compatibility)
+  | 'diceReverseGoalBar' // Goal Bar - barre de progression style Twitch
+  | 'diceReverseImpactHud' // Impact HUD - animation slam
 
 /**
  * Position 3D d'un élément
@@ -151,6 +159,70 @@ export interface PollMockData {
   totalDuration: number
 }
 
+// ===== INTERFACES GAMIFICATION POLL =====
+
+/**
+ * Configuration du timer gamifié
+ */
+export interface PollTimerConfig {
+  showBadge: boolean // Afficher le badge ⏱ visible
+  urgentThreshold: number // Seuil en secondes pour mode urgent (défaut: 10)
+  urgentColor: string // Couleur du timer en mode urgent
+}
+
+/**
+ * Configuration de la barre de temps gamifiée
+ */
+export interface PollTimeBarConfig {
+  enabled: boolean // Afficher la barre de temps
+  shimmerEnabled: boolean // Effet shimmer sur la barre
+  glowEdgeEnabled: boolean // Glow au bord de la progression
+  shakeWhenUrgent: boolean // Tremblement quand < urgentThreshold
+  shakeIntensity: number // Intensité du shake (1-10)
+}
+
+/**
+ * Configuration du leader (option en tête)
+ */
+export interface PollLeaderConfig {
+  showCrown: boolean // Afficher 👑 sur le leader
+  pulseAnimation: boolean // Animation de pulsation sur le leader
+  changeSound: AudioSettings // Son quand le leader change
+}
+
+/**
+ * Configuration de l'affichage des résultats
+ */
+export interface PollResultConfig {
+  displayDuration: number // Durée d'affichage en ms (défaut: 5000)
+  winnerColor: string // Couleur du/des gagnant(s) (défaut: #FFD700 doré)
+  winnerScale: number // Zoom sur le gagnant (défaut: 1.05)
+  winnerGlow: boolean // Glow doré autour du gagnant
+  winnerGlowColor: string // Couleur du glow (défaut: #FFD700)
+  loserFadeOut: boolean // Fade-out des perdants
+  loserFadeDuration: number // Durée du fade en ms
+  loserFinalOpacity: number // Opacité finale des perdants (0 = invisible)
+}
+
+/**
+ * Configuration des ex-aequo
+ */
+export interface PollTieBreakerConfig {
+  showAllWinners: boolean // Afficher tous les ex-aequo en doré
+  titleText: string // Texte affiché (défaut: "EX-ÆQUO !")
+}
+
+/**
+ * Configuration complète de la gamification du poll
+ */
+export interface PollGamificationConfig {
+  timer: PollTimerConfig
+  timeBar: PollTimeBarConfig
+  leader: PollLeaderConfig
+  result: PollResultConfig
+  tieBreaker: PollTieBreakerConfig
+}
+
 /**
  * Propriétés spécifiques pour un élément poll (sondage)
  */
@@ -164,6 +236,7 @@ export interface PollProperties {
   medalColors: MedalColors
   progressBar: ProgressBarConfig
   animations: PollAnimationsConfig
+  gamification: PollGamificationConfig
   layout: {
     maxWidth: number
     minOptionsToShow: number
@@ -412,11 +485,208 @@ export interface DiceProperties {
   mockData: DiceMockData
 }
 
+// ===== INTERFACES SPÉCIFIQUES AU DICE REVERSE =====
+
+/**
+ * Configuration du conteneur de la Goal Bar
+ */
+export interface DiceReverseContainerStyle {
+  backgroundColor: string
+  borderColor: string
+  borderWidth: number
+  borderRadius: number
+  opacity: number
+}
+
+/**
+ * Configuration de la barre de progression dice reverse
+ */
+export interface DiceReverseProgressBarStyle {
+  height: number
+  backgroundColor: string
+  fillColor: string
+  fillGradientEnabled: boolean
+  fillGradientStart: string
+  fillGradientEnd: string
+  glowColor: string
+}
+
+/**
+ * Configuration du shake de la Goal Bar
+ */
+export interface DiceReverseShakeConfig {
+  startPercent: number // À quel % de progression le shake commence (0-100)
+  maxIntensity: number // Intensité maximale du shake en pixels
+}
+
+/**
+ * Configuration de l'animation d'entrée/sortie de la Goal Bar
+ */
+export interface DiceReverseGoalBarAnimationsConfig {
+  entry: {
+    duration: number
+    easing: 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out'
+  }
+  exit: {
+    duration: number
+    easing: 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out'
+  }
+  success: {
+    displayDuration: number // Durée d'affichage de l'animation de succès
+  }
+}
+
+/**
+ * Configuration audio de la Goal Bar
+ */
+export interface DiceReverseGoalBarAudioConfig {
+  progressSound: AudioSettings
+  successSound: AudioSettings
+}
+
+/**
+ * Configuration du conteneur de l'Impact HUD
+ */
+export interface DiceReverseImpactContainerStyle {
+  backgroundColor: string
+  borderColor: string
+  borderWidth: number
+  borderRadius: number
+}
+
+/**
+ * Configuration de l'animation de l'Impact HUD
+ */
+export interface DiceReverseImpactAnimationsConfig {
+  dropDistance: number // Distance de chute en pixels
+  dropDuration: number // Durée de la chute en ms
+  displayDuration: number // Durée d'affichage en ms
+}
+
+/**
+ * Configuration audio de l'Impact HUD
+ */
+export interface DiceReverseImpactAudioConfig {
+  impactSound: AudioSettings
+}
+
+/**
+ * Typographie de la Goal Bar
+ */
+export interface DiceReverseGoalBarTypography {
+  title: TypographySettings
+  progress: TypographySettings
+  timer: TypographySettings
+}
+
+/**
+ * Typographie de l'Impact HUD
+ */
+export interface DiceReverseImpactTypography {
+  title: TypographySettings
+  detail: TypographySettings
+}
+
+/**
+ * Transform de la Goal Bar (position indépendante)
+ */
+export interface DiceReverseGoalBarTransform {
+  position: {
+    x: number // Position X en coordonnées canvas (-960 à 960)
+    y: number // Position Y en coordonnées canvas (-540 à 540)
+  }
+  scale: number
+}
+
+/**
+ * Transform de l'Impact HUD (position indépendante)
+ */
+export interface DiceReverseImpactTransform {
+  position: {
+    x: number
+    y: number
+  }
+  scale: number
+}
+
+/**
+ * Données mock pour l'aperçu du dice reverse dans le studio
+ */
+export interface DiceReverseMockData {
+  eventName: string
+  currentProgress: number
+  objectiveTarget: number
+  timeRemaining: number
+  isComplete: boolean
+}
+
+/**
+ * Propriétés spécifiques pour un élément dice reverse (Goal Bar + Impact HUD)
+ * @deprecated Utilisé uniquement pour la rétrocompatibilité, préférer DiceReverseGoalBarProperties et DiceReverseImpactHudProperties
+ */
+export interface DiceReverseProperties {
+  // Goal Bar (barre de progression style Twitch Goal)
+  goalBar: {
+    container: DiceReverseContainerStyle
+    progressBar: DiceReverseProgressBarStyle
+    shake: DiceReverseShakeConfig
+    animations: DiceReverseGoalBarAnimationsConfig
+    audio: DiceReverseGoalBarAudioConfig
+    typography: DiceReverseGoalBarTypography
+    transform: DiceReverseGoalBarTransform
+    width: number // Largeur de la Goal Bar en pixels
+  }
+  // Impact HUD (animation slam quand l'action s'exécute)
+  impactHud: {
+    container: DiceReverseImpactContainerStyle
+    animations: DiceReverseImpactAnimationsConfig
+    audio: DiceReverseImpactAudioConfig
+    typography: DiceReverseImpactTypography
+    transform: DiceReverseImpactTransform
+  }
+  // Données mock pour l'aperçu
+  mockData: DiceReverseMockData
+}
+
+/**
+ * Propriétés pour l'élément Goal Bar (barre de progression style Twitch)
+ * Élément indépendant avec son propre gizmo et position
+ */
+export interface DiceReverseGoalBarProperties {
+  container: DiceReverseContainerStyle
+  progressBar: DiceReverseProgressBarStyle
+  shake: DiceReverseShakeConfig
+  animations: DiceReverseGoalBarAnimationsConfig
+  audio: DiceReverseGoalBarAudioConfig
+  typography: DiceReverseGoalBarTypography
+  width: number // Largeur de la Goal Bar en pixels (base size for gizmo)
+  height: number // Hauteur calculée de la Goal Bar en pixels
+  mockData: DiceReverseMockData
+}
+
+/**
+ * Propriétés pour l'élément Impact HUD (animation slam)
+ * Élément indépendant avec son propre gizmo et position
+ */
+export interface DiceReverseImpactHudProperties {
+  container: DiceReverseImpactContainerStyle
+  animations: DiceReverseImpactAnimationsConfig
+  audio: DiceReverseImpactAudioConfig
+  typography: DiceReverseImpactTypography
+  width: number // Largeur du HUD en pixels (base size for gizmo)
+  height: number // Hauteur du HUD en pixels
+}
+
 /**
  * Union des propriétés possibles
  * NOTE: Ajouter de nouveaux types de propriétés ici
  */
-export type ElementProperties = PollProperties | DiceProperties
+export type ElementProperties =
+  | PollProperties
+  | DiceProperties
+  | DiceReverseProperties
+  | DiceReverseGoalBarProperties
+  | DiceReverseImpactHudProperties
 
 /**
  * Élément dans l'overlay

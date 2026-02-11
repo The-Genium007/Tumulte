@@ -13,6 +13,7 @@ import { Env } from '@adonisjs/core/env'
 
 export default await Env.create(new URL('../', import.meta.url), {
   NODE_ENV: Env.schema.enum(['development', 'production', 'test'] as const),
+  ENV_SUFFIX: Env.schema.enum.optional(['prod', 'staging', 'dev'] as const),
   PORT: Env.schema.number(),
   APP_KEY: Env.schema.string(),
   HOST: Env.schema.string({ format: 'host' }),
@@ -83,6 +84,7 @@ export default await Env.create(new URL('../', import.meta.url), {
   TWITCH_CLIENT_ID: Env.schema.string(),
   TWITCH_CLIENT_SECRET: Env.schema.string(),
   TWITCH_REDIRECT_URI: Env.schema.string(),
+  TWITCH_EVENTSUB_SECRET: Env.schema.string.optional(),
 
   /*
   |----------------------------------------------------------

@@ -4,10 +4,11 @@ export default defineNuxtConfig({
   devtools: { enabled: process.env.NODE_ENV === 'development' },
   ssr: false, // SPA mode - variables must be set at build time
 
-  // Disable source maps in production for security
+  // Source maps: enabled for Sentry error tracking
+  // In production, maps are uploaded to Sentry then deleted from build output
   sourcemap: {
     server: false,
-    client: process.env.NODE_ENV === 'development',
+    client: true,
   },
 
   modules: [
@@ -150,9 +151,9 @@ export default defineNuxtConfig({
       ],
     },
     workbox: {
-      // En mode SPA, toutes les navigations doivent servir index.html
-      // Le client-side router gère ensuite la route
-      navigateFallback: '/index.html',
+      // En mode SPA, toutes les navigations doivent être redirigées vers
+      // la route racine (le client-side router gère ensuite la navigation)
+      navigateFallback: '/',
       navigateFallbackDenylist: [/^\/api/, /^\/auth/, /^\/offline/],
       globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
       // Import du script de gestion des notifications push

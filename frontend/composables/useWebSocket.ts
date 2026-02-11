@@ -6,6 +6,11 @@ import type {
   ReadinessChangeEvent,
   PreviewCommandEvent,
   DiceRollEvent,
+  GamificationInstanceEvent,
+  GamificationProgressEvent,
+  GamificationCompleteEvent,
+  GamificationArmedEvent,
+  GamificationActionExecutedEvent,
 } from '@/types'
 import { loggers } from '@/utils/logger'
 
@@ -529,7 +534,7 @@ export const useWebSocket = () => {
         clientExists: !!client.value,
         channel,
       })
-      console.error('WebSocket subscribe error:', error)
+      loggers.ws.error('WebSocket subscribe error:', error)
       throw error
     }
 
@@ -582,7 +587,7 @@ export const useWebSocket = () => {
       })
       .catch((error: unknown) => {
         loggers.ws.error(`Failed to create subscription for channel ${channel}:`, error)
-        console.error('WebSocket connect error:', error)
+        loggers.ws.error('WebSocket connect error:', error)
       })
 
     // Retourner une fonction de nettoyage asynchrone
@@ -608,6 +613,13 @@ export const useWebSocket = () => {
       onPreviewCommand?: (data: PreviewCommandEvent) => void
       onDiceRoll?: (data: DiceRollEvent) => void
       onDiceRollCritical?: (data: DiceRollEvent) => void
+      // Gamification events
+      onGamificationStart?: (data: GamificationInstanceEvent) => void
+      onGamificationProgress?: (data: GamificationProgressEvent) => void
+      onGamificationComplete?: (data: GamificationCompleteEvent) => void
+      onGamificationArmed?: (data: GamificationArmedEvent) => void
+      onGamificationExpired?: (data: { instanceId: string }) => void
+      onGamificationActionExecuted?: (data: GamificationActionExecutedEvent) => void
     }
   ): (() => Promise<void>) => {
     if (!client.value) {
@@ -663,6 +675,37 @@ export const useWebSocket = () => {
             callbacks.onDiceRollCritical(message.data as DiceRollEvent)
           }
           break
+        // Gamification events
+        case 'gamification:start':
+          if (callbacks.onGamificationStart) {
+            callbacks.onGamificationStart(message.data as GamificationInstanceEvent)
+          }
+          break
+        case 'gamification:progress':
+          if (callbacks.onGamificationProgress) {
+            callbacks.onGamificationProgress(message.data as GamificationProgressEvent)
+          }
+          break
+        case 'gamification:complete':
+          if (callbacks.onGamificationComplete) {
+            callbacks.onGamificationComplete(message.data as GamificationCompleteEvent)
+          }
+          break
+        case 'gamification:armed':
+          if (callbacks.onGamificationArmed) {
+            callbacks.onGamificationArmed(message.data as GamificationArmedEvent)
+          }
+          break
+        case 'gamification:expired':
+          if (callbacks.onGamificationExpired) {
+            callbacks.onGamificationExpired(message.data as { instanceId: string })
+          }
+          break
+        case 'gamification:action_executed':
+          if (callbacks.onGamificationActionExecuted) {
+            callbacks.onGamificationActionExecuted(message.data as GamificationActionExecutedEvent)
+          }
+          break
         default:
           loggers.ws.warn(`Unknown event type: ${message.event}`)
       }
@@ -675,7 +718,7 @@ export const useWebSocket = () => {
       })
       .catch((error: unknown) => {
         loggers.ws.error(`Failed to create subscription for streamer channel ${channel}:`, error)
-        console.error('WebSocket subscribe error:', error)
+        loggers.ws.error('WebSocket subscribe error:', error)
       })
 
     return async () => {
@@ -730,7 +773,7 @@ export const useWebSocket = () => {
       })
       .catch((error: unknown) => {
         loggers.ws.error(`Failed to create subscription for readiness channel ${channel}:`, error)
-        console.error('WebSocket subscribe error:', error)
+        loggers.ws.error('WebSocket subscribe error:', error)
       })
 
     return async () => {

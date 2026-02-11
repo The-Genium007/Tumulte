@@ -265,9 +265,6 @@ const selectedCampaignStreamers = computed<StreamerDisplay[]>(() => {
 const _formatAuthTime = (seconds: number | null): string => {
   if (!seconds) return 'Non autorisé'
 
-  // Si l'autorisation est > 1 an (31536000 secondes), c'est "permanent"
-  if (seconds > 31536000) return 'Permanent'
-
   const hours = Math.floor(seconds / 3600)
   const mins = Math.floor((seconds % 3600) / 60)
   const secs = seconds % 60
@@ -651,8 +648,7 @@ const sendPollInternal = async () => {
             (pollStatus.value === 'sending' || pollStatus.value === 'running')
           ) {
             const results = Object.entries(data.votesByOption).map(([index, votes]) => ({
-              option:
-                currentPoll.value?.options?.[parseInt(index)] || `Option ${parseInt(index) + 1}`,
+              optionIndex: parseInt(index),
               votes: votes as number,
             }))
 
@@ -677,8 +673,7 @@ const sendPollInternal = async () => {
 
           if (votesData) {
             const results = Object.entries(votesData).map(([index, votes]) => ({
-              option:
-                currentPoll.value?.options?.[parseInt(index)] || `Option ${parseInt(index) + 1}`,
+              optionIndex: parseInt(index),
               votes: votes as number,
             }))
 
@@ -874,8 +869,7 @@ onMounted(async () => {
           (pollStatus.value === 'sending' || pollStatus.value === 'running')
         ) {
           const results = Object.entries(data.votesByOption).map(([index, votes]) => ({
-            option:
-              currentPoll.value?.options?.[parseInt(index)] || `Option ${parseInt(index) + 1}`,
+            optionIndex: parseInt(index),
             votes: votes as number,
           }))
 
@@ -899,8 +893,7 @@ onMounted(async () => {
 
         if (votesData) {
           const results = Object.entries(votesData).map(([index, votes]) => ({
-            option:
-              currentPoll.value?.options?.[parseInt(index)] || `Option ${parseInt(index) + 1}`,
+            optionIndex: parseInt(index),
             votes: votes as number,
           }))
 

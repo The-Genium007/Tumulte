@@ -9,6 +9,9 @@
 |
 */
 
+// Initialize Sentry FIRST before any other imports to capture early errors
+import '#config/sentry'
+
 import 'reflect-metadata'
 import { Ignitor, prettyPrintError } from '@adonisjs/core'
 import type { RedisClientType } from 'redis'
@@ -97,8 +100,8 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
           adapter: createAdapter(pubClient, subClient),
         })
 
-        const { default: VttWebSocketService } = await import('#services/vtt/vtt_websocket_service')
-        const vttWebSocketService = new VttWebSocketService()
+        // Use the container singleton to ensure the same instance is used everywhere
+        const vttWebSocketService = await app.container.make('vttWebSocketService')
         vttWebSocketService.setup(io)
 
         console.log('[Socket.IO] Server initialized with Redis adapter for horizontal scaling')
@@ -113,10 +116,50 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
           // Run cache warmup after seeding (non-blocking)
           const { default: CacheWarmer } = await import('#services/cache/cache_warmer')
           const cacheWarmer = new CacheWarmer()
-          return cacheWarmer.warmup()
+          await cacheWarmer.warmup()
+
+          // Run startup reconciliation to clean up orphaned rewards and stale data
+          // This runs AFTER cache warmup to ensure all services are ready
+          const { OrphanDetector } = await import('#services/cleanup/orphan_detector')
+          const { TwitchRewardReconciler } =
+            await import('#services/cleanup/twitch_reward_reconciler')
+          const { CleanupAuditService } = await import('#services/cleanup/cleanup_audit_service')
+          const { StartupReconciliationService } =
+            await import('#services/cleanup/startup_reconciliation_service')
+          const { StreamerGamificationConfigRepository } =
+            await import('#repositories/streamer_gamification_config_repository')
+          const { TwitchRewardService } = await import('#services/twitch/twitch_reward_service')
+
+          const configRepo = new StreamerGamificationConfigRepository()
+          const twitchRewardService = new TwitchRewardService()
+          const auditService = new CleanupAuditService()
+          const orphanDetector = new OrphanDetector(configRepo)
+          const reconciler = new TwitchRewardReconciler(
+            twitchRewardService,
+            configRepo,
+            auditService
+          )
+          const reconciliationService = new StartupReconciliationService(
+            orphanDetector,
+            reconciler,
+            auditService
+          )
+
+          return reconciliationService.reconcile()
+        })
+        .then((reconciliationResult) => {
+          if (reconciliationResult) {
+            console.log('[StartupReconciliation] Completed:', {
+              orphansFound: reconciliationResult.orphanedRewardsFound,
+              orphansCleaned: reconciliationResult.orphanedRewardsCleaned,
+              phantomsFixed: reconciliationResult.phantomsFixed,
+              durationMs: reconciliationResult.durationMs,
+              errors: reconciliationResult.errors.length,
+            })
+          }
         })
         .catch((error) => {
-          console.error('[DatabaseSeeder] Failed to seed or warmup:', error)
+          console.error('[Startup] Failed during seed/warmup/reconciliation:', error)
         })
     })
   })

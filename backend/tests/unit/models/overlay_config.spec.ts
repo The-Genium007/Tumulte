@@ -21,33 +21,97 @@ test.group('OverlayConfig Model - Static Methods', () => {
 
     const props = OverlayConfig.getDefaultDiceProperties()
 
-    // Check main categories exist
+    // Check main categories exist (new structure with diceBox and hud)
+    assert.property(props, 'diceBox')
+    assert.property(props, 'hud')
+    assert.property(props, 'hudTransform')
     assert.property(props, 'colors')
-    assert.property(props, 'textures')
-    assert.property(props, 'physics')
-    assert.property(props, 'resultText')
     assert.property(props, 'audio')
     assert.property(props, 'animations')
-    assert.property(props, 'layout')
+    assert.property(props, 'mockData')
+
+    // Check diceBox structure
+    const diceBox = props.diceBox as Record<string, unknown>
+    assert.property(diceBox, 'colors')
+    assert.property(diceBox, 'texture')
+    assert.property(diceBox, 'material')
+
+    // Check diceBox colors
+    const diceBoxColors = diceBox.colors as Record<string, string>
+    assert.equal(diceBoxColors.foreground, '#9146FF') // Tumulte Purple
+    assert.equal(diceBoxColors.background, '#ffffff') // White dice
+
+    // Check hud structure
+    const hud = props.hud as Record<string, unknown>
+    assert.property(hud, 'container')
+    assert.property(hud, 'criticalBadge')
+    assert.property(hud, 'formula')
+    assert.property(hud, 'result')
+  })
+
+  test('getDefaultGoalBarProperties should return all goal bar configuration', async ({
+    assert,
+  }) => {
+    const { overlayConfig: OverlayConfig } = await import('#models/overlay_config')
+
+    const props = OverlayConfig.getDefaultGoalBarProperties()
+
+    // Check main categories exist
+    assert.property(props, 'container')
+    assert.property(props, 'progressBar')
+    assert.property(props, 'shake')
+    assert.property(props, 'animations')
+    assert.property(props, 'audio')
+    assert.property(props, 'typography')
+    assert.property(props, 'width')
+    assert.property(props, 'height')
     assert.property(props, 'mockData')
 
     // Check some specific values
-    const colors = props.colors as Record<string, string>
-    assert.equal(colors.baseColor, '#1a1a2e')
-    assert.equal(colors.numberColor, '#ffffff')
+    const container = props.container as Record<string, unknown>
+    assert.equal(container.borderColor, '#9146FF')
+    assert.equal(container.borderRadius, 16)
 
-    const physics = props.physics as Record<string, number>
-    assert.equal(physics.gravity, -30)
-    assert.equal(physics.bounciness, 0.4)
+    const typography = props.typography as Record<string, unknown>
+    assert.property(typography, 'title')
+    assert.property(typography, 'progress')
+    assert.property(typography, 'timer')
   })
 
-  test('getDefaultConfigWithPoll should include poll and dice elements', async ({ assert }) => {
+  test('getDefaultImpactHudProperties should return all impact hud configuration', async ({
+    assert,
+  }) => {
+    const { overlayConfig: OverlayConfig } = await import('#models/overlay_config')
+
+    const props = OverlayConfig.getDefaultImpactHudProperties()
+
+    // Check main categories exist
+    assert.property(props, 'container')
+    assert.property(props, 'animations')
+    assert.property(props, 'audio')
+    assert.property(props, 'typography')
+    assert.property(props, 'width')
+    assert.property(props, 'height')
+
+    // Check some specific values
+    const container = props.container as Record<string, unknown>
+    assert.equal(container.borderColor, '#9146FF') // Tumulte Purple (harmonized)
+    assert.equal(container.borderWidth, 3)
+
+    const typography = props.typography as Record<string, unknown>
+    assert.property(typography, 'title')
+    assert.property(typography, 'detail')
+  })
+
+  test('getDefaultConfigWithPoll should include poll, dice, goal bar and impact hud elements', async ({
+    assert,
+  }) => {
     const { overlayConfig: OverlayConfig } = await import('#models/overlay_config')
 
     const config = OverlayConfig.getDefaultConfigWithPoll()
 
     assert.equal(config.version, '1.0')
-    assert.lengthOf(config.elements, 2)
+    assert.lengthOf(config.elements, 4)
 
     // Check poll element
     const pollElement = config.elements.find((e) => e.type === 'poll')
@@ -66,6 +130,22 @@ test.group('OverlayConfig Model - Static Methods', () => {
     assert.equal(diceElement!.name, 'Dés 3D par défaut')
     assert.deepEqual(diceElement!.position, { x: 0, y: 0, z: 0 })
     assert.deepEqual(diceElement!.scale, { x: 1, y: 1, z: 1 })
+
+    // Check goal bar element
+    const goalBarElement = config.elements.find((e) => e.type === 'diceReverseGoalBar')
+    assert.exists(goalBarElement)
+    assert.equal(goalBarElement!.id, 'default_goal_bar')
+    assert.equal(goalBarElement!.name, 'Goal Bar par défaut')
+    assert.deepEqual(goalBarElement!.position, { x: 0, y: 400, z: 0 })
+    assert.equal(goalBarElement!.zIndex, 2)
+
+    // Check impact hud element
+    const impactHudElement = config.elements.find((e) => e.type === 'diceReverseImpactHud')
+    assert.exists(impactHudElement)
+    assert.equal(impactHudElement!.id, 'default_impact_hud')
+    assert.equal(impactHudElement!.name, 'Impact HUD par défaut')
+    assert.deepEqual(impactHudElement!.position, { x: 0, y: 0, z: 0 })
+    assert.equal(impactHudElement!.zIndex, 3)
   })
 })
 
@@ -141,12 +221,14 @@ test.group('OverlayConfig Model - JSON Serialization', (group) => {
     assert.isObject(fetched.config)
     assert.equal(fetched.config.version, '1.0')
     assert.isArray(fetched.config.elements)
-    assert.lengthOf(fetched.config.elements, 2)
+    assert.lengthOf(fetched.config.elements, 4)
 
     // Verify element types
     const types = fetched.config.elements.map((e) => e.type)
     assert.include(types, 'poll')
     assert.include(types, 'dice')
+    assert.include(types, 'diceReverseGoalBar')
+    assert.include(types, 'diceReverseImpactHud')
   })
 
   test('should handle complex nested properties in config', async ({ assert }) => {
@@ -220,8 +302,19 @@ test.group('OverlayConfig Model - Element Types', () => {
     const configWithPoll = OverlayConfig.getDefaultConfigWithPoll()
 
     // Check that elements have valid types
+    const validTypes = [
+      'text',
+      'image',
+      'shape',
+      'particle',
+      'poll',
+      'dice',
+      'diceReverse',
+      'diceReverseGoalBar',
+      'diceReverseImpactHud',
+    ]
     for (const element of configWithPoll.elements) {
-      assert.include(['text', 'image', 'shape', 'particle', 'poll', 'dice'], element.type)
+      assert.include(validTypes, element.type)
     }
   })
 
@@ -255,6 +348,32 @@ test.group('OverlayConfig Model - Element Types', () => {
 
     // Dice element properties should match default dice properties
     assert.deepEqual(diceElement.properties, defaultDiceProps)
+  })
+
+  test('goal bar element should have required properties from getDefaultGoalBarProperties', async ({
+    assert,
+  }) => {
+    const { overlayConfig: OverlayConfig } = await import('#models/overlay_config')
+
+    const config = OverlayConfig.getDefaultConfigWithPoll()
+    const goalBarElement = config.elements.find((e) => e.type === 'diceReverseGoalBar')!
+    const defaultGoalBarProps = OverlayConfig.getDefaultGoalBarProperties()
+
+    // Goal bar element properties should match default goal bar properties
+    assert.deepEqual(goalBarElement.properties, defaultGoalBarProps)
+  })
+
+  test('impact hud element should have required properties from getDefaultImpactHudProperties', async ({
+    assert,
+  }) => {
+    const { overlayConfig: OverlayConfig } = await import('#models/overlay_config')
+
+    const config = OverlayConfig.getDefaultConfigWithPoll()
+    const impactHudElement = config.elements.find((e) => e.type === 'diceReverseImpactHud')!
+    const defaultImpactHudProps = OverlayConfig.getDefaultImpactHudProperties()
+
+    // Impact hud element properties should match default impact hud properties
+    assert.deepEqual(impactHudElement.properties, defaultImpactHudProps)
   })
 })
 

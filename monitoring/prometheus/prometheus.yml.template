@@ -1,0 +1,89 @@
+# =============================================================================
+# Prometheus Configuration - Tumulte
+# =============================================================================
+#
+# Les targets backend/frontend sont chargés depuis targets/apps.yml
+# Ce fichier est généré par scripts/deploy.sh selon ENV_SUFFIX
+#
+# Usage:
+#   ./scripts/deploy.sh staging   # Génère targets pour tumulte-backend-staging
+#   ./scripts/deploy.sh prod      # Génère targets pour tumulte-backend-prod
+#
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: 'tumulte'
+
+rule_files:
+  - 'alerts.yml'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            # Utilise le hostname complet - sera remplacé par deploy.sh
+            - 'tumulte-alertmanager-ENV_SUFFIX_PLACEHOLDER:9093'
+
+# =============================================================================
+# SCRAPE CONFIGS
+# =============================================================================
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Prometheus lui-même
+  # ---------------------------------------------------------------------------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # ---------------------------------------------------------------------------
+  # TUMULTE BACKEND + FRONTEND - Chargés depuis targets/apps.yml
+  # ---------------------------------------------------------------------------
+  - job_name: 'tumulte-apps'
+    metrics_path: '/metrics'
+    file_sd_configs:
+      - files:
+          - '/etc/prometheus/targets/apps.yml'
+        refresh_interval: 30s
+    scrape_timeout: 10s
+
+  # ---------------------------------------------------------------------------
+  # NODE EXPORTER
+  # ---------------------------------------------------------------------------
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['tumulte-node-exporter-ENV_SUFFIX_PLACEHOLDER:9100']
+        labels:
+          service: 'node'
+
+  # ---------------------------------------------------------------------------
+  # CADVISOR
+  # ---------------------------------------------------------------------------
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['tumulte-cadvisor-ENV_SUFFIX_PLACEHOLDER:8080']
+        labels:
+          service: 'docker'
+
+  # ---------------------------------------------------------------------------
+  # POSTGRES EXPORTER
+  # ---------------------------------------------------------------------------
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['tumulte-postgres-exporter-ENV_SUFFIX_PLACEHOLDER:9187']
+        labels:
+          service: 'postgresql'
+          database: 'twitch_polls'
+
+  # ---------------------------------------------------------------------------
+  # REDIS EXPORTER
+  # ---------------------------------------------------------------------------
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['tumulte-redis-exporter-ENV_SUFFIX_PLACEHOLDER:9121']
+        labels:
+          service: 'redis'

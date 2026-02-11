@@ -24,3 +24,7 @@ yarn-error.log
 
 # Platform specific
 .DS_Store
+
+# Playwright
+playwright-report
+test-results

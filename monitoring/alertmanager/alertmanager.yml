@@ -1,0 +1,116 @@
+# =============================================================================
+# Alertmanager Configuration - Tumulte
+# =============================================================================
+# Configure ici où envoyer les alertes (Discord, email, Slack, etc.)
+#
+# IMPORTANT: Les webhooks Discord doivent être configurés dans le fichier .env
+#   - DISCORD_MONITORING_WEBHOOK_URL : Alertes normales (warnings)
+#   - DISCORD_CRITICAL_WEBHOOK_URL   : Alertes critiques (channel séparé)
+#
+# Pour créer un webhook Discord:
+#   1. Server Settings > Integrations > Webhooks > New Webhook
+#   2. Copier l'URL du webhook
+#   3. Coller dans le fichier .env correspondant
+#
+# =============================================================================
+
+global:
+  # Timeout pour les webhooks
+  resolve_timeout: 5m
+
+# Templates pour les messages Discord
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Arbre de routage des alertes
+route:
+  # Groupe les alertes par nom d'alerte et environnement
+  group_by: ['alertname', 'severity', 'environment']
+  # Attendre 30s avant d'envoyer le premier groupe
+  group_wait: 30s
+  # Attendre 5m avant d'envoyer un nouveau groupe avec les mêmes labels
+  group_interval: 5m
+  # Répéter l'envoi toutes les 4h si l'alerte n'est pas résolue
+  repeat_interval: 4h
+  # Receiver par défaut (utilise 'null' tant que les webhooks Discord ne sont pas configurés)
+  receiver: 'discord-notifications'
+
+  # Routes spécifiques par sévérité
+  routes:
+    # Alertes critiques : envoi immédiat
+    - match:
+        severity: critical
+      receiver: 'discord-critical'
+      group_wait: 10s
+      repeat_interval: 1h
+
+    # Alertes warning : groupées
+    - match:
+        severity: warning
+      receiver: 'discord-notifications'
+      group_wait: 1m
+      repeat_interval: 4h
+
+# Receivers (destinations des alertes)
+receivers:
+  # ---------------------------------------------------------------------------
+  # Discord - Notifications normales (warnings)
+  # IMPORTANT: Configurer DISCORD_MONITORING_WEBHOOK_URL dans .env
+  # ---------------------------------------------------------------------------
+  - name: 'discord-notifications'
+    # Webhook désactivé par défaut - décommenter et configurer pour activer
+    # webhook_configs:
+    #   - url: '${DISCORD_MONITORING_WEBHOOK_URL}'
+    #     send_resolved: true
+    #     http_config:
+    #       follow_redirects: true
+
+  # ---------------------------------------------------------------------------
+  # Discord - Alertes critiques (channel séparé recommandé)
+  # IMPORTANT: Configurer DISCORD_CRITICAL_WEBHOOK_URL dans .env
+  # ---------------------------------------------------------------------------
+  - name: 'discord-critical'
+    # Webhook désactivé par défaut - décommenter et configurer pour activer
+    # webhook_configs:
+    #   - url: '${DISCORD_CRITICAL_WEBHOOK_URL}'
+    #     send_resolved: true
+    #     http_config:
+    #       follow_redirects: true
+
+  # ---------------------------------------------------------------------------
+  # Fallback - Aucune notification (utilisé si les webhooks ne sont pas configurés)
+  # ---------------------------------------------------------------------------
+  - name: 'null'
+
+# Inhibition rules (évite les alertes redondantes)
+inhibit_rules:
+  # Si le service est down, pas besoin des alertes de latence
+  - source_match:
+      alertname: 'TumulteBackendDown'
+    target_match_re:
+      alertname: 'High.*'
+    equal: ['service']
+
+  - source_match:
+      alertname: 'TumulteFrontendDown'
+    target_match_re:
+      alertname: 'High.*'
+    equal: ['service']
+
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname']
+
+  # Si PostgreSQL est down, ignorer les alertes de connexions
+  - source_match:
+      alertname: 'PostgresDown'
+    target_match_re:
+      alertname: 'Postgres.*'
+
+  # Si Redis est down, ignorer les alertes de mémoire Redis
+  - source_match:
+      alertname: 'RedisDown'
+    target_match_re:
+      alertname: 'Redis.*'

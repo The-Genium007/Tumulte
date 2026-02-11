@@ -15,8 +15,8 @@
      🎨 CONFIGURATION RAPIDE - Couleurs de base du thème
      ========================================================================== */
 
-  /* Couleur principale (brand/primary) */
-  --theme-brand: #0f0b04;
+  /* Couleur principale (brand/primary) - Marron doré chaleureux */
+  --theme-brand: #8b6f47;
 
   /* Couleur secondaire */
   --theme-secondary: #d8b790;
@@ -40,18 +40,18 @@
      PALETTES DE COULEURS - Valeurs HEX statiques
      ========================================================================== */
 
-  /* Brand / Primary - Palette marron foncé */
-  --color-brand-50: #f5f3f0;
-  --color-brand-100: #e8e4dd;
-  --color-brand-200: #d4cdc2;
-  --color-brand-300: #b5aa99;
-  --color-brand-400: #8a7d6a;
-  --color-brand-500: #0f0b04;
-  --color-brand-600: #0d0a03;
-  --color-brand-700: #0b0802;
-  --color-brand-800: #080602;
-  --color-brand-900: #060502;
-  --color-brand-950: #040301;
+  /* Brand / Primary - Palette marron doré chaleureux */
+  --color-brand-50: #faf8f5;
+  --color-brand-100: #f2ebe0;
+  --color-brand-200: #e5d9c5;
+  --color-brand-300: #d4c4a6;
+  --color-brand-400: #bfa07a;
+  --color-brand-500: #8b6f47;
+  --color-brand-600: #7a5f3c;
+  --color-brand-700: #664e31;
+  --color-brand-800: #533f28;
+  --color-brand-900: #3f3020;
+  --color-brand-950: #2a2015;
 
   /* Alias primary → brand */
   --color-primary-50: var(--color-brand-50);
@@ -151,7 +151,7 @@
      INTERFACE - BACKGROUNDS
      ========================================================================== */
   --color-bg-page: var(--theme-bg-page);
-  --color-bg-subtle: var(--theme-bg-page);
+  --color-bg-subtle: #F5F3F1;
   --color-bg-muted: #ffffff;
   --color-bg-elevated: #ffffff;
   --color-bg-inverse: #0f172a;
@@ -432,7 +432,7 @@ html.dark {
 
   /* Override des couleurs de page pour le dark mode */
   --color-bg-page: var(--color-dark-bg-base);
-  --color-bg-subtle: var(--color-dark-bg-base);
+  --color-bg-subtle: var(--color-dark-bg-surface);
   --color-bg-muted: var(--color-dark-bg-surface);
   --color-bg-elevated: var(--color-dark-bg-elevated);
   --color-text-primary: var(--color-dark-text-primary);

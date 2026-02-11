@@ -3,11 +3,15 @@ import type {
   OverlayElement,
   DiceProperties,
   PollProperties,
+  DiceReverseProperties,
+  DiceReverseGoalBarProperties,
+  DiceReverseImpactHudProperties,
   TypographySettings,
   BoxStyleSettings,
   MedalColors,
   ProgressBarConfig,
   PollAnimationsConfig,
+  PollGamificationConfig,
   PollMockData,
 } from '../types'
 import { deepMerge } from './usePropertyUpdater'
@@ -23,7 +27,11 @@ export function useElementUpdater(
 ) {
   // ===== Utilitaire de mise à jour de propriété par chemin =====
 
-  function updatePropertyByPath(path: string, value: unknown, elementType: 'dice' | 'poll'): void {
+  function updatePropertyByPath(
+    path: string,
+    value: unknown,
+    elementType: 'dice' | 'poll' | 'diceReverse' | 'diceReverseGoalBar' | 'diceReverseImpactHud'
+  ): void {
     if (!selectedElement.value || selectedElement.value.type !== elementType) return
 
     const props = selectedElement.value.properties
@@ -167,6 +175,13 @@ export function useElementUpdater(
     updatePollProperty('animations', merged)
   }
 
+  function updatePollGamification(gamification: Partial<PollGamificationConfig>): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as PollProperties
+    const merged = deepMerge(props.gamification, gamification)
+    updatePollProperty('gamification', merged)
+  }
+
   function updatePollLayout(
     layout: Partial<{ maxWidth: number; minOptionsToShow: number; maxOptionsToShow: number }>
   ): void {
@@ -179,6 +194,122 @@ export function useElementUpdater(
     if (!selectedElement.value) return
     const props = selectedElement.value.properties as PollProperties
     updatePollProperty('mockData', { ...props.mockData, ...mockData })
+  }
+
+  // ===== Dice Reverse Updates =====
+
+  function updateDiceReverseProperty(path: string, value: unknown): void {
+    updatePropertyByPath(path, value, 'diceReverse')
+  }
+
+  function updateDiceReverseGoalBar(goalBar: Partial<DiceReverseProperties['goalBar']>): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseProperties
+    const merged = deepMerge(props.goalBar, goalBar)
+    updateDiceReverseProperty('goalBar', merged)
+  }
+
+  function updateDiceReverseImpactHud(
+    impactHud: Partial<DiceReverseProperties['impactHud']>
+  ): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseProperties
+    const merged = deepMerge(props.impactHud, impactHud)
+    updateDiceReverseProperty('impactHud', merged)
+  }
+
+  function updateDiceReverseMockData(mockData: Partial<DiceReverseProperties['mockData']>): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseProperties
+    updateDiceReverseProperty('mockData', { ...props.mockData, ...mockData })
+  }
+
+  // ===== Goal Bar (Separate Element) Updates =====
+
+  function updateGoalBarProperty(path: string, value: unknown): void {
+    updatePropertyByPath(path, value, 'diceReverseGoalBar')
+  }
+
+  function updateGoalBarContainer(key: string, value: string | number): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseGoalBarProperties
+    updateGoalBarProperty('container', { ...props.container, [key]: value })
+  }
+
+  function updateGoalBarProgressBar(key: string, value: string | number | boolean): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseGoalBarProperties
+    updateGoalBarProperty('progressBar', { ...props.progressBar, [key]: value })
+  }
+
+  function updateGoalBarShake(key: string, value: number): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseGoalBarProperties
+    updateGoalBarProperty('shake', { ...props.shake, [key]: value })
+  }
+
+  function updateGoalBarMockData(key: string, value: string | number | boolean): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseGoalBarProperties
+    updateGoalBarProperty('mockData', { ...props.mockData, [key]: value })
+  }
+
+  function updateGoalBarTypography(section: string, key: string, value: string | number): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseGoalBarProperties
+    const currentTypography = props.typography[section as keyof typeof props.typography]
+    updateGoalBarProperty('typography', {
+      ...props.typography,
+      [section]: { ...currentTypography, [key]: value },
+    })
+  }
+
+  function updateGoalBarWidth(value: number): void {
+    updateGoalBarProperty('width', value)
+  }
+
+  function updateGoalBarAudio(key: string, value: { enabled: boolean; volume: number }): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseGoalBarProperties
+    updateGoalBarProperty('audio', { ...props.audio, [key]: value })
+  }
+
+  // ===== Impact HUD (Separate Element) Updates =====
+
+  function updateImpactHudProperty(path: string, value: unknown): void {
+    updatePropertyByPath(path, value, 'diceReverseImpactHud')
+  }
+
+  function updateImpactHudContainer(key: string, value: string | number): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseImpactHudProperties
+    updateImpactHudProperty('container', { ...props.container, [key]: value })
+  }
+
+  function updateImpactHudAnimations(key: string, value: number): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseImpactHudProperties
+    updateImpactHudProperty('animations', { ...props.animations, [key]: value })
+  }
+
+  function updateImpactHudAudio(key: string, value: { enabled: boolean; volume: number }): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseImpactHudProperties
+    updateImpactHudProperty('audio', { ...props.audio, [key]: value })
+  }
+
+  function updateImpactHudTypography(section: string, key: string, value: string | number): void {
+    if (!selectedElement.value) return
+    const props = selectedElement.value.properties as DiceReverseImpactHudProperties
+    const currentTypography = props.typography[section as keyof typeof props.typography]
+    updateImpactHudProperty('typography', {
+      ...props.typography,
+      [section]: { ...currentTypography, [key]: value },
+    })
+  }
+
+  function updateImpactHudWidth(value: number): void {
+    updateImpactHudProperty('width', value)
   }
 
   return {
@@ -201,7 +332,29 @@ export function useElementUpdater(
     updatePollMedalColors,
     updatePollProgressBar,
     updatePollAnimations,
+    updatePollGamification,
     updatePollLayout,
     updatePollMockData,
+    // Dice Reverse (legacy)
+    updateDiceReverseProperty,
+    updateDiceReverseGoalBar,
+    updateDiceReverseImpactHud,
+    updateDiceReverseMockData,
+    // Goal Bar (separate element)
+    updateGoalBarProperty,
+    updateGoalBarContainer,
+    updateGoalBarProgressBar,
+    updateGoalBarShake,
+    updateGoalBarMockData,
+    updateGoalBarTypography,
+    updateGoalBarWidth,
+    updateGoalBarAudio,
+    // Impact HUD (separate element)
+    updateImpactHudProperty,
+    updateImpactHudContainer,
+    updateImpactHudAnimations,
+    updateImpactHudAudio,
+    updateImpactHudTypography,
+    updateImpactHudWidth,
   }
 }
