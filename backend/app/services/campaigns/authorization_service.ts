@@ -107,8 +107,8 @@ export class AuthorizationService {
     await this.membershipRepository.revokePollAuthorization(membership)
 
     // Delete gamification rewards (remove Twitch Channel Points rewards)
+    const streamer = await Streamer.find(streamerId)
     try {
-      const streamer = await Streamer.find(streamerId)
       if (streamer) {
         const gamificationResult = await this.gamificationBridge.onAuthorizationRevoked(
           campaignId,
@@ -135,6 +135,15 @@ export class AuthorizationService {
         '[Authorization] Failed to delete gamification rewards on revoke'
       )
     }
+
+    // Broadcast readiness change via WebSocket (streamer is no longer ready)
+    const wsService = new WebSocketService()
+    wsService.emitStreamerReadinessChange(
+      campaignId,
+      streamerId,
+      false,
+      streamer?.twitchDisplayName ?? 'Unknown'
+    )
   }
 
   /**

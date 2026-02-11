@@ -3,6 +3,7 @@ import logger from '@adonisjs/core/services/logger'
 import app from '@adonisjs/core/services/app'
 import { CampaignMembershipRepository } from '#repositories/campaign_membership_repository'
 import { GamificationAuthBridge } from '#services/gamification/gamification_auth_bridge'
+import { webSocketService as WebSocketService } from '#services/websocket/websocket_service'
 
 // Run every 5 minutes to check for expired authorizations
 const CRON_EXPRESSION = '*/5 * * * *'
@@ -161,6 +162,15 @@ export class AuthorizationExpiryScheduler {
 
           // Clear the authorization timestamps
           await this.membershipRepository.clearPollAuthorization(membership)
+
+          // Broadcast readiness change via WebSocket (streamer is no longer ready)
+          const wsService = new WebSocketService()
+          wsService.emitStreamerReadinessChange(
+            membership.campaignId,
+            streamer.id,
+            false,
+            streamer.twitchDisplayName
+          )
 
           processed++
         } catch (error) {

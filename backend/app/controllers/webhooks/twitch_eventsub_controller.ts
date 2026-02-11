@@ -310,6 +310,25 @@ export default class TwitchEventSubController {
   ): Promise<void> {
     if (!streamerConfig) return
 
+    logger.info(
+      {
+        event: 'streamer_redemption_start',
+        redemptionId: event.id,
+        rewardId: event.reward.id,
+        rewardTitle: event.reward.title,
+        broadcasterId: event.broadcaster_user_id,
+        broadcasterName: event.broadcaster_user_name,
+        userId: event.user_id,
+        userLogin: event.user_login,
+        streamerId,
+        streamerConfigId: streamerConfig.id,
+        campaignId: streamerConfig.campaignId,
+        eventId: streamerConfig.eventId,
+        cost: event.reward.cost,
+      },
+      'Processing streamer redemption'
+    )
+
     try {
       const result = await this.gamificationService.onStreamerRedemption({
         redemptionId: event.id,
