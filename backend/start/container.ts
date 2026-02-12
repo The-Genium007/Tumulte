@@ -146,11 +146,20 @@ app.container.singleton('actionHandlerRegistry', async () => {
   const { StatModifyAction } =
     await import('#services/gamification/handlers/actions/stat_modify_action')
   const { CustomAction } = await import('#services/gamification/handlers/actions/custom_action')
+  const { SpellDisableAction } =
+    await import('#services/gamification/handlers/actions/spell_disable_action')
+  const { SpellBuffAction } =
+    await import('#services/gamification/handlers/actions/spell_buff_action')
+  const { SpellDebuffAction } =
+    await import('#services/gamification/handlers/actions/spell_debuff_action')
 
   registry.register(new DiceInvertAction())
   registry.register(new ChatMessageAction())
   registry.register(new StatModifyAction())
   registry.register(new CustomAction())
+  registry.register(new SpellDisableAction())
+  registry.register(new SpellBuffAction())
+  registry.register(new SpellDebuffAction())
 
   return registry
 })
@@ -235,6 +244,10 @@ app.container.singleton('gamificationService', async () => {
   // Injecter le FoundryCommandAdapter
   const foundryCommandAdapter = await app.container.make('foundryCommandAdapter')
   gamificationService.setFoundryCommandService(foundryCommandAdapter)
+
+  // Injecter le TwitchChatService pour les notifications post-action
+  const twitchChatService = await app.container.make('twitchChatService')
+  actionExecutor.setTwitchChatNotifier(twitchChatService)
 
   return gamificationService
 })
@@ -412,6 +425,32 @@ app.container.bind('criticalityRuleService', async () => {
   return new mod.CriticalityRuleService(repository)
 })
 
+// System Preset Service (applies system-defined criticality rules to campaigns)
+app.container.bind('systemPresetService', async () => {
+  const mod = await import('#services/campaigns/system_preset_service')
+  return new mod.SystemPresetService()
+})
+
+// Item Category Rule Repository
+app.container.bind('itemCategoryRuleRepository', async () => {
+  const mod = await import('#repositories/campaign_item_category_rule_repository')
+  return new mod.CampaignItemCategoryRuleRepository()
+})
+
+// Item Category Rule Service
+app.container.bind('itemCategoryRuleService', async () => {
+  const mod = await import('#services/campaigns/item_category_rule_service')
+  const repository = await app.container.make('itemCategoryRuleRepository')
+  return new mod.ItemCategoryRuleService(repository)
+})
+
+// Item Category Detection Service
+app.container.bind('itemCategoryDetectionService', async () => {
+  const mod = await import('#services/campaigns/item_category_detection_service')
+  const repository = await app.container.make('itemCategoryRuleRepository')
+  return new mod.ItemCategoryDetectionService(repository)
+})
+
 /*
 |--------------------------------------------------------------------------
 | Export helpers pour typage
@@ -519,6 +558,18 @@ declare module '@adonisjs/core/types' {
     >
     criticalityRuleService: InstanceType<
       typeof import('#services/campaigns/criticality_rule_service').CriticalityRuleService
+    >
+    systemPresetService: InstanceType<
+      typeof import('#services/campaigns/system_preset_service').SystemPresetService
+    >
+    itemCategoryRuleRepository: InstanceType<
+      typeof import('#repositories/campaign_item_category_rule_repository').CampaignItemCategoryRuleRepository
+    >
+    itemCategoryRuleService: InstanceType<
+      typeof import('#services/campaigns/item_category_rule_service').ItemCategoryRuleService
+    >
+    itemCategoryDetectionService: InstanceType<
+      typeof import('#services/campaigns/item_category_detection_service').ItemCategoryDetectionService
     >
   }
 }
