@@ -240,7 +240,6 @@ export class GamificationService {
       .then((runner) =>
         runner?.run({
           campaignId,
-          userId: streamerId,
           eventType: 'gamification',
           mode: 'light',
           metadata: { streamerId, source: 'dice_roll' },
@@ -458,10 +457,9 @@ export class GamificationService {
         const runner = await this.getPreFlightRunner()
         const report = await runner?.run({
           campaignId,
-          userId: streamerId,
           eventType: 'gamification',
           mode: 'full',
-          metadata: { eventId, eventSlug: config.event.slug, source: 'manual_trigger' },
+          metadata: { eventId, eventSlug: config.event.slug, streamerId, source: 'manual_trigger' },
         })
 
         if (report && !report.healthy) {
@@ -640,7 +638,6 @@ export class GamificationService {
       .then((runner) =>
         runner?.run({
           campaignId: redemption.campaignId,
-          userId: redemption.streamerId,
           eventType: 'gamification',
           mode: 'light',
           metadata: { streamerId: redemption.streamerId, source: 'streamer_redemption' },

@@ -42,7 +42,7 @@ export class TokenCheck implements PreFlightCheck {
     const start = Date.now()
 
     try {
-      const invalidStreamers = await this.checkTokens(ctx.campaignId, ctx.userId)
+      const invalidStreamers = await this.checkTokens(ctx.campaignId, ctx.userId ?? null)
 
       if (invalidStreamers.length === 0) {
         logger.debug('[PreFlight] Token check: OK - All tokens valid')
@@ -98,13 +98,17 @@ export class TokenCheck implements PreFlightCheck {
    * Check all streamer tokens for a campaign.
    * Extracted from the original HealthCheckService.checkTokens().
    */
-  private async checkTokens(campaignId: string, userId: string): Promise<InvalidStreamer[]> {
+  private async checkTokens(campaignId: string, userId: string | null): Promise<InvalidStreamer[]> {
     const invalidStreamers: InvalidStreamer[] = []
     const checkedStreamerIds = new Set<string>()
 
     // 1. Check GM token first (if they have a streamer profile)
+    // Skip if no userId (automatic/system triggers)
+    if (!userId) {
+      logger.debug('[PreFlight] No userId provided, skipping MJ token check')
+    }
     try {
-      const mjUser = await this.userRepository.findByIdWithStreamer(userId)
+      const mjUser = userId ? await this.userRepository.findByIdWithStreamer(userId) : null
       if (mjUser?.streamer) {
         const streamer = mjUser.streamer
         checkedStreamerIds.add(streamer.id)

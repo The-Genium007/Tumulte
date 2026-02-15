@@ -72,8 +72,8 @@ export interface CheckContext {
   /** Campaign being checked */
   campaignId: string
 
-  /** User who triggered the check */
-  userId: string
+  /** User who triggered the check (null for automatic/system triggers) */
+  userId?: string
 
   /** Type of event being launched */
   eventType: EventCategory
