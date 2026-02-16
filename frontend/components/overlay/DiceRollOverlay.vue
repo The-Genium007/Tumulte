@@ -336,7 +336,7 @@ const spawnParticles = () => {
       {
         duration: 500 + Math.random() * 300,
         easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-        fill: 'forwards' as FillMode,
+        fill: 'forwards' as const,
       }
     )
 
