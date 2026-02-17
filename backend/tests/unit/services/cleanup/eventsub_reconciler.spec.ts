@@ -28,12 +28,16 @@ function createSubscription(overrides: Record<string, any> = {}): EventSubSubscr
     id: `sub-${Math.random().toString(36).slice(2, 8)}`,
     status: 'enabled',
     type: 'channel.channel_points_custom_reward_redemption.add',
+    version: '1',
+    transport: { method: 'webhook' },
+    created_at: new Date().toISOString(), // eslint-disable-line camelcase
+    cost: 0,
     condition: {
-      broadcaster_user_id: 'broadcaster-1', // eslint-disable-line camelcase
+      broadcaster_user_id: 'broadcaster-1',
       reward_id: 'reward-1', // eslint-disable-line camelcase
     },
     ...overrides,
-  } as EventSubSubscription
+  }
 }
 
 function createStreamerConfig(overrides: Record<string, any> = {}) {
@@ -44,7 +48,6 @@ function createStreamerConfig(overrides: Record<string, any> = {}) {
     twitchRewardId: 'reward-1',
     twitchRewardStatus: 'active',
     isEnabled: true,
-    streamer: null,
     load: async (relation: string) => {
       if (relation === 'streamer' && !('_streamer' in overrides)) {
         overrides._streamer = {
@@ -119,7 +122,7 @@ test.group('EventSubReconciler — reconcile', () => {
       listSubscriptions: async () => [
         createSubscription({
           condition: {
-            broadcaster_user_id: 'broadcaster-1', // eslint-disable-line camelcase
+            broadcaster_user_id: 'broadcaster-1',
             reward_id: 'reward-1', // eslint-disable-line camelcase
           },
           status: 'enabled',
@@ -282,7 +285,7 @@ test.group('EventSubReconciler — findMatchingSubscription', () => {
     const subs = [
       createSubscription({
         condition: {
-          broadcaster_user_id: 'bc-1', // eslint-disable-line camelcase
+          broadcaster_user_id: 'bc-1',
           reward_id: 'rw-1', // eslint-disable-line camelcase
         },
         status: 'enabled',
@@ -301,7 +304,7 @@ test.group('EventSubReconciler — findMatchingSubscription', () => {
     const subs = [
       createSubscription({
         condition: {
-          broadcaster_user_id: 'bc-1', // eslint-disable-line camelcase
+          broadcaster_user_id: 'bc-1',
           reward_id: 'rw-1', // eslint-disable-line camelcase
         },
         status: 'webhook_callback_verification_pending',
@@ -320,7 +323,7 @@ test.group('EventSubReconciler — findMatchingSubscription', () => {
     const subs = [
       createSubscription({
         condition: {
-          broadcaster_user_id: 'bc-other', // eslint-disable-line camelcase
+          broadcaster_user_id: 'bc-other',
           reward_id: 'rw-1', // eslint-disable-line camelcase
         },
       }),
@@ -338,7 +341,7 @@ test.group('EventSubReconciler — findMatchingSubscription', () => {
     const subs = [
       createSubscription({
         condition: {
-          broadcaster_user_id: 'bc-1', // eslint-disable-line camelcase
+          broadcaster_user_id: 'bc-1',
           reward_id: 'rw-1', // eslint-disable-line camelcase
         },
         status: 'authorization_revoked',

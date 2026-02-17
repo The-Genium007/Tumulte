@@ -7,7 +7,7 @@ import { FoundryCommandAdapter } from '#services/gamification/foundry_command_ad
 
 function createMockVttWebSocketService(overrides: Record<string, any> = {}) {
   return {
-    broadcast: overrides.broadcast || (async () => {}),
+    broadcast: overrides.broadcast || (async () => true),
     ...overrides,
   } as any
 }
@@ -29,9 +29,10 @@ test.group('FoundryCommandAdapter — sendChatMessage', () => {
     let broadcastedData: any
 
     const mockWs = createMockVttWebSocketService({
-      broadcast: async (connId: string, event: string, data: any) => {
+      broadcast: async (_connId: string, event: string, data: any) => {
         broadcastedEvent = event
         broadcastedData = data
+        return true
       },
     })
 
@@ -75,6 +76,7 @@ test.group('FoundryCommandAdapter — rollDice via sendCommand', () => {
     const mockWs = createMockVttWebSocketService({
       broadcast: async (_connId: string, _event: string, data: any) => {
         broadcastedData = data
+        return true
       },
     })
 
@@ -101,6 +103,7 @@ test.group('FoundryCommandAdapter — modifyActor via sendCommand', () => {
       broadcast: async (_connId: string, event: string, data: any) => {
         broadcastedEvent = event
         broadcastedData = data
+        return true
       },
     })
 
@@ -125,6 +128,7 @@ test.group('FoundryCommandAdapter — applySpellEffect via sendCommand', () => {
       broadcast: async (_connId: string, event: string, data: any) => {
         broadcastedEvent = event
         broadcastedData = data
+        return true
       },
     })
 
@@ -153,6 +157,7 @@ test.group('FoundryCommandAdapter — applyMonsterEffect via sendCommand', () =>
     const mockWs = createMockVttWebSocketService({
       broadcast: async (_connId: string, _event: string, data: any) => {
         broadcastedData = data
+        return true
       },
     })
 
@@ -181,6 +186,7 @@ test.group('FoundryCommandAdapter — cleanupAllEffects via sendCommand', () => 
       broadcast: async (_connId: string, event: string, data: any) => {
         broadcastedEvent = event
         broadcastedData = data
+        return true
       },
     })
 
@@ -202,6 +208,7 @@ test.group('FoundryCommandAdapter — requestId generation', () => {
     const mockWs = createMockVttWebSocketService({
       broadcast: async (_connId: string, _event: string, data: any) => {
         requestIds.push(data.requestId)
+        return true
       },
     })
 
@@ -222,6 +229,7 @@ test.group('FoundryCommandAdapter — requestId generation', () => {
     const mockWs = createMockVttWebSocketService({
       broadcast: async (_connId: string, _event: string, data: any) => {
         broadcastedData = data
+        return true
       },
     })
 
@@ -231,7 +239,7 @@ test.group('FoundryCommandAdapter — requestId generation', () => {
     assert.exists(broadcastedData.timestamp)
     // Verify it's a valid ISO date
     const date = new Date(broadcastedData.timestamp)
-    assert.isFalse(isNaN(date.getTime()))
+    assert.isFalse(Number.isNaN(date.getTime()))
   })
 })
 
@@ -244,6 +252,7 @@ test.group('FoundryCommandAdapter — deleteChatMessage via sendCommand', () => 
       broadcast: async (_connId: string, event: string, data: any) => {
         broadcastedEvent = event
         broadcastedData = data
+        return true
       },
     })
 

@@ -83,7 +83,7 @@ test.group('ItemCategoryRulesController — index', () => {
       const ctx = createMockHttpContext({
         params: { campaignId: 'campaign-1' },
       })
-      const result = await controller.index(ctx as any)
+      const result: any = await controller.index(ctx as any)
 
       assert.isArray(result)
       assert.lengthOf(result, 2)
@@ -146,7 +146,7 @@ test.group('ItemCategoryRulesController — store', () => {
         body,
       })
 
-      const result = await controller.store(ctx as any)
+      const result: any = await controller.store(ctx as any)
 
       assert.equal(createdData.campaignId, 'campaign-1')
       assert.equal(result.category, 'spell')
@@ -223,7 +223,7 @@ test.group('ItemCategoryRulesController — update', () => {
         body: { label: 'Updated Label', isEnabled: false },
       })
 
-      const result = await controller.update(ctx as any)
+      const result: any = await controller.update(ctx as any)
 
       assert.equal(updatedRuleId, 'rule-1')
       assert.equal(updatedCampaignId, 'campaign-1')
@@ -329,7 +329,7 @@ test.group('ItemCategoryRulesController — detect', () => {
         params: { campaignId: 'campaign-1' },
       })
 
-      const result = await controller.detect(ctx as any)
+      const result: any = await controller.detect(ctx as any)
 
       assert.isTrue(detectCalled)
       assert.isArray(result)
@@ -362,7 +362,7 @@ test.group('ItemCategoryRulesController — sync', () => {
         params: { campaignId: 'campaign-1' },
       })
 
-      const result = await controller.sync(ctx as any)
+      const result: any = await controller.sync(ctx as any)
 
       assert.equal(result.synchronized, 10)
       assert.equal(result.changed, 3)

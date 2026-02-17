@@ -87,7 +87,7 @@ test.group('CriticalityRulesController — index', () => {
       const ctx = createMockHttpContext({
         params: { campaignId: 'campaign-1' },
       })
-      const result = await controller.index(ctx as any)
+      const result: any = await controller.index(ctx as any)
 
       assert.isArray(result)
       assert.lengthOf(result, 2)
@@ -147,7 +147,7 @@ test.group('CriticalityRulesController — store', () => {
         body,
       })
 
-      const result = await controller.store(ctx as any)
+      const result: any = await controller.store(ctx as any)
 
       assert.equal(createdData.campaignId, 'campaign-1')
       assert.equal(result.label, 'Natural 20')
@@ -184,7 +184,7 @@ test.group('CriticalityRulesController — update', () => {
         body: { label: 'Updated Label' },
       })
 
-      const result = await controller.update(ctx as any)
+      const result: any = await controller.update(ctx as any)
 
       assert.equal(updatedRuleId, 'rule-1')
       assert.equal(updatedCampaignId, 'campaign-1')
@@ -262,7 +262,7 @@ test.group('CriticalityRulesController — systemInfo', () => {
         params: { campaignId: 'campaign-1' },
       })
 
-      const result = await controller.systemInfo(ctx as any)
+      const result: any = await controller.systemInfo(ctx as any)
 
       assert.equal(result.gameSystemId, 'dnd5e')
       assert.equal(result.tier, 1)
@@ -294,7 +294,7 @@ test.group('CriticalityRulesController — systemInfo', () => {
         params: { campaignId: 'campaign-2' },
       })
 
-      const result = await controller.systemInfo(ctx as any)
+      const result: any = await controller.systemInfo(ctx as any)
 
       assert.isNull(result.gameSystemId)
       assert.equal(result.presetRulesActive, 0)

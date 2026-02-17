@@ -1,7 +1,6 @@
 import { test } from '@japa/runner'
 import { DiceInvertAction } from '#services/gamification/handlers/actions/dice_invert_action'
 import type GamificationInstance from '#models/gamification_instance'
-import type { ResultData } from '#models/gamification_instance'
 
 // ========================================
 // HELPERS

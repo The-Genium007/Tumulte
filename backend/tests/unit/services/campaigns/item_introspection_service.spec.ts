@@ -45,6 +45,7 @@ function createFeature(overrides: Partial<FeatureInfo> = {}): FeatureInfo {
     img: '/icons/feature.webp',
     type: 'feat',
     subtype: 'class',
+    uses: null,
     ...overrides,
   }
 }
