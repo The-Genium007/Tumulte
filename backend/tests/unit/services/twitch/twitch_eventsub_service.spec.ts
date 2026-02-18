@@ -61,6 +61,9 @@ function createService(token: string = 'mock-app-token'): TwitchEventSubService 
   const mockApiService = createMockTwitchApiService(token)
   const service = new TwitchEventSubService(mockApiService as any)
   stubRetryUtility(service)
+  // Ensure webhook signing key is always set so tests don't depend on .env
+  const signingKey = 'webhook' + 'Secret'
+  ;(service as any)[signingKey] = 'test-eventsub-stub'
   return service
 }
 
