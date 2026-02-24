@@ -95,8 +95,7 @@ const getContextMenuItems = (character: GmCharacter) => {
           } catch (error) {
             toast.add({
               title: 'Erreur',
-              description:
-                error instanceof Error ? error.message : 'Impossible de changer le type',
+              description: error instanceof Error ? error.message : 'Impossible de changer le type',
               color: 'error' as const,
             })
           }

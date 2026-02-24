@@ -67,6 +67,7 @@ class HttpClient {
               if (import.meta.client) {
                 try {
                   const { $posthog } = useNuxtApp()
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   ;($posthog as any)?.capture('twitch_auth_expired', {
                     url: error.config?.url,
                   })

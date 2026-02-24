@@ -461,10 +461,10 @@ const handlePairing = async () => {
     pairingSuccess.value = data
 
     track('vtt_connected', {
-      campaign_id: data.campaign.id, // eslint-disable-line camelcase
+      campaign_id: data.campaign.id,
       campaign_name: data.campaign.name, // eslint-disable-line camelcase
     })
-    setUserPropertiesOnce({ first_vtt_connected_at: new Date().toISOString() })
+    setUserPropertiesOnce({ first_vtt_connected_at: new Date().toISOString() }) // eslint-disable-line camelcase
 
     toast.add({
       title: 'Connexion établie',

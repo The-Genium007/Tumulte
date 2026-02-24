@@ -82,7 +82,7 @@ import { useFeatureFlags } from '~/composables/useFeatureFlags'
 
 const { track } = useAnalytics()
 const { getCtaVariant } = useFeatureFlags()
-const ctaText = getCtaVariant() === 'variant_a' ? 'Commencer l\'Aventure' : 'Rejoindre l\'Aventure'
+const ctaText = getCtaVariant() === 'variant_a' ? "Commencer l'Aventure" : "Rejoindre l'Aventure"
 
 /**
  * Track CTA clicks for funnel analysis.

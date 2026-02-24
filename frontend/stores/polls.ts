@@ -214,10 +214,10 @@ export const usePollsStore = defineStore('polls', () => {
       const isFirstLaunch = !polls.value.some((p) => p.id !== pollId && p.lastLaunchedAt)
       if (isFirstLaunch) {
         track('first_poll_launched', {
-          poll_id: pollId, // eslint-disable-line camelcase
-          poll_instance_id: data.data.id, // eslint-disable-line camelcase
+          poll_id: pollId,
+          poll_instance_id: data.data.id,
         })
-        setUserPropertiesOnce({ first_poll_launched_at: new Date().toISOString() })
+        setUserPropertiesOnce({ first_poll_launched_at: new Date().toISOString() }) // eslint-disable-line camelcase
       }
 
       // Track le lancement du poll

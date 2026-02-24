@@ -42,7 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
       .then(({ setSentryUser }) => {
         setSentryUser({
           id: userData.id,
-          email: userData.email,
+          email: userData.email ?? undefined,
           username: userData.displayName,
         })
       })
