@@ -45,6 +45,9 @@ export default class Character extends BaseModel {
   @column()
   declare characterType: 'pc' | 'npc' | 'monster'
 
+  @column()
+  declare characterTypeOverride: boolean
+
   @column({
     prepare: (value: object | null) => (value ? JSON.stringify(value) : null),
     consume: (value: string | object | null) =>

@@ -397,10 +397,15 @@ export default class VttWebhookService {
 
     if (character) {
       // Check if anything actually changed before writing to DB
+      // If the GM manually overrode the character type, preserve it during sync
+      const effectiveCharacterType = character.characterTypeOverride
+        ? character.characterType
+        : resolvedCharacterType
+
       const newData = {
         name: characterData.name,
         avatarUrl: characterData.avatarUrl,
-        characterType: resolvedCharacterType,
+        characterType: effectiveCharacterType,
         stats: characterData.stats || character.stats,
         inventory: characterData.inventory || character.inventory,
         spells: characterData.spells || character.spells,

@@ -11,6 +11,7 @@ import redis from '@adonisjs/redis/services/main'
 import { randomBytes } from 'node:crypto'
 import { DateTime } from 'luxon'
 import env from '#start/env'
+import { VttConnectionDto } from '#dtos/vtt/vtt_connection_dto'
 
 interface PendingPairing {
   code: string
@@ -101,7 +102,8 @@ export default class VttConnectionsController {
 
     await connection.load('provider')
 
-    return response.created(connection)
+    // Return full DTO with apiKey (user needs it to configure Foundry)
+    return response.created(VttConnectionDto.fromModel(connection))
   }
 
   /**
@@ -186,7 +188,8 @@ export default class VttConnectionsController {
 
     await connection.load('provider')
 
-    return response.ok(connection)
+    // Return full DTO with apiKey (user needs the new key)
+    return response.ok(VttConnectionDto.fromModel(connection))
   }
 
   /**
@@ -307,7 +310,8 @@ export default class VttConnectionsController {
     )
 
     // Build API URL
-    const apiUrl = env.get('API_URL') || `http://${env.get('HOST')}:${env.get('PORT')}`
+    const apiUrl =
+      env.get('API_URL') || `http://${env.get('HOST', 'localhost')}:${env.get('PORT', 3333)}`
 
     // Store reauthorization data for the module to pick up
     const reauthorizedData = {
@@ -470,7 +474,8 @@ export default class VttConnectionsController {
       )
 
       // Build API URL - use API_URL env var if set, otherwise construct from HOST:PORT
-      const apiUrl = env.get('API_URL') || `http://${env.get('HOST')}:${env.get('PORT')}`
+      const apiUrl =
+        env.get('API_URL') || `http://${env.get('HOST', 'localhost')}:${env.get('PORT', 3333)}`
 
       // Store completed pairing for the module to pick up
       // Include fingerprint so the module can send it back on token refresh

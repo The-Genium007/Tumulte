@@ -48,10 +48,11 @@ router.get('/health/ready', [healthController, 'ready'])
 // Liveness probe - checks if app is running
 router.get('/health/live', [healthController, 'live'])
 
-// Prometheus metrics endpoint (protected - admin only in production)
+// Prometheus metrics endpoint (protected - admin only)
 router
   .get('/metrics', [metricsController, 'index'])
   .use(middleware.auth({ guards: ['web', 'api'] }))
+  .use(middleware.admin())
 
 // ==========================================
 // Routes d'authentification
@@ -188,6 +189,12 @@ router
     router.delete(
       '/campaigns/:id/active-character',
       '#controllers/mj/gm_characters_controller.destroy'
+    )
+
+    // Character type toggle (NPC <-> Monster)
+    router.put(
+      '/campaigns/:id/characters/:characterId/type',
+      '#controllers/mj/gm_characters_controller.toggleType'
     )
 
     // GM Dice Roll Attribution
@@ -832,6 +839,13 @@ router
     )
   })
   .prefix('/webhooks/foundry')
+  .use(
+    middleware.rateLimit({
+      maxRequests: 30,
+      windowSeconds: 60,
+      keyPrefix: 'foundry_webhook',
+    })
+  )
 
 // ==========================================
 // Twitch EventSub Webhooks (public, auth via HMAC signature)
