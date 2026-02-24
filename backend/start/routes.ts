@@ -190,6 +190,12 @@ router
       '#controllers/mj/gm_characters_controller.destroy'
     )
 
+    // Character type toggle (NPC <-> Monster)
+    router.put(
+      '/campaigns/:id/characters/:characterId/type',
+      '#controllers/mj/gm_characters_controller.toggleType'
+    )
+
     // GM Dice Roll Attribution
     router.get(
       '/campaigns/:id/pending-rolls',
