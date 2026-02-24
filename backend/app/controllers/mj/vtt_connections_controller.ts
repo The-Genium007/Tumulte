@@ -310,7 +310,8 @@ export default class VttConnectionsController {
     )
 
     // Build API URL
-    const apiUrl = env.get('API_URL') || `http://${env.get('HOST')}:${env.get('PORT')}`
+    const apiUrl =
+      env.get('API_URL') || `http://${env.get('HOST', 'localhost')}:${env.get('PORT', 3333)}`
 
     // Store reauthorization data for the module to pick up
     const reauthorizedData = {
@@ -473,7 +474,8 @@ export default class VttConnectionsController {
       )
 
       // Build API URL - use API_URL env var if set, otherwise construct from HOST:PORT
-      const apiUrl = env.get('API_URL') || `http://${env.get('HOST')}:${env.get('PORT')}`
+      const apiUrl =
+        env.get('API_URL') || `http://${env.get('HOST', 'localhost')}:${env.get('PORT', 3333)}`
 
       // Store completed pairing for the module to pick up
       // Include fingerprint so the module can send it back on token refresh
