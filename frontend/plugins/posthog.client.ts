@@ -91,8 +91,6 @@ export default defineNuxtPlugin((nuxtApp) => {
       // Session Replay avec sampling (10% des sessions)
       disable_session_recording: false,
       session_recording: {
-        // Sampling : enregistrer seulement 10% des sessions
-        // Réduit les coûts et la bande passante
         maskAllInputs: true,
         maskTextSelector: '.mask-text',
       },
@@ -104,7 +102,16 @@ export default defineNuxtPlugin((nuxtApp) => {
       respect_dnt: true,
       secure_cookie: import.meta.env.PROD,
 
-      // Feature flags - bootstrap vide pour chargement rapide
+      // === PASSIVE MODE ===
+      // PostHog doit uniquement collecter des données, jamais bloquer l'app.
+      // Désactiver tout chargement dynamique de scripts externes et feature flags
+      // pour éviter les erreurs CSP et 401 en production.
+      disable_external_dependency_loading: true, // Pas de script externe (config.js)
+      advanced_disable_feature_flags: true, // Pas d'appel /flags/ (élimine les 401)
+      advanced_disable_feature_flags_on_first_load: true,
+      disable_surveys: true, // Pas de surveys (réduit les requêtes)
+
+      // Feature flags - bootstrap vide, pas de rechargement réseau
       bootstrap: {
         featureFlags: {},
       },
