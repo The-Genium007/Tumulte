@@ -272,11 +272,11 @@ export default defineNuxtConfig({
           'http-equiv': 'Content-Security-Policy',
           content: [
             "default-src 'self'",
-            // Scripts: self + inline (Vue/Nuxt needs it) + GTM
+            // Scripts: self + inline (Vue/Nuxt needs it) + GTM + PostHog dynamic config loader
             // SECURITY NOTE: 'unsafe-inline' is required by Vue 3/Nuxt for runtime rendering.
             // Migrating to nonce-based CSP requires the nuxt-security module — tracked as future work.
             // Note: unsafe-eval only needed in dev for HMR, removed in production for security
-            `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com ${process.env.NODE_ENV === 'development' ? "'unsafe-eval'" : ''}`,
+            `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://eu-assets.i.posthog.com ${process.env.NODE_ENV === 'development' ? "'unsafe-eval'" : ''}`,
             // Styles: self + inline (Tailwind/Vue dynamic styles require unsafe-inline — accepted risk)
             "style-src 'self' 'unsafe-inline'",
             // Images: self + data URIs + Twitch CDN for profile images
